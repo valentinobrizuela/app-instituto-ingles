@@ -1,0 +1,96 @@
+// Bootstrapper y Router
+const App = {
+    init() {
+        console.log("Iniciando West House OS (Local Storage)...");
+        
+        // Inicializar DB y Auth
+        DB.init(); 
+        Auth.init(); 
+        
+        // Listener de rutas
+        window.addEventListener('hashchange', this.router.bind(this));
+        
+        // Ejecuta ruta inicial
+        this.router();
+    },
+
+    router() {
+        let path = window.location.hash.split('?')[0] || '#/';
+        const authRequired = path !== '#/login';
+
+        // Redirigir si no hay sesión
+        if (authRequired && !Auth.isAuthenticated()) {
+            window.location.hash = '#/login';
+            return;
+        }
+
+        // Redirigir si ya hay sesión pero trata de ir a Login
+        if (path === '#/login' && Auth.isAuthenticated()) {
+            window.location.hash = '#/';
+            return;
+        }
+
+        // Cargar vista
+        if (path === '#/login') {
+            document.getElementById('app').innerHTML = ''; // Clear
+            UI.renderLogin();
+            UI.hideLoader();
+            return;
+        }
+
+        // Si es ruta interna, asegurarse que el Layout está renderizado
+        if (!document.querySelector('.app-layout')) {
+            UI.renderLayout();
+        }
+
+        // Actualizar activo en la barra lateral
+        UI.updateActiveNavLink();
+
+        // Limpiar vista actual
+        const viewContainer = document.getElementById('router-view');
+
+        // Cargar la vista según ruta
+        switch(path) {
+            case '#/':
+                Views.Dashboard.render();
+                break;
+            case '#/users':
+                Views.Users.render();
+                break;
+            case '#/courses':
+                Views.Courses.render();
+                break;
+            case '#/attendance':
+                Views.Attendance.render();
+                break;
+            case '#/payments':
+                Views.Payments.render();
+                break;
+            case '#/materials':
+                Views.Materials.render();
+                break;
+            case '#/calendar':
+                if (Views.Calendar) Views.Calendar.render();
+                break;
+            case '#/notifications':
+                if (Views.Notifications) Views.Notifications.render();
+                break;
+            default:
+                viewContainer.innerHTML = `
+                    <div style="text-align:center;margin-top:50px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size:3rem;color:var(--warning);margin-bottom:1rem"></i>
+                        <h2>Página no encontrada</h2>
+                        <a href="#/" class="btn btn-primary mt-4">Ir al inicio</a>
+                    </div>
+                `;
+        }
+
+        // Finalizar carga
+        UI.hideLoader();
+    }
+};
+
+// Arrancar App cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+});
