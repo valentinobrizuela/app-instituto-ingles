@@ -115,31 +115,35 @@ Views.Courses = {
         `);
     },
 
-    save(e) {
+    async save(e) {
         e.preventDefault();
         UI.showLoader();
-        DB.insert('courses', {
-            name: document.getElementById('c-name').value,
-            level: document.getElementById('c-level').value,
-            schedule: document.getElementById('c-schedule').value,
-            teacherId: parseInt(document.getElementById('c-teacher').value)
-        });
-        UI.closeModal();
-        UI.showToast('Curso creado y publicado en la plataforma', 'success');
-        this.render();
+        try {
+            await DB.insert('courses', {
+                name: document.getElementById('c-name').value,
+                level: document.getElementById('c-level').value,
+                schedule: document.getElementById('c-schedule').value,
+                teacherId: parseInt(document.getElementById('c-teacher').value)
+            });
+            UI.closeModal();
+            UI.showToast('Curso creado y publicado en la plataforma', 'success');
+            this.render();
+        } catch (err) {
+            UI.showToast('Error al crear curso', 'danger');
+        }
         UI.hideLoader();
     },
 
-    delete(id) {
+    async delete(id) {
         if(confirm('¿ELIMINAR este curso de forma permanente? Se desvincularán alumnos, asistencias y materiales relacionados.')) {
             UI.showLoader();
-            DB.remove('courses', id);
+            await DB.remove('courses', id);
             
             const allUsers = DB.getTable('users');
             const targets = allUsers.filter(u => Number(u.courseId) === Number(id));
             
             for (const u of targets) {
-                DB.update('users', u.id, { courseId: null });
+                await DB.update('users', u.id, { courseId: null });
             }
 
             UI.showToast('Curso eliminado correctamente', 'success');

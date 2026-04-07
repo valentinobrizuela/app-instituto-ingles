@@ -14,7 +14,7 @@ Views.Users = {
         }
 
         const usersList = DB.getTable('users').filter(u => u.role !== 'admin');
-        const limit = 10;
+        const limit = 20; // Aumentar a 20 para manejar mejor los 100 alumnos
         const pagedData = DB.paginate(usersList, page, limit);
 
         document.getElementById('router-view').innerHTML = `
@@ -46,7 +46,7 @@ Views.Users = {
                 </div>
                 
                 ${pagedData.totalPages > 1 ? `
-                <div style="padding:1rem; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                <div style="padding:1rem; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:var(--primary-light);">
                     <button class="btn btn-secondary shadow-sm" ${page === 1 ? 'disabled' : ''} onclick="Views.Users.render(${page - 1})">
                         <i class="fa-solid fa-angle-left"></i> Anterior
                     </button>
@@ -60,8 +60,8 @@ Views.Users = {
     },
 
     row(u) {
-        let badge = u.role === 'student' ? '<span class="badge badge-success" style="background:#d1fae5; color:#065f46">Alumno</span>' 
-                : '<span class="badge badge-info" style="background:#e0f2fe; color:#0369a1">Profesor</span>';
+        let badge = u.role === 'student' ? '<span class="badge badge-success">Alumno</span>' 
+                : '<span class="badge badge-info">Profesor</span>';
         
         let levelHtml = u.level ? `<div style="font-size:0.8rem; margin-top:0.25rem" class="text-muted"><i class="fa-solid fa-layer-group"></i> ${u.level}</div>` : '';
         let courseHtml = '-';
@@ -190,42 +190,48 @@ Views.Users = {
         }, 100);
     },
 
-    save(e) {
+    async save(e) {
         e.preventDefault();
         UI.showLoader();
         
         const rawPassword = document.getElementById('u-password').value;
-        const hashedPass = DB.hashPass(rawPassword);
+        // NOTA: No hasheamos aquí, dejamos que el Backend lo haga por seguridad centralizada
+        // El backend detecta si el pass es corto y lo hashea.
 
         const data = {
             name: document.getElementById('u-name').value,
             email: document.getElementById('u-email').value,
             role: document.getElementById('u-role').value,
-            password: hashedPass
+            password: rawPassword
         };
         
         if (data.role === 'student') {
             data.age = parseInt(document.getElementById('u-age').value) || null;
             data.parentEmail = document.getElementById('u-parent').value;
             data.level = document.getElementById('u-level').value;
-            if(document.getElementById('u-course').value) {
-                data.courseId = parseInt(document.getElementById('u-course').value);
+            const courseVal = document.getElementById('u-course').value;
+            if(courseVal) {
+                data.courseId = parseInt(courseVal);
                 const tCourse = DB.getTable('courses').find(c => Number(c.id) === data.courseId);
                 if(tCourse) data.teacherId = tCourse.teacherId;
             }
         }
 
-        DB.insert('users', data);
-        UI.closeModal();
-        UI.showToast('Usuario guardado con éxito. Contraseña encriptada.', 'success');
-        this.render();
+        try {
+            await DB.insert('users', data);
+            UI.closeModal();
+            UI.showToast('Usuario guardado con éxito y sincronizado.', 'success');
+            this.render();
+        } catch (err) {
+            UI.showToast('Error al guardar usuario', 'danger');
+        }
         UI.hideLoader();
     },
 
-    delete(id) {
+    async delete(id) {
         if(confirm('¿Seguro que deseas ELIMINAR este usuario de forma permanente?')) {
             UI.showLoader();
-            DB.remove('users', id);
+            await DB.remove('users', id);
             UI.showToast('Usuario eliminado', 'success');
             this.render();
             UI.hideLoader();

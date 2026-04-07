@@ -3,215 +3,219 @@ window.Views = window.Views || {};
 Views.Dashboard = {
     render() {
         const user = Auth.getUser();
-        let html = `<div class="dashboard-header mb-4">
-                        <h1 class="text-primary" style="font-size:2.5rem; letter-spacing:-1px;">Hola, ${user.name} 👋</h1>
-                        <p class="text-muted">Bienvenido al panel de control de West House English School.</p>
-                    </div>`;
+        const viewContainer = document.getElementById('router-view');
 
+        if (user.role === 'admin') {
+            this.renderAdmin(user, viewContainer);
+        } else if (user.role === 'teacher') {
+            this.renderTeacher(user, viewContainer);
+        } else {
+            this.renderStudent(user, viewContainer);
+        }
+    },
+
+    renderAdmin(user, container) {
         const users = DB.getTable('users');
+        const students = users.filter(u => u.role === 'student');
+        const teachers = users.filter(u => u.role === 'teacher');
         const payments = DB.getTable('payments');
-        const courses = DB.getTable('courses');
-        const attendance = DB.getTable('attendance');
         
-        if(user.role === 'admin') {
-            const totalAlumnos = users.filter(u => u.role === 'student').length;
-            const totalProfesores = users.filter(u => u.role === 'teacher').length;
-            const deudas = payments.filter(p => p.status !== 'Pagado').length;
-            const ingresos = payments.filter(p => p.status === 'Pagado').reduce((acc, p) => acc + p.amount, 0);
+        const totalRevenue = payments.filter(p => p.status === 'Pagado').reduce((acc, p) => acc + p.amount, 0);
 
-            const ausentes = attendance.filter(a => a.status === 'Ausente');
-            
-            html += `
-                <div style="display:grid; grid-template-columns: 2.5fr 1fr; gap:1.5rem; margin-bottom:1rem">
-                    <!-- Left Column: Metrics & Charts -->
-                    <div style="display:flex; flex-direction:column; gap:1rem;">
-                        
-                        <!-- Mini Metrics Cards -->
-                        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem;">
-                            <div class="card metric-card" style="padding:1rem; border-left: 4px solid var(--primary);">
-                                <h3 class="text-muted uppercase" style="font-size:0.7rem; letter-spacing:1px"><i class="fa-solid fa-user-graduate"></i> Alumnos</h3>
-                                <div style="font-size:1.8rem;font-weight:700;color:var(--text-main);margin-top:0.25rem;line-height:1">${totalAlumnos}</div>
-                            </div>
-                            <div class="card metric-card" style="padding:1rem; border-left: 4px solid var(--success);">
-                                <h3 class="text-muted uppercase" style="font-size:0.7rem; letter-spacing:1px"><i class="fa-solid fa-money-bill-wave"></i> Ingresos ($)</h3>
-                                <div style="font-size:1.8rem;font-weight:700;color:var(--success);margin-top:0.25rem;line-height:1">${ingresos.toFixed(2)}</div>
-                            </div>
-                            <div class="card metric-card" style="padding:1rem; border-left: 4px solid var(--danger);">
-                                <h3 class="text-muted uppercase" style="font-size:0.7rem; letter-spacing:1px"><i class="fa-solid fa-triangle-exclamation"></i> Riesgo</h3>
-                                <div style="font-size:1.8rem;font-weight:700;color:var(--danger);margin-top:0.25rem;line-height:1">${deudas} Deudas</div>
-                            </div>
-                            <div class="card metric-card" style="padding:1rem; border-left: 4px solid var(--info);">
-                                <h3 class="text-muted uppercase" style="font-size:0.7rem; letter-spacing:1px"><i class="fa-solid fa-chalkboard-user"></i> Staff</h3>
-                                <div style="font-size:1.8rem;font-weight:700;color:var(--info);margin-top:0.25rem;line-height:1">${totalProfesores}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Compact Charts Area -->
-                        <div style="display:flex; gap:1rem;">
-                            <div class="card" style="flex:2; padding:1.25rem; position: relative;">
-                                <h3 class="mb-2" style="font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:0.5rem">Ingresos vs Deudas</h3>
-                                <div style="height:180px;"><canvas id="financeChart"></canvas></div>
-                            </div>
-                            <div class="card" style="flex:1; padding:1.25rem; position:relative;">
-                                <h3 class="mb-2" style="font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:0.5rem">Porcentaje Niveles</h3>
-                                <div style="height:180px;"><canvas id="levelChart"></canvas></div>
-                            </div>
-                        </div>
-                    </div>
+        container.innerHTML = `
+            <div class="header-section mb-5">
+                <h1 class="hero-title" style="color:var(--text-main); margin-bottom: 0.5rem">Panel de Control</h1>
+                <p class="text-muted">Bienvenido de nuevo, ${user.name}. Aquí tienes un resumen de la academia.</p>
+            </div>
 
-                    <!-- Right Column: Actions & Alerts -->
-                    <div style="display:flex; flex-direction:column; gap:1rem;">
-                        <div class="card" style="padding:1.25rem; background: linear-gradient(135deg, rgba(37,99,235,0.05), rgba(255,255,255,0));">
-                            <h2 style="font-size:1.1rem; margin-bottom:1rem; color:var(--primary)"><i class="fa-solid fa-bolt"></i> Acciones Rápidas</h2>
-                            <div style="display:grid; grid-template-columns: 1fr; gap:0.5rem">
-                                <a href="#/users" class="btn btn-secondary shadow-sm" style="text-align:left; font-size:0.9rem"><i class="fa-solid fa-user-plus w-5"></i> Crear Alumno</a>
-                                <a href="#/payments" class="btn btn-secondary shadow-sm" style="text-align:left; font-size:0.9rem"><i class="fa-solid fa-file-invoice w-5"></i> Flujo de Pagos</a>
-                                <button onclick="Views.Dashboard.sendMassEmail()" class="btn btn-primary shadow-sm" style="text-align:left; font-size:0.9rem; background:#28a745"><i class="fa-solid fa-envelope w-5"></i> Reporte Mensual</button>
-                                
-                                <hr style="margin:0.5rem 0; border:none; border-top:1px dashed #cbd5e1"/>
-                                
-                                <button onclick="Views.Dashboard.simulateTransfer()" class="btn btn-primary shadow-md" style="text-align:left; font-size:0.9rem; background:var(--text-main); color:white; border:none; position:relative; overflow:hidden">
-                                    <i class="fa-solid fa-building-columns w-5" style="color:#fbbf24"></i> Simular Transferencia (API)
-                                </button>
-                                <small class="text-muted mt-1" style="font-size:0.75rem; line-height:1.2">Emula un Webhook bancario: Encontrará una deuda automática y la pagará instantáneamente.</small>
-                            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="card" style="border-bottom: 4px solid var(--primary)">
+                    <div style="display:flex; justify-content:space-between; align-items:start">
+                        <div>
+                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:1px">Alumnos</p>
+                            <h2 style="font-size:2.5rem; margin-top:0.5rem">${students.length}</h2>
                         </div>
-
-                        <div class="card" style="padding:1.25rem; border: 1px solid rgba(220,53,69,0.2);">
-                            <h2 class="text-danger" style="font-size:1.1rem; margin-bottom:1rem;"><i class="fa-solid fa-bell"></i> Alertas de Sistema</h2>
-                            <ul style="list-style:none; display:flex; flex-direction:column; gap:0.5rem">
-                                ${ausentes.length > 0 ? `
-                                <li style="padding:0.75rem; background:#fff5f5; border-radius:6px; border-left:3px solid var(--danger); font-size:0.85rem">
-                                    <strong>${ausentes.length} inasistencias</strong> registradas últimamente.
-                                </li>` : ''}
-                                ${deudas > 0 ? `
-                                <li style="padding:0.75rem; background:#fff5f5; border-radius:6px; border-left:3px solid var(--danger); font-size:0.85rem">
-                                    <strong>${deudas} cuotas</strong> en estado Crítico/Atrasado.
-                                </li>` : ''}
-                                ${ausentes.length===0 && deudas===0 ? `<li class="text-muted" style="font-size:0.85rem">Todo en orden ✅</li>` : ''}
-                            </ul>
+                        <div style="background:var(--primary-light); color:var(--primary); padding:10px; border-radius:10px">
+                            <i class="fa-solid fa-user-graduate fa-xl"></i>
                         </div>
                     </div>
                 </div>
-            `;
-        } 
-        else if (user.role === 'teacher') {
-            const misCursos = courses.filter(c => c.teacherId === user.id);
-            html += `
-                <div class="card mb-4 mt-4 border-left-info">
-                    <h3 class="text-primary"><i class="fa-solid fa-graduation-cap"></i> Mis Cursos Asignados</h3>
-                    <div class="grid-table mt-4" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:1rem;">
-                        ${misCursos.map(c => `
-                            <div class="card shadow-sm" style="background:#f9fafb">
-                                <h4 class="mb-2" style="font-size:1.2rem; font-weight:700;">${c.name}</h4>
-                                <p class="text-muted"><i class="fa-regular fa-clock"></i> ${c.schedule}</p>
-                                <a href="#/attendance" class="btn btn-primary w-full mt-4"><i class="fa-solid fa-check-to-slot"></i> Tomar Asistencia</a>
-                            </div>
-                        `).join('')}
-                    </div>
-                    ${misCursos.length === 0 ? '<p class="text-muted">No tienes cursos asignados actualmente.</p>' : ''}
-                </div>
-            `;
-        }
-        else if (user.role === 'student') {
-            const misCursos = courses.filter(c => c.id === user.courseId);
-            html += `
-                <div class="card mb-4 border-left-primary">
-                    <h3 class="text-primary"><i class="fa-solid fa-book-open"></i> Mi Nivel Actual</h3>
-                    ${misCursos.length > 0 ? `
-                        <div class="mt-4 p-4" style="background:var(--bg-color); border-radius:var(--radius); border-left:4px solid var(--primary);">
-                            <h4 style="font-size:1.5rem">${misCursos[0].name} <span class="badge badge-info">${misCursos[0].level}</span></h4>
-                            <p class="mt-2 text-muted"><i class="fa-regular fa-calendar"></i> Horario: ${misCursos[0].schedule}</p>
+                <div class="card" style="border-bottom: 4px solid var(--success)">
+                    <div style="display:flex; justify-content:space-between; align-items:start">
+                        <div>
+                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:1px">Recaudación</p>
+                            <h2 style="font-size:2.5rem; margin-top:0.5rem">$${totalRevenue.toFixed(0)}</h2>
                         </div>
-                    ` : '<p>No estás asignado a ningún curso.</p>'}
+                        <div style="background:#dcfce7; color:var(--success); padding:10px; border-radius:10px">
+                            <i class="fa-solid fa-wallet fa-xl"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="card mb-4 border-left-warning">
-                    <h3><i class="fa-solid fa-bullhorn text-warning"></i> Anuncios</h3>
-                    <p style="margin-top:1rem" class="text-muted">Recuerda revisar el <strong>Calendario</strong> para las fechas de examen y la sección de <strong>Materiales</strong> para descargar tus guías de estudio.</p>
+                <div class="card" style="border-bottom: 4px solid var(--accent)">
+                    <div style="display:flex; justify-content:space-between; align-items:start">
+                        <div>
+                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:1px">Profesores</p>
+                            <h2 style="font-size:2.5rem; margin-top:0.5rem">${teachers.length}</h2>
+                        </div>
+                        <div style="background:#fef3c7; color:var(--accent); padding:10px; border-radius:10px">
+                            <i class="fa-solid fa-chalkboard-user fa-xl"></i>
+                        </div>
+                    </div>
                 </div>
-            `;
-        }
+            </div>
 
-        document.getElementById('router-view').innerHTML = html;
+            <div class="card">
+                <h3 class="mb-4"><i class="fa-solid fa-chart-line text-primary"></i> Actividad Reciente</h3>
+                <canvas id="mainChart" style="max-height: 300px;"></canvas>
+            </div>
+        `;
 
-        if(user.role === 'admin') {
-            setTimeout(() => this.initCharts(), 50);
-        }
+        this.initAdminChart();
     },
 
-    initCharts() {
-        const ctxFinance = document.getElementById('financeChart');
-        const ctxLevel = document.getElementById('levelChart');
-        if (!ctxFinance || !ctxLevel) return;
+    renderStudent(user, container) {
+        const payments = DB.getTable('payments').filter(p => Number(p.studentId) === Number(user.id));
+        const hasDebt = payments.some(p => p.status !== 'Pagado');
+        const course = DB.getTable('courses').find(c => Number(c.id) === Number(user.courseId));
+        const teacher = DB.getTable('users').find(u => Number(u.id) === Number(user.teacherId));
 
-        const payments = DB.getTable('payments');
-        const pagados = payments.filter(p => p.status === 'Pagado').reduce((a,b)=>a+b.amount,0);
-        const deudas = payments.filter(p => p.status !== 'Pagado').reduce((a,b)=>a+b.amount,0);
+        container.innerHTML = `
+            <div class="hero-welcome">
+                <div style="position:relative; z-index:2">
+                    <span class="badge" style="background:var(--accent); color:white; margin-bottom:1rem">Estudiante Activo</span>
+                    <h1 class="hero-title">¡Welcome to West House English School!</h1>
+                    <p class="hero-subtitle">Hola <strong>${user.name}</strong>, nos alegra mucho tenerte de vuelta. Sigue practicando y alcanzando tus metas.</p>
+                    
+                    <div style="margin-top:2rem; display:flex; gap:1rem">
+                        <button class="btn btn-primary" onclick="window.location.hash='#/materials'">Ver mis materiales <i class="fa-solid fa-arrow-right"></i></button>
+                        <button class="btn" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2)" onclick="window.location.hash='#/calendar'">Mi Horario</button>
+                    </div>
+                </div>
+            </div>
 
-        new Chart(ctxFinance, {
-            type: 'bar',
-            data: {
-                labels: ['Ingresos Cobrados', 'Deuda Pendiente'],
-                datasets: [{
-                    label: 'Monto en $',
-                    data: [pagados, deudas],
-                    backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(220, 53, 69, 0.7)'],
-                    borderColor: ['#28a745', '#dc3545'],
-                    borderWidth: 1,
-                    borderRadius: 8
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}} }
-        });
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div class="card">
+                    <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
+                        <i class="fa-solid fa-book-open-reader"></i> Mi Clase Actual
+                    </h3>
+                    <div style="background:var(--primary-light); padding:1.5rem; border-radius:12px; margin-bottom:1rem">
+                        <h4 style="font-size:1.2rem; color:var(--primary-dark)">${course ? course.name : 'No asignado'}</h4>
+                        <p class="text-muted mt-1"><i class="fa-regular fa-clock"></i> ${course ? course.schedule : '-'}</p>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.75rem">
+                        <div class="avatar" style="background:var(--accent); color:white">${teacher ? teacher.name[0] : '?'}</div>
+                        <div>
+                            <p style="font-weight:700; font-size:0.9rem">${teacher ? teacher.name : 'Consultar en Recepción'}</p>
+                            <p class="text-muted text-sm">Tu Profesor(a)</p>
+                        </div>
+                    </div>
+                </div>
 
-        const users = DB.getTable('users').filter(u=>u.role==='student');
-        const levels = { Beginner: 0, Intermediate: 0, Advanced: 0 };
-        users.forEach(u => { if(levels[u.level] !== undefined) levels[u.level]++; });
+                <div class="card">
+                    <h3 class="mb-4" style="color:var(--success); display:flex; align-items:center; gap:0.5rem">
+                        <i class="fa-solid fa-circle-dollar-to-slot"></i> Mi Estado de Pagos
+                    </h3>
+                    <div style="text-align:center; padding:1rem">
+                        ${hasDebt ? `
+                            <div style="color:var(--danger)">
+                                <i class="fa-solid fa-triangle-exclamation fa-3x mb-2"></i>
+                                <p style="font-weight:700">Tienes cuotas pendientes</p>
+                                <p class="text-muted text-sm">Por favor acude a administración para regularizar.</p>
+                            </div>
+                        ` : `
+                            <div style="color:var(--success)">
+                                <i class="fa-solid fa-circle-check fa-3x mb-2"></i>
+                                <p style="font-weight:700">¡Estás al día!</p>
+                                <p class="text-muted text-sm">Gracias por tu puntualidad en el pago.</p>
+                            </div>
+                        `}
+                        <button class="btn btn-secondary mt-4 w-full" onclick="window.location.hash='#/payments'">Ver Historial de Pagos</button>
+                    </div>
+                </div>
 
-        new Chart(ctxLevel, {
-            type: 'doughnut',
-            data: {
-                labels: ['Beginner', 'Intermediate', 'Advanced'],
-                datasets: [{
-                    data: [levels.Beginner, levels.Intermediate, levels.Advanced],
-                    backgroundColor: ['#ffc107', '#0dcaf0', '#ff7a00'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '70%'}
-        });
+                <div class="card" style="grid-column: span 1 md:span 2;">
+                    <h3 class="mb-3">Nuestra Historia</h3>
+                    <p class="text-muted" style="font-size:0.95rem; line-height:1.7">
+                        En <strong>West House English School</strong>, creemos que aprender inglés es abrir puertas al futuro. 
+                        Nacimos con la misión de brindar una educación de alta calidad, personalizada y dinámica. 
+                        Desde nuestros inicios, hemos ayudado a cientos de alumnos a comunicarse con el mundo, usando 
+                        tecnología de vanguardia y los mejores métodos pedagógicos. ¡Eres parte de una comunidad global!
+                    </p>
+                    <div style="display:flex; gap:1.5rem; margin-top:1.5rem">
+                        <div style="text-align:center">
+                            <div style="font-size:1.5rem; font-weight:800; color:var(--primary)">10+</div>
+                            <div class="text-sm text-muted">Años de Exp.</div>
+                        </div>
+                        <div style="text-align:center">
+                            <div style="font-size:1.5rem; font-weight:800; color:var(--primary)">500+</div>
+                            <div class="text-sm text-muted">Egresados</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     },
 
-    sendMassEmail() {
-        const students = DB.getTable('users').filter(u => u.role === 'student');
-        const parentEmails = students.map(s => s.parentEmail).filter(e => e).join(',');
-        let body = `Estimados Padres/Tutores,\n\nAdjuntamos el resumen académico mensual de su hijo/a en West House English School.\n`;
-        body += `Por favor, ingresen a la plataforma o comuníquense para el detalle de asistencias y calificaciones.\n\n`;
-        body += `Mensaje Institucional:\n"Este mes hemos avanzado notablemente. ¡Felicitaciones a todos los alumnos!"\n`;
-        window.location.href = `mailto:?bcc=${parentEmails}&subject=Reporte Mensual West House&body=${encodeURIComponent(body)}`;
-        UI.showToast("Generando reporte mensual. Se abrirá tu cliente de correo predeterminado.", "success");
+    renderTeacher(user, container) {
+        const courses = DB.getTable('courses').filter(c => Number(c.teacherId) === Number(user.id));
+        const students = DB.getTable('users').filter(u => Number(u.teacherId) === Number(user.id));
+
+        container.innerHTML = `
+            <div class="header-section mb-5">
+                <h1 class="hero-title" style="color:var(--text-main); margin-bottom: 0.5rem">Panel del Profesor</h1>
+                <p class="text-muted">Bienvenido, Prof. ${user.name.split(' ')[1] || user.name}. Tienes ${courses.length} cursos a cargo hoy.</p>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                <div class="card">
+                    <h3 class="mb-4"><i class="fa-solid fa-chalkboard text-primary"></i> Mis Cursos</h3>
+                    ${courses.length > 0 ? courses.map(c => `
+                        <div style="padding:1rem; border:1px solid var(--border-color); border-radius:10px; margin-bottom:0.75rem">
+                            <p style="font-weight:700">${c.name}</p>
+                            <p class="text-muted text-sm">${c.schedule}</p>
+                        </div>
+                    `).join('') : '<p class="text-muted">No tienes cursos asignados.</p>'}
+                </div>
+                
+                <div class="card">
+                    <h3 class="mb-4"><i class="fa-solid fa-users-rectangle text-info"></i> Mis Alumnos</h3>
+                    <div style="font-size:3rem; font-weight:800; color:var(--info)">${students.length}</div>
+                    <p class="text-muted mb-4">Total de estudiantes bajo tu seguimiento.</p>
+                    <button class="btn btn-primary w-full" onclick="window.location.hash='#/attendance'">Registrar Asistencia</button>
+                </div>
+            </div>
+        `;
     },
 
-    simulateTransfer() {
-        const payments = DB.getTable('payments');
-        const deudas = payments.filter(p => p.status !== 'Pagado');
-        if (deudas.length === 0) {
-            UI.showToast("¡Todo está al día! No hay deudas para simular pagos.", "info");
-            return;
-        }
-
-        deudas.sort((a,b) => new Date(a.date) - new Date(b.date));
-        const deudaPagar = deudas[0];
-
-        const user = DB.getTable('users').find(u => u.id === deudaPagar.studentId);
-        
-        UI.showToast("⏳ Receptando Webhook bancario entrante...", "info");
-        
+    initAdminChart() {
         setTimeout(() => {
-            DB.update('payments', deudaPagar.id, { status: 'Pagado' });
-            UI.showToast(`🔥 PAGO ACREDITADO: $${deudaPagar.amount} de ${user ? user.name : 'Usuario'}. El sistema financiero se ha auto-actualizado.`, "success");
-            this.render();
-        }, 1500);
+            const ctx = document.getElementById('mainChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Cobros ($)',
+                            data: [1200, 1900, 1750, 2500, 2100, 3200],
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#f97316',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } }
+                    }
+                });
+            }
+        }, 100);
     }
-}
+};

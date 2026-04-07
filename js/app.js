@@ -1,17 +1,21 @@
 // Bootstrapper y Router
 const App = {
-    init() {
-        console.log("Iniciando West House OS (Local Storage)...");
-        
-        // Inicializar DB y Auth
-        DB.init(); 
-        Auth.init(); 
-        
+    async init() {
+        console.log("Iniciando West House OS (Backend Ready)...");
+
+        // Sincronización de Datos (Backend unificado)
+        await DB.init();
+        Auth.init();
+
+        console.log("✓ Sistema sincronizado con backend.");
+
         // Listener de rutas
-        window.addEventListener('hashchange', this.router.bind(this));
-        
-        // Ejecuta ruta inicial
-        this.router();
+        window.addEventListener('hashchange', () => {
+            requestAnimationFrame(() => this.router());
+        });
+
+        // Ejecuta ruta inicial con RAF
+        requestAnimationFrame(() => this.router());
     },
 
     router() {
@@ -50,9 +54,12 @@ const App = {
         const viewContainer = document.getElementById('router-view');
 
         // Cargar la vista según ruta
-        switch(path) {
+        switch (path) {
             case '#/':
                 Views.Dashboard.render();
+                break;
+            case '#/about':
+                if (Views.About) Views.About.render();
                 break;
             case '#/users':
                 Views.Users.render();

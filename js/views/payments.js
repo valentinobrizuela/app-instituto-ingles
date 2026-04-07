@@ -163,6 +163,9 @@ Views.Payments = {
                     ${this.getBadge(p.status)}
                 </td>
                 <td style="text-align:center">
+                    <button class="btn btn-primary shadow-sm" style="font-size:0.8rem; padding:0.4rem 0.6rem; margin-right:4px;" onclick="Views.Payments.sendInvoice(${p.id})" title="Enviar Factura por Email">
+                        <i class="fa-solid fa-envelope"></i> Factura
+                    </button>
                     <button class="btn btn-secondary shadow-sm" style="font-size:0.8rem; padding:0.4rem 0.6rem" onclick="Views.Payments.toggleStatus(${p.id})">
                         <i class="fa-solid fa-rotate"></i> Estado
                     </button>
@@ -212,41 +215,71 @@ Views.Payments = {
         `);
     },
 
-    save(e) {
+    async save(e) {
         e.preventDefault();
         UI.showLoader();
-        DB.insert('payments', {
-            studentId: parseInt(document.getElementById('p-student').value),
-            amount: parseFloat(document.getElementById('p-amount').value),
-            date: document.getElementById('p-date').value,
-            status: document.getElementById('p-status').value
-        });
-        UI.closeModal();
-        UI.showToast('Transacción registrada con éxito', 'success');
-        this.render();
+        try {
+            const newPayment = await DB.insert('payments', {
+                studentId: parseInt(document.getElementById('p-student').value),
+                amount: parseFloat(document.getElementById('p-amount').value),
+                date: document.getElementById('p-date').value,
+                status: document.getElementById('p-status').value
+            });
+
+            UI.closeModal();
+            UI.showToast('Transacción registrada con éxito', 'success');
+            
+            // AUTOMACIÓN: Si está pagado, enviar factura inmediatamente
+            if (newPayment.status === 'Pagado') {
+                this.sendInvoice(newPayment.id, true); // true = silent mode
+            }
+
+            this.render();
+        } catch (err) {
+            UI.showToast('Error al registrar pago', 'danger');
+        }
         UI.hideLoader();
     },
 
-    toggleStatus(id) {
+    async toggleStatus(id) {
         UI.showLoader();
         const payments = DB.getTable('payments');
         const payment = payments.find(p => Number(p.id) === Number(id));
         if (payment) {
             const nextStatus = payment.status === 'Pagado' ? 'Pendiente' : payment.status === 'Pendiente' ? 'Atrasado' : 'Pagado';
-            DB.update('payments', id, { status: nextStatus });
+            await DB.update('payments', id, { status: nextStatus });
             UI.showToast('Estado de cobro actualizado a: ' + nextStatus);
             this.render();
         }
         UI.hideLoader();
     },
 
-    delete(id) {
+    async delete(id) {
         if(confirm('¿Seguro que deseas ELIMINAR este registro financiero de forma permanente?')) {
             UI.showLoader();
-            DB.remove('payments', id);
+            await DB.remove('payments', id);
             UI.showToast('Registro financiero eliminado', 'success');
             this.render();
             UI.hideLoader();
         }
+    },
+
+    async sendInvoice(id, silent = false) {
+        if(!silent && !confirm('¿Deseas enviar la factura electrónica al email del alumno por esta transacción?')) return;
+        
+        if(!silent) UI.showLoader();
+        try {
+            const res = await fetch(`${CONFIG.API_URL}/payments/invoice/${id}`, { method: 'POST' });
+            const data = await res.json();
+            if(data.success) {
+                UI.showToast('Factura enviada correctamente (' + data.data.invoiceId + ')', 'success');
+            } else {
+                UI.showToast('Error al enviar factura automática', 'danger');
+            }
+        } catch (err) {
+            console.error(err);
+            if(!silent) UI.showToast('Error de conexión con el servidor de correos', 'danger');
+        }
+        if(!silent) UI.hideLoader();
     }
 };
