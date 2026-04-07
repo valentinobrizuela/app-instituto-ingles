@@ -29,6 +29,7 @@ const Auth = {
                 if (data.success) {
                     this.currentUser = data.user;
                     localStorage.setItem('westhouse_session', JSON.stringify(data.user));
+                    localStorage.setItem('westhouse_token', data.token);
                     
                     // Re-sincronizar DB al iniciar sesión para asegurar datos frescos
                     await DB.init();
@@ -40,25 +41,15 @@ const Auth = {
             console.error("Auth Backend Error:", err);
         }
         
-        // Fallback local solo si el backend está caído (Opcional, pero aquí lo restringimos por seguridad)
-        console.warn("Fallo de autenticación en backend. Verificando local...");
-        const users = DB.getTable('users');
-        const hashedPassword = DB.hashPass(password);
-        const user = users.find(u => u.email === email && u.password === hashedPassword);
-        
-        if (user) {
-            const { password, ...sessionUser } = user;
-            this.currentUser = sessionUser;
-            localStorage.setItem('westhouse_session', JSON.stringify(sessionUser));
-            return true;
-        }
-
+        // Remove local fallback for security since we strictly need a server JWT now
+        console.warn("Fallo de autenticación en backend o credenciales incorrectas.");
         return false;
     },
 
     logout() {
         this.currentUser = null;
         localStorage.removeItem('westhouse_session');
+        localStorage.removeItem('westhouse_token');
         // Usar location.replace o href para forzar una recarga limpia si es necesario, 
         // pero el router con hashchange debería bastar.
         window.location.hash = '#/login';

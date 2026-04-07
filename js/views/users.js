@@ -85,6 +85,7 @@ Views.Users = {
                 <td style="font-size:0.9rem">
                     <div><i class="fa-regular fa-envelope text-muted"></i> ${u.email || '-'}</div>
                     ${u.parentEmail ? `<div style="margin-top:0.25rem; font-size:0.8rem; color:var(--text-muted)"><i class="fa-solid fa-user-shield text-info"></i> Tutor: ${u.parentEmail}</div>` : ''}
+                    ${u.parentPhone ? `<div style="margin-top:0.25rem; font-size:0.8rem;"><a href="https://wa.me/${u.parentPhone.replace(/\D/g,'')}?text=Hola,%20nos%20comunicamos%20de%20West%20House%20English%20School%20por%20motivos%20administrativos." target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold"><i class="fa-brands fa-whatsapp"></i> ${u.parentPhone}</a></div>` : ''}
                 </td>
                 <td>
                     ${badge}
@@ -137,14 +138,18 @@ Views.Users = {
                 <div id="u-student-fields" style="background:#f8fafc; padding:1rem; border-radius:8px; border:1px solid #e2e8f0; margin-top:1.5rem">
                     <h3 class="mb-4" style="font-size:1.1rem; color:var(--info)"><i class="fa-solid fa-graduation-cap"></i> Ficha Académica del Alumno</h3>
                     
-                    <div style="display:grid; grid-template-columns: 100px 1fr; gap:1rem;">
+                    <div style="display:grid; grid-template-columns: 100px 1fr 1fr; gap:1rem;">
                         <div class="form-group">
                             <label>Edad</label>
                             <input type="number" id="u-age" class="form-control" min="4" max="99">
                         </div>
                         <div class="form-group">
-                            <label>Email del Padre / Tutor <span class="text-danger">* Para reportes</span></label>
-                            <input type="email" id="u-parent" class="form-control" placeholder="Obligatorio para el boletín" required>
+                            <label>Email Tutor *</label>
+                            <input type="email" id="u-parent" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>WhatsApp Tutor *</label>
+                            <input type="tel" id="u-phone" class="form-control" placeholder="+54 9 ..." required>
                         </div>
                     </div>
 
@@ -177,14 +182,17 @@ Views.Users = {
             const roleSelect = document.getElementById('u-role');
             const studentFields = document.getElementById('u-student-fields');
             const parentInput = document.getElementById('u-parent');
+            const phoneInput = document.getElementById('u-phone');
 
             roleSelect.addEventListener('change', (e) => {
                 if(e.target.value === 'student') {
                     studentFields.style.display = 'block';
                     parentInput.setAttribute('required', 'true');
+                    phoneInput.setAttribute('required', 'true');
                 } else {
                     studentFields.style.display = 'none';
                     parentInput.removeAttribute('required');
+                    phoneInput.removeAttribute('required');
                 }
             });
         }, 100);
@@ -208,6 +216,7 @@ Views.Users = {
         if (data.role === 'student') {
             data.age = parseInt(document.getElementById('u-age').value) || null;
             data.parentEmail = document.getElementById('u-parent').value;
+            data.parentPhone = document.getElementById('u-phone').value;
             data.level = document.getElementById('u-level').value;
             const courseVal = document.getElementById('u-course').value;
             if(courseVal) {

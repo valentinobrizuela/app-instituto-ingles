@@ -5,7 +5,29 @@
 const API_URL = CONFIG.API_URL;
 
 const DB = {
-    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events'],
+    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades', 'logs'],
+
+    async authFetch(url, options = {}) {
+        const token = localStorage.getItem('westhouse_token');
+        const defaultHeaders = { 'Content-Type': 'application/json' };
+        if (token) {
+            defaultHeaders['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const finalOptions = {
+            ...options,
+            headers: {
+                ...defaultHeaders,
+                ...(options.headers || {})
+            }
+        };
+        // For file uploads, don't set Content-Type header so browser sets boundary
+        if (options.body instanceof FormData) {
+             delete finalOptions.headers['Content-Type'];
+        }
+        
+        return await fetch(url, finalOptions);
+    },
 
     hashPass(password) {
          return CryptoJS.SHA256(password).toString();
@@ -25,9 +47,8 @@ const DB = {
     async insert(tableName, data) {
         // Enviar a la API Real primero para obtener el ID real
         try {
-            const res = await fetch(`${API_URL}/${tableName}`, {
+            const res = await this.authFetch(`${API_URL}/${tableName}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
 
@@ -64,9 +85,8 @@ const DB = {
             this.saveTable(tableName, table);
 
             try {
-                const res = await fetch(`${API_URL}/${tableName}/${id}`, {
+                const res = await this.authFetch(`${API_URL}/${tableName}/${id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedFields)
                 });
                 if (res.ok) console.log(`[DB] ${tableName} ${id} actualizado en backend`);
@@ -84,7 +104,7 @@ const DB = {
         this.saveTable(tableName, table);
 
         try {
-            const res = await fetch(`${API_URL}/${tableName}/${id}`, {
+            const res = await this.authFetch(`${API_URL}/${tableName}/${id}`, {
                 method: 'DELETE'
             });
             if (res.ok) console.log(`[DB] ${tableName} ${id} eliminado en backend`);
@@ -108,7 +128,7 @@ const DB = {
         console.log("🔄 Sincronizando con West House Backend...");
         try {
             for (let table of this.tables) {
-                const res = await fetch(`${API_URL}/${table}`);
+                const res = await this.authFetch(`${API_URL}/${table}`);
                 if (res.ok) {
                     const data = await res.json();
                     this.saveTable(table, data);
@@ -201,6 +221,8 @@ const DB = {
         this.saveTable('materials', []);
         this.saveTable('notifications', []);
         this.saveTable('events', []);
+        this.saveTable('grades', []);
+        this.saveTable('logs', []);
         console.log("Seed Local de 100 alumnos completado ✓");
     }
 };

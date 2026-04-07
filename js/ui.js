@@ -74,7 +74,7 @@ const UI = {
 
                     <nav class="nav-links">
                         <div class="nav-item">
-                            <a href="#/" class="nav-link" id="nav-home"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+                            <a href="#/" class="nav-link" id="nav-home"><i class="fa-solid fa-chart-pie"></i> ${Auth.hasRole('student') ? 'Mi Portal' : 'Dashboard'}</a>
                         </div>
                         <div class="nav-item">
                             <a href="#/about" class="nav-link" id="nav-about"><i class="fa-solid fa-leaf"></i> Quiénes Somos</a>
@@ -86,17 +86,20 @@ const UI = {
                         </div>
                         ` : ''}
 
+                        ${!Auth.hasRole('student') ? `
                         <div class="nav-item">
                             <a href="#/courses" class="nav-link" id="nav-courses"><i class="fa-solid fa-graduation-cap"></i> Cursos</a>
                         </div>
-
                         <div class="nav-item">
                             <a href="#/attendance" class="nav-link" id="nav-attendance"><i class="fa-solid fa-calendar-check"></i> Asistencia</a>
                         </div>
-
                         <div class="nav-item">
                             <a href="#/payments" class="nav-link" id="nav-payments"><i class="fa-solid fa-file-invoice-dollar"></i> Pagos</a>
                         </div>
+                        <div class="nav-item">
+                            <a href="#/grades" class="nav-link" id="nav-grades"><i class="fa-solid fa-star"></i> Calificaciones</a>
+                        </div>
+                        ` : ''}
 
                         <div class="nav-item">
                             <a href="#/materials" class="nav-link" id="nav-materials"><i class="fa-solid fa-folder-open"></i> Materiales</a>
@@ -129,6 +132,10 @@ const UI = {
                                 <span style="position:absolute; top:-5px; right:-5px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:2px solid #fff"></span>
                             </div>
                             <div style="width:1px; height:24px; background:var(--border-color)"></div>
+                            <button class="btn" style="padding:0.4rem; background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;" onclick="UI.toggleTheme()" title="Modo Oscuro/Claro">
+                                <i class="fa-solid fa-moon"></i>
+                            </button>
+                            <div style="width:1px; height:24px; background:var(--border-color)"></div>
                             <p class="text-sm font-bold text-muted">${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
                             
                             <div style="width:1px; height:24px; background:var(--border-color)"></div>
@@ -142,6 +149,25 @@ const UI = {
                 </main>
             </div>
         `;
+        this.initTheme();
+    },
+
+    initTheme() {
+        const theme = localStorage.getItem('westhouse_theme') || 'light';
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    },
+
+    toggleTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('westhouse_theme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('westhouse_theme', 'dark');
+        }
     },
 
     updateActiveNavLink() {

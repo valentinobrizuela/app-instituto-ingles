@@ -156,6 +156,7 @@ Views.Payments = {
                 <td style="padding:1.25rem 1rem;">
                     <div style="font-weight:600; color:var(--text-main)"><i class="fa-solid fa-user-graduate text-primary" style="margin-right:0.5rem"></i> ${student ? student.name : 'Usuario Eliminado'}</div>
                     ${student && student.parentEmail ? `<div style="font-size:0.8rem; margin-top:0.25rem" class="text-muted">Tutor: ${student.parentEmail}</div>` : ''}
+                    ${student && student.parentPhone ? `<div style="margin-top:0.25rem; font-size:0.8rem;"><a href="https://wa.me/${student.parentPhone.replace(/\D/g,'')}?text=Hola,%20contacto%20desde%20administracion%20de%20West%20House." target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold"><i class="fa-brands fa-whatsapp"></i> Contactar</a></div>` : ''}
                 </td>
                 <td><i class="fa-regular fa-calendar-days text-muted"></i> ${new Date(p.date).toLocaleDateString('es-ES', {month:'short', day:'numeric', year:'numeric'})}</td>
                 <td style="font-weight:700; color:var(--success); font-size:1.1rem">$${Number(p.amount).toFixed(2)}</td>
@@ -269,7 +270,7 @@ Views.Payments = {
         
         if(!silent) UI.showLoader();
         try {
-            const res = await fetch(`${CONFIG.API_URL}/payments/invoice/${id}`, { method: 'POST' });
+            const res = await DB.authFetch(`${CONFIG.API_URL}/payments/invoice/${id}`, { method: 'POST' });
             const data = await res.json();
             if(data.success) {
                 UI.showToast('Factura enviada correctamente (' + data.data.invoiceId + ')', 'success');

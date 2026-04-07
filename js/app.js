@@ -56,7 +56,11 @@ const App = {
         // Cargar la vista según ruta
         switch (path) {
             case '#/':
-                Views.Dashboard.render();
+                if (Auth.hasRole('student')) {
+                    if (Views.StudentPortal) Views.StudentPortal.render();
+                } else {
+                    Views.Dashboard.render();
+                }
                 break;
             case '#/about':
                 if (Views.About) Views.About.render();
@@ -81,6 +85,10 @@ const App = {
                 break;
             case '#/notifications':
                 if (Views.Notifications) Views.Notifications.render();
+                break;
+            case '#/grades':
+                if (Views.Grades && !Auth.hasRole('student')) Views.Grades.render();
+                else window.location.hash = '#/';
                 break;
             default:
                 viewContainer.innerHTML = `

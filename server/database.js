@@ -31,7 +31,8 @@ function initTables() {
         level TEXT,
         courseId INTEGER,
         teacherId INTEGER,
-        parentEmail TEXT
+        parentEmail TEXT,
+        parentPhone TEXT
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS courses (
@@ -83,6 +84,23 @@ function initTables() {
         end TEXT,
         type TEXT,
         courseId INTEGER
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS grades (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        studentId INTEGER,
+        courseId INTEGER,
+        term TEXT,
+        score REAL,
+        date TEXT
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER,
+        action TEXT,
+        details TEXT,
+        timestamp TEXT
     )`, () => {
         checkAndSeed();
     });
@@ -108,7 +126,7 @@ async function seedDatabase() {
         await run('DELETE FROM users');
         await run('DELETE FROM courses');
         await run('DELETE FROM payments');
-        await run('DELETE FROM sqlite_sequence WHERE name IN ("users", "courses", "payments")');
+        await run('DELETE FROM sqlite_sequence WHERE name IN ("users", "courses", "payments", "grades", "logs")');
 
         // 2. Insert Admins
         const admins = [
@@ -168,14 +186,20 @@ async function seedDatabase() {
             const level = courses[courseIdx][1];
 
             const res = await run(
-                'INSERT INTO users (name, email, password, role, age, level, courseId, teacherId, parentEmail) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [name, email, hashPass('student123'), 'student', 10 + (i % 10), level, courseId, teacherId, `parent${i}@example.com`]
+                'INSERT INTO users (name, email, password, role, age, level, courseId, teacherId, parentEmail, parentPhone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [name, email, hashPass('student123'), 'student', 10 + (i % 10), level, courseId, teacherId, `parent${i}@example.com`, `+54 9 11 ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)}`]
             );
 
             const studentId = res.lastID;
             // Add a payment
             const status = i % 5 === 0 ? 'Pendiente' : 'Pagado';
             await run('INSERT INTO payments (studentId, amount, date, status) VALUES (?, ?, ?, ?)', [studentId, 50.00, today, status]);
+
+            // Add grades
+            const score1 = (Math.random() * 4 + 6).toFixed(1); // Grade between 6.0 and 10.0
+            const score2 = (Math.random() * 4 + 6).toFixed(1);
+            await run('INSERT INTO grades (studentId, courseId, term, score, date) VALUES (?, ?, ?, ?, ?)', [studentId, courseId, 'Trimestre 1', parseFloat(score1), today]);
+            await run('INSERT INTO grades (studentId, courseId, term, score, date) VALUES (?, ?, ?, ?, ?)', [studentId, courseId, 'Trimestre 2', parseFloat(score2), today]);
         }
 
         console.log('✅ Base de Datos inicializada con 100 alumnos, 8 profesores y 8 cursos.');
