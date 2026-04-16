@@ -3,6 +3,16 @@ const App = {
     async init() {
         console.log("Iniciando West House OS (Backend Ready)...");
 
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            try {
+                const reg = await navigator.serviceWorker.register('./sw.js');
+                console.log('Service Worker Registered:', reg.scope);
+            } catch (err) {
+                console.warn('Service Worker Registration Failed:', err);
+            }
+        }
+
         // Sincronización de Datos (Backend unificado)
         await DB.init();
         Auth.init();

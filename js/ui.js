@@ -66,6 +66,7 @@ const UI = {
             <div id="global-loader" class="loader-overlay"><div class="loader"></div></div>
 
             <div class="app-layout">
+                <div class="sidebar-overlay" onclick="UI.toggleSidebar()"></div>
                 <aside class="sidebar">
                     <div class="sidebar-header">
                         <div class="logo-icon"><i class="fa-solid fa-house-chimney-window"></i></div>
@@ -124,6 +125,9 @@ const UI = {
                 <main class="main-content">
                     <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
                         <div id="section-title-wrapper">
+                             <button class="mobile-nav-toggle" onclick="UI.toggleSidebar()">
+                                 <i class="fa-solid fa-bars"></i>
+                             </button>
                              <!-- Dinámico -->
                         </div>
                         <div style="display:flex; gap:1rem; align-items:center">
@@ -176,6 +180,23 @@ const UI = {
             link.classList.remove('active');
             if (link.getAttribute('href') === hash) link.classList.add('active');
         });
+        
+        // Cierra la sidebar si estamos en móvil al navegar
+        if (window.innerWidth <= 768) {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            if (sidebar) sidebar.classList.remove('open');
+            if (overlay) overlay.classList.remove('active');
+        }
+    },
+
+    toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
     },
 
     // --- UTILS ---
