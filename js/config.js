@@ -16,5 +16,7 @@ const isLocal = !hostname ||
                 protocol === 'file:';
 
 if (isLocal) {
-    CONFIG.API_URL = "http://localhost:3000/api";
+    // Si es local, usamos el hostname actual (para que funcione tanto en 'localhost' como con la IP de la red local)
+    const apiHostname = hostname || 'localhost';
+    CONFIG.API_URL = `${protocol}//${apiHostname}:3000/api`;
 }

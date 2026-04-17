@@ -13,6 +13,16 @@ const App = {
             }
         }
 
+        // PWA Install Prompt Handling
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevenir que el navegador muestre el prompt automático
+            e.preventDefault();
+            // Guardar el evento para dispararlo luego
+            window.deferredPrompt = e;
+            // Mostrar botón de instalación en la UI
+            UI.showInstallButton();
+        });
+
         // Sincronización de Datos (Backend unificado)
         await DB.init();
         Auth.init();

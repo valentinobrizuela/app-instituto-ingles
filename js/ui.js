@@ -112,6 +112,12 @@ const UI = {
                     </nav>
 
                     <div class="sidebar-footer">
+                        <div id="install-pwa-container" style="display:none; margin-bottom: 1rem;">
+                            <button class="btn btn-primary w-full" onclick="UI.installApp()" style="background:var(--success); font-size:0.8rem; padding:0.5rem">
+                                <i class="fa-solid fa-download"></i> Descargar App
+                            </button>
+                        </div>
+
                         <div class="user-profile-small">
                             <div class="avatar">${user.name[0]}</div>
                             <div style="flex:1; overflow:hidden">
@@ -253,5 +259,27 @@ const UI = {
             modal.style.opacity = "0";
             setTimeout(() => modal.remove(), 200);
         }
+    },
+
+    // --- PWA INSTALLATION ---
+    showInstallButton() {
+        const container = document.getElementById('install-pwa-container');
+        if (container) container.style.display = 'block';
+    },
+
+    async installApp() {
+        const promptEvent = window.deferredPrompt;
+        if (!promptEvent) return;
+
+        // Mostrar el prompt nativo
+        promptEvent.prompt();
+
+        // Ver qué eligió el usuario
+        const { outcome } = await promptEvent.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+
+        // Limpiar
+        window.deferredPrompt = null;
+        document.getElementById('install-pwa-container').style.display = 'none';
     }
 };
