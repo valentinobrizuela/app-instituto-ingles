@@ -2,6 +2,9 @@ const UI = {
     // --- LOGIN RENDERER ---
     renderLogin() {
         document.body.innerHTML = `
+            <div id="toast-container" class="toast-container"></div>
+            <div id="global-loader" class="loader-overlay" style="z-index: 9999;"><div class="loader"></div></div>
+            
             <div class="login-screen">
                 <div class="login-card">
                     <div style="text-align:center; margin-bottom:2.5rem">
