@@ -10,14 +10,14 @@ const Auth = {
     // ── Lógica de Sesión (Asíncrona) ─────────────────────────
 
     async init() {
-        if (!supabase) return;
+        if (!sb) return;
         
         // Verificar si hay sesión activa en Supabase
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await sb.auth.getSession();
         
         if (session) {
             // Obtener datos del perfil desde la tabla pública
-            const { data: profile, error } = await supabase
+            const { data: profile, error } = await sb
                 .from('users')
                 .select('*')
                 .eq('email', session.user.email)
@@ -37,7 +37,7 @@ const Auth = {
     },
 
     async login(email, password) {
-        if (!supabase) {
+        if (!sb) {
             console.error("Supabase no está inicializado.");
             return false;
         }
@@ -46,7 +46,7 @@ const Auth = {
             console.log(`[AUTH] Intento de login para: ${email}`);
             
             // 1. Intentar Login en Supabase Auth
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await sb.auth.signInWithPassword({
                 email: email,
                 password: password,
             });
@@ -55,7 +55,7 @@ const Auth = {
 
             if (data.user) {
                 // 2. Obtener el perfil extendido desde public.users
-                const { data: profile, error: profileError } = await supabase
+                const { data: profile, error: profileError } = await sb
                     .from('users')
                     .select('*')
                     .eq('email', email)
@@ -86,7 +86,7 @@ const Auth = {
     },
 
     async logout() {
-        if (supabase) await supabase.auth.signOut();
+        if (sb) await sb.auth.signOut();
         
         this.currentUser = null;
         localStorage.removeItem('westhouse_session');

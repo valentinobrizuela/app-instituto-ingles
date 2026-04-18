@@ -4,7 +4,7 @@ const CONFIG = {
     API_URL: "https://westhouseenglishschool.com/api",
     // Configuración de Supabase
     SUPABASE_URL: "https://mwfxxppefpyaxwtybcnf.supabase.com",
-    SUPABASE_KEY: "sb_publishable_YxSdxaecaAicyfkyqfNugg_XquP8SK4"
+    SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Znh4cHBlZnB5YXh3dHliY25mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNzM5ODMsImV4cCI6MjA5MTk0OTk4M30.MrNz2jdBP7mHtWNw2IpXibBixk9aoDu20yG2NrMIGh0"
 };
 
 // Si estamos en local (localhost, 127.0.0.1, IPs privadas, o abriendo el archivo localmente), usamos el servidor local como fallback
@@ -24,4 +24,4 @@ if (isLocal && !CONFIG.SUPABASE_URL) {
 }
 
 // Global Supabase Client
-const supabase = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;
+const sb = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;

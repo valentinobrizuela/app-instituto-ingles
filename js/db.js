@@ -7,8 +7,8 @@ const DB = {
 
     // Utility to get current session token if needed (Supabase JS handles this automatically usually)
     async getSession() {
-        if (!supabase) return null;
-        const { data: { session } } = await supabase.auth.getSession();
+        if (!sb) return null;
+        const { data: { session } } = await sb.auth.getSession();
         return session;
     },
 
@@ -24,10 +24,10 @@ const DB = {
     // ── OPERACIONES CON SUPABASE ──
 
     async insert(tableName, data) {
-        if (!supabase) return null;
+        if (!sb) return null;
 
         try {
-            const { data: newRecord, error } = await supabase
+            const { data: newRecord, error } = await sb
                 .from(tableName)
                 .insert([data])
                 .select()
@@ -52,10 +52,10 @@ const DB = {
     },
 
     async update(tableName, id, updatedFields) {
-        if (!supabase) return null;
+        if (!sb) return null;
 
         try {
-            const { data: updatedRecord, error } = await supabase
+            const { data: updatedRecord, error } = await sb
                 .from(tableName)
                 .update(updatedFields)
                 .eq('id', id)
@@ -81,10 +81,10 @@ const DB = {
     },
 
     async remove(tableName, id) {
-        if (!supabase) return;
+        if (!sb) return;
 
         try {
-            const { error } = await supabase
+            const { error } = await sb
                 .from(tableName)
                 .delete()
                 .eq('id', id);
@@ -112,7 +112,7 @@ const DB = {
 
     // ── INIT: Sincronización completa con Supabase ──
     async init() {
-        if (!supabase) {
+        if (!sb) {
             console.warn("Supabase no inicializado. Usando caché local.");
             return;
         }
@@ -122,7 +122,7 @@ const DB = {
 
         try {
             for (let table of this.tables) {
-                const { data, error } = await supabase
+                const { data, error } = await sb
                     .from(table)
                     .select('*');
 
