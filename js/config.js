@@ -22,3 +22,6 @@ if (isLocal && !CONFIG.SUPABASE_URL) {
     const apiHostname = hostname || 'localhost';
     CONFIG.API_URL = `${protocol}//${apiHostname}:3000/api`;
 }
+
+// Global Supabase Client
+const supabase = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;

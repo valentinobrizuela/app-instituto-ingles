@@ -2,9 +2,6 @@
 // WEST HOUSE — DB.js (Supabase Client Edition)
 // ============================================================
 
-// Initialize Supabase Client (Global)
-const supabase = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;
-
 const DB = {
     tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades', 'logs'],
 

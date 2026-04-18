@@ -2,9 +2,6 @@
 // WEST HOUSE — Auth.js (Supabase Edition)
 // ============================================================
 
-// Initialize Supabase Client
-const supabase = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;
-
 const Auth = {
     // ── Propiedades ──────────────────────────────────────────
 
