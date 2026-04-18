@@ -135,7 +135,7 @@ Views.Courses = {
                 name: document.getElementById('c-name').value,
                 level: document.getElementById('c-level').value,
                 schedule: document.getElementById('c-schedule').value,
-                teacherId: parseInt(document.getElementById('c-teacher').value)
+                teacher_id: document.getElementById('c-teacher').value
             });
             UI.closeModal();
             UI.showToast('Curso creado y publicado en la plataforma', 'success');

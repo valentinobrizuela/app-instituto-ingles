@@ -93,7 +93,7 @@ Views.Payments = {
 
     renderStudentView(student) {
         const allPayments = DB.getTable('payments');
-        const payments = allPayments.filter(p => Number(p.studentId) === Number(student.id));
+        const payments = allPayments.filter(p => String(p.student_id) === String(student.id));
         payments.sort((a,b) => new Date(b.date) - new Date(a.date));
 
         const deuda = payments.filter(p => p.status !== 'Pagado').reduce((acc, p) => acc + p.amount, 0);
@@ -150,13 +150,13 @@ Views.Payments = {
     },
 
     row(p) {
-        const student = DB.getTable('users').find(u => Number(u.id) === Number(p.studentId));
+        const student = DB.getTable('users').find(u => String(u.id) === String(p.student_id));
         return `
             <tr style="border-bottom: 1px solid var(--border-color); transition: background 0.2s">
                 <td style="padding:1.25rem 1rem;">
                     <div style="font-weight:600; color:var(--text-main)"><i class="fa-solid fa-user-graduate text-primary" style="margin-right:0.5rem"></i> ${student ? student.name : 'Usuario Eliminado'}</div>
                     ${student && student.parentEmail ? `<div style="font-size:0.8rem; margin-top:0.25rem" class="text-muted">Tutor: ${student.parentEmail}</div>` : ''}
-                    ${student && student.parentPhone ? `<div style="margin-top:0.25rem; font-size:0.8rem;"><a href="https://wa.me/${student.parentPhone.replace(/\D/g,'')}?text=Hola,%20contacto%20desde%20administracion%20de%20West%20House." target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold"><i class="fa-brands fa-whatsapp"></i> Contactar</a></div>` : ''}
+                    ${student && student.parentPhone ? `<div style="margin-top:0.25rem; font-size:0.8rem;"><a href="https://wa.me/${student.parentPhone.replace(/\\D/g,'')}?text=Hola,%20contacto%20desde%20administracion%20de%20West%20House." target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold"><i class="fa-brands fa-whatsapp"></i> Contactar</a></div>` : ''}
                 </td>
                 <td><i class="fa-regular fa-calendar-days text-muted"></i> ${new Date(p.date).toLocaleDateString('es-ES', {month:'short', day:'numeric', year:'numeric'})}</td>
                 <td style="font-weight:700; color:var(--success); font-size:1.1rem">$${Number(p.amount).toFixed(2)}</td>
@@ -221,7 +221,7 @@ Views.Payments = {
         UI.showLoader();
         try {
             const newPayment = await DB.insert('payments', {
-                studentId: parseInt(document.getElementById('p-student').value),
+                student_id: document.getElementById('p-student').value,
                 amount: parseFloat(document.getElementById('p-amount').value),
                 date: document.getElementById('p-date').value,
                 status: document.getElementById('p-status').value
