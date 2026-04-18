@@ -3,10 +3,10 @@ window.Views = window.Views || {};
 Views.StudentPortal = {
     render() {
         const user = Auth.getUser();
-        const payments = DB.getTable('payments').filter(p => Number(p.studentId) === Number(user.id));
+        const payments = DB.getTable('payments').filter(p => p.student_id === user.id);
         const hasDebt = payments.some(p => p.status !== 'Pagado');
-        const course = DB.getTable('courses').find(c => Number(c.id) === Number(user.courseId));
-        const teacher = DB.getTable('users').find(u => Number(u.id) === Number(user.teacherId));
+        const course = DB.getTable('courses').find(c => c.id == user.course_id);
+        const teacher = DB.getTable('users').find(u => u.id === user.teacher_id);
 
         const container = document.getElementById('router-view');
 
@@ -51,16 +51,25 @@ Views.StudentPortal = {
                             <div style="color:var(--danger)">
                                 <i class="fa-solid fa-triangle-exclamation fa-3x mb-2"></i>
                                 <p style="font-weight:700">Tienes cuotas pendientes</p>
-                                <p class="text-muted text-sm">Por favor acude a administración para regularizar.</p>
                             </div>
                         ` : `
                             <div style="color:var(--success)">
                                 <i class="fa-solid fa-circle-check fa-3x mb-2"></i>
                                 <p style="font-weight:700">¡Estás al día!</p>
-                                <p class="text-muted text-sm">Gracias por tu puntualidad en el pago.</p>
                             </div>
                         `}
-                        <button class="btn btn-secondary mt-4 w-full" onclick="window.location.hash='#/payments'">Ver Historial de Pagos</button>
+                        
+                        <div style="margin-top: 1.5rem; text-align: left; background: var(--bg-hover); padding: 1rem; border-radius: 8px;">
+                            <p style="font-weight: bold; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Últimos Pagos</p>
+                            ${payments.length > 0 ? payments.slice(-3).map(p => `
+                                <div style="display:flex; justify-content:space-between; font-size: 0.85rem; padding: 0.25rem 0; border-bottom: 1px solid var(--border-color);">
+                                    <span style="color:var(--text-muted)">${new Date(p.date).toLocaleDateString()}</span>
+                                    <span style="font-weight:bold; color:${p.status === 'Pagado' ? 'var(--success)' : 'var(--danger)'}">$${Number(p.amount).toLocaleString('es-AR')}</span>
+                                </div>
+                            `).join('') : '<p class="text-xs text-muted">No hay pagos registrados aún.</p>'}
+                        </div>
+
+                        <button class="btn btn-secondary mt-4 w-full" onclick="window.location.hash='#/payments'">Ver Detalle Completo</button>
                     </div>
                 </div>
 
