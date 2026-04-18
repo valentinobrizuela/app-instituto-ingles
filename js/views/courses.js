@@ -6,9 +6,9 @@ Views.Courses = {
         let courses = DB.getTable('courses');
         
         if (user.role === 'teacher') {
-            courses = courses.filter(c => Number(c.teacherId) === Number(user.id));
+            courses = courses.filter(c => String(c.teacher_id) === String(user.id));
         } else if (user.role === 'student') {
-            courses = courses.filter(c => Number(c.id) === Number(user.courseId));
+            courses = courses.filter(c => String(c.id) === String(user.course_id));
         }
 
         const isAdmin = user.role === 'admin';
@@ -31,10 +31,16 @@ Views.Courses = {
 
     renderCourseCard(c, isAdmin) {
         const allUsers = DB.getTable('users');
-        const teacher = allUsers.find(u => Number(u.id) === Number(c.teacherId)) || { name: 'Sin asignar' };
-        const studentsCount = allUsers.filter(u => u.role === 'student' && Number(u.courseId) === Number(c.id)).length;
+        const teacher = allUsers.find(u => String(u.id) === String(c.teacher_id)) || { name: 'Sin asignar' };
+        const studentsInCourse = allUsers.filter(u => u.role === 'student' && String(u.course_id) === String(c.id));
+        const studentsCount = studentsInCourse.length;
         
         let badgeColor = c.level === 'Beginner' ? 'warning' : c.level === 'Intermediate' ? 'info' : 'primary';
+
+        // Set up the modal content string
+        const studentsListHTML = studentsCount > 0 
+            ? studentsInCourse.map(s => `<div style="padding:0.5rem; border-bottom:1px solid #eee;">👤 ${s.name} <span style="color:#888; font-size:0.8rem">(${s.email})</span></div>`).join('')
+            : '<p class="text-muted">No hay alumnos inscriptos todavía.</p>';
 
         return `
             <div class="card shadow-md" style="display:flex; flex-direction:column; padding:0; overflow:hidden; border:1px solid #e2e8f0; transition: transform 0.2s">
@@ -62,11 +68,17 @@ Views.Courses = {
                     </div>
                     
                     <div style="margin-top:1.5rem; display:flex; gap:0.5rem; justify-content:space-between">
+                        <button class="btn btn-primary" style="flex:1" onclick="UI.openModal('Info: ${c.name}', \`<div style='max-height:300px; overflow-y:auto;'><h4>Profesor: ${teacher.name}</h4><h5 class='mt-3 mb-2'>Alumnos Inscriptos (${studentsCount}):</h5>${studentsListHTML.replace(/"/g, '&quot;')}</div>\`)">
+                            <i class="fa-solid fa-eye"></i> Ver Lista
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:space-between">
                         <button class="btn btn-secondary shadow-sm" style="flex:1" onclick="window.location.hash='#/materials'">
-                            <i class="fa-solid fa-folder-open"></i> Ir a Materiales
+                            <i class="fa-solid fa-folder-open"></i> Materiales
                         </button>
                         ${isAdmin ? `
-                        <button class="btn" style="background:#fee2e2; color:#b91c1c; border:none; padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer;" onclick="Views.Courses.delete(${c.id})" title="Eliminar Curso">
+                        <button class="btn" style="background:#fee2e2; color:#b91c1c; border:none; padding:0.6rem 0.8rem; border-radius:8px; cursor:pointer;" onclick="Views.Courses.delete('${c.id}')" title="Eliminar Curso">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                         ` : ''}

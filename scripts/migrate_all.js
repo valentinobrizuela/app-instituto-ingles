@@ -128,14 +128,15 @@ async function migrate() {
     await supabase.from('payments').delete().neq('id', 0);
     await supabase.from('attendance').delete().neq('id', 0);
     await supabase.from('courses').delete().neq('id', 0);
-    await supabase.from('users').delete().neq('role', 'none'); 
+    await supabase.from('users').delete().eq('role', 'student'); 
+    await supabase.from('users').delete().eq('role', 'teacher'); 
 
     // Re-crear profesores
     const teacherNames = [...new Set(mergedData.map(s => s.teacher).filter(Boolean))];
     const teacherIdMap = {};
 
     for (const tName of teacherNames) {
-        const email = `${tName.toLowerCase().replace(/\s/g, '')}@westhouse.com`;
+        const email = `${tName.toLowerCase().replace(/\\s/g, '')}@westhouse.com`;
         
         await supabase.auth.admin.createUser({
             email, password: 'WestHouse2026', email_confirm: true
@@ -150,7 +151,7 @@ async function migrate() {
         if (profile) teacherIdMap[tName] = profile.id;
     }
 
-    // Re-crear Cursos
+    // Re-crear Cursos manually ensuring uniqueness
     const courseGroups = [...new Set(mergedData.map(s => s.group).filter(Boolean))];
     const courseIdMap = {};
 
@@ -158,13 +159,19 @@ async function migrate() {
         const studentRow = mergedData.find(s => s.group === gName);
         const tId = teacherIdMap[studentRow.teacher];
 
-        const { data: course } = await supabase
-            .from('courses')
-            .upsert({ name: gName, teacher_id: tId, level: gName.split(' ')[0] }, { onConflict: 'name' })
-            .select('id')
-            .single();
+        // Ensure course doesn't exist
+        let { data: existingCourse } = await supabase.from('courses').select('id').eq('name', gName).single();
+        
+        if (!existingCourse) {
+             const { data: insertedCourse } = await supabase
+                .from('courses')
+                .insert({ name: gName, teacher_id: tId, level: gName.split(' ')[0] })
+                .select('id')
+                .single();
+             existingCourse = insertedCourse;
+        }
 
-        if (course) courseIdMap[gName] = course.id;
+        if (existingCourse) courseIdMap[gName] = existingCourse.id;
     }
 
     // Insertar Estudiantes
