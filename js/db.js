@@ -147,6 +147,3 @@ const DB = {
         }
     }
 };
-    console.log("Seed Local de 100 alumnos completado ✓");
-    }
-};
