@@ -127,7 +127,10 @@ const DB = {
                     .select('*');
 
                 if (error) {
-                    console.warn(`Error al cargar ${table}:`, error.message);
+                    // Ignorar errores de permisos (42501) si no es admin, es normal que no vea todo
+                    if (error.code !== '42501') {
+                        console.warn(`Error al cargar ${table}:`, error.message);
+                    }
                     continue;
                 }
 
