@@ -3,7 +3,7 @@ const CONFIG = {
     BASE_URL: "https://westhouseenglishschool.com",
     API_URL: "https://westhouseenglishschool.com/api",
     // Configuración de Supabase
-    SUPABASE_URL: "https://mwfxxppefpyaxwtybcnf.supabase.com",
+    SUPABASE_URL: "https://mwfxxppefpyaxwtybcnf.supabase.co",
     SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Znh4cHBlZnB5YXh3dHliY25mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNzM5ODMsImV4cCI6MjA5MTk0OTk4M30.MrNz2jdBP7mHtWNw2IpXibBixk9aoDu20yG2NrMIGh0"
 };
 
