@@ -1,62 +1,102 @@
 // ============================================================
-// WEST HOUSE — Auth.js (Local Storage Edition)
+// WEST HOUSE — Auth.js (Supabase Edition)
 // ============================================================
+
+// Initialize Supabase Client
+const supabase = window.supabase ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY) : null;
 
 const Auth = {
     // ── Propiedades ──────────────────────────────────────────
 
     currentUser: null,
 
-    // ── Lógica de Sesión (Síncrona) ──────────────────────────
+    // ── Lógica de Sesión (Asíncrona) ─────────────────────────
 
-    init() {
-        const user = localStorage.getItem('westhouse_session');
-        if (user) {
-            this.currentUser = JSON.parse(user);
+    async init() {
+        if (!supabase) return;
+        
+        // Verificar si hay sesión activa en Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            // Obtener datos del perfil desde la tabla pública
+            const { data: profile, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('email', session.user.email)
+                .single();
+            
+            if (profile) {
+                this.currentUser = profile;
+                localStorage.setItem('westhouse_session', JSON.stringify(profile));
+            }
+        } else {
+            // Intentar recuperar de localStorage si no hay sesión (opcional, mejor confiar en Supabase)
+            const user = localStorage.getItem('westhouse_session');
+            if (user) {
+                this.currentUser = JSON.parse(user);
+            }
         }
     },
 
     async login(email, password) {
+        if (!supabase) {
+            console.error("Supabase no está inicializado.");
+            return false;
+        }
+
         try {
-            const res = await fetch(`${CONFIG.API_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+            console.log(`[AUTH] Intento de login para: ${email}`);
+            
+            // 1. Intentar Login en Supabase Auth
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success) {
-                    this.currentUser = data.user;
-                    localStorage.setItem('westhouse_session', JSON.stringify(data.user));
-                    localStorage.setItem('westhouse_token', data.token);
-                    
-                    // Re-sincronizar DB al iniciar sesión para asegurar datos frescos
-                    await DB.init();
-                    
-                    return true;
+            if (error) throw error;
+
+            if (data.user) {
+                // 2. Obtener el perfil extendido desde public.users
+                const { data: profile, error: profileError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .single();
+
+                if (profileError) {
+                    console.warn("Sesión iniciada pero no se encontró perfil en public.users");
+                    // Fallback: usar datos básicos del auth user
+                    this.currentUser = { email: data.user.email, role: 'student', name: email.split('@')[0] };
+                } else {
+                    this.currentUser = profile;
                 }
+
+                localStorage.setItem('westhouse_session', JSON.stringify(this.currentUser));
+                localStorage.setItem('westhouse_token', data.session.access_token);
+                
+                // Re-sincronizar DB local (caché)
+                await DB.init();
+                
+                return true;
             }
         } catch (err) {
-            console.error("Auth Backend Error:", err);
+            console.error("Auth Supabase Error:", err.message);
+            UI.showToast("Error de acceso: " + err.message, "error");
         }
         
-        // Remove local fallback for security since we strictly need a server JWT now
-        console.warn("Fallo de autenticación en backend o credenciales incorrectas.");
         return false;
     },
 
-    logout() {
+    async logout() {
+        if (supabase) await supabase.auth.signOut();
+        
         this.currentUser = null;
         localStorage.removeItem('westhouse_session');
         localStorage.removeItem('westhouse_token');
-        // Usar location.replace o href para forzar una recarga limpia si es necesario, 
-        // pero el router con hashchange debería bastar.
+        
         window.location.hash = '#/login';
-        // Forzamos un reload si el hash ya era #/login para asegurar que se limpie la UI
-        if (window.location.hash === '#/login') {
-            window.location.reload();
-        }
+        window.location.reload();
     },
 
     isAuthenticated() {

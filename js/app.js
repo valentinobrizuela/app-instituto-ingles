@@ -25,7 +25,7 @@ const App = {
 
         // Sincronización de Datos (Backend unificado)
         await DB.init();
-        Auth.init();
+        await Auth.init();
 
         console.log("✓ Sistema sincronizado con backend.");
 

@@ -1,10 +1,13 @@
 // Configuración Centralizada
 const CONFIG = {
     BASE_URL: "https://westhouseenglishschool.com",
-    API_URL: "https://westhouseenglishschool.com/api"
+    API_URL: "https://westhouseenglishschool.com/api",
+    // Configuración de Supabase
+    SUPABASE_URL: "https://mwfxxppefpyaxwtybcnf.supabase.com",
+    SUPABASE_KEY: "sb_publishable_YxSdxaecaAicyfkyqfNugg_XquP8SK4"
 };
 
-// Si estamos en local (localhost, 127.0.0.1, IPs privadas, o abriendo el archivo localmente), usamos el servidor local
+// Si estamos en local (localhost, 127.0.0.1, IPs privadas, o abriendo el archivo localmente), usamos el servidor local como fallback
 const hostname = window.location.hostname;
 const protocol = window.location.protocol;
 const isLocal = !hostname || 
@@ -15,8 +18,7 @@ const isLocal = !hostname ||
                 hostname.endsWith('.local') ||
                 protocol === 'file:';
 
-if (isLocal) {
-    // Si es local, usamos el hostname actual (para que funcione tanto en 'localhost' como con la IP de la red local)
+if (isLocal && !CONFIG.SUPABASE_URL) {
     const apiHostname = hostname || 'localhost';
     CONFIG.API_URL = `${protocol}//${apiHostname}:3000/api`;
 }
