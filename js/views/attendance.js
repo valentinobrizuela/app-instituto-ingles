@@ -12,7 +12,7 @@ Views.Attendance = {
         const allCourses = DB.getTable('courses');
         let courses = allCourses;
         if (user.role === 'teacher') {
-            courses = courses.filter(c => Number(c.teacherId) === Number(user.id));
+            courses = courses.filter(c => Number(c.teacher_id) === Number(user.id));
         }
 
         let html = `
@@ -47,7 +47,7 @@ Views.Attendance = {
         const coursesList = DB.getTable('courses');
         const attendanceRecords = DB.getTable('attendance');
 
-        const attendance = attendanceRecords.filter(a => Number(a.studentId) === Number(student.id));
+        const attendance = attendanceRecords.filter(a => Number(a.student_id) === Number(student.id));
         
         const presentes = attendance.filter(a => a.status === 'Presente').length;
         const ausentes = attendance.filter(a => a.status === 'Ausente').length;
@@ -114,7 +114,7 @@ Views.Attendance = {
         const courses = DB.getTable('courses');
         const course = courses.find(c => Number(c.id) === Number(courseId));
         const allUsers = DB.getTable('users');
-        const students = allUsers.filter(u => u.role === 'student' && Number(u.courseId) === Number(courseId));
+        const students = allUsers.filter(u => u.role === 'student' && Number(u.course_id) === Number(courseId));
         
         let html = `
             <div class="card mb-4 border-left-primary shadow-sm" style="padding: 1.5rem; background:linear-gradient(to right, #ffffff, #fff5ec)">
@@ -183,7 +183,7 @@ Views.Attendance = {
 
         const date = document.getElementById('a-date').value;
         const records = DB.getTable('attendance');
-        const filtered = records.filter(a => Number(a.courseId) === Number(courseId) && a.date === date);
+        const filtered = records.filter(a => Number(a.course_id) === Number(courseId) && a.date === date);
 
         filtered.forEach(r => {
             const container = document.getElementById(`status-btns-${r.studentId}`);
@@ -221,8 +221,8 @@ Views.Attendance = {
             DB.update('attendance', existing.id, { status: status });
         } else {
             DB.insert('attendance', {
-                courseId: Number(courseId),
-                studentId: Number(studentId),
+                course_id: Number(courseId),
+                student_id: Number(studentId),
                 date,
                 status
             });

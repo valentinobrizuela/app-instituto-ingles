@@ -69,11 +69,13 @@ Views.Users = {
 
         const allCourses = DB.getTable('courses');
 
-        if(u.role === 'student' && u.courseId) {
-            const c = allCourses.find(c => Number(c.id) === Number(u.courseId));
+        const allCourses = DB.getTable('courses');
+
+        if(u.role === 'student' && u.course_id) {
+            const c = allCourses.find(c => Number(c.id) === Number(u.course_id));
             if(c) courseHtml = `<span class="badge" style="background:#f3f4f6; color:#4b5563; border:1px solid #e5e7eb">${c.name}</span>`;
         } else if (u.role === 'teacher') {
-            const cc = allCourses.filter(c => Number(c.teacherId) === Number(u.id)).length;
+            const cc = allCourses.filter(c => Number(c.teacher_id) === Number(u.id)).length;
             courseHtml = `<span class="text-muted" style="font-size:0.8rem">${cc} Cursos asignados</span>`;
         }
 
@@ -85,8 +87,8 @@ Views.Users = {
                 </td>
                 <td style="font-size:0.9rem">
                     <div><i class="fa-regular fa-envelope text-muted"></i> ${u.email || '-'}</div>
-                    ${u.parentEmail ? `<div style="margin-top:0.25rem; font-size:0.8rem; color:var(--text-muted)"><i class="fa-solid fa-user-shield text-info"></i> Tutor: ${u.parentEmail}</div>` : ''}
-                    ${u.parentPhone ? `<div style="margin-top:0.25rem; font-size:0.8rem;"><a href="https://wa.me/${u.parentPhone.replace(/\D/g,'')}?text=Hola,%20nos%20comunicamos%20de%20West%20House%20English%20School%20por%20motivos%20administrativos." target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold"><i class="fa-brands fa-whatsapp"></i> ${u.parentPhone}</a></div>` : ''}
+                    ${u.parent_email ? `<div style="margin-top:0.25rem; font-size:0.8rem; color:var(--text-muted)"><i class="fa-solid fa-user-shield text-info"></i> Tutor: ${u.parent_email}</div>` : ''}
+                    ${u.parent_phone ? `<div style="margin-top:0.25rem; font-size:0.8rem;"><a href="https://wa.me/${u.parent_phone.replace(/\D/g,'')}?text=Hola,%20nos%20comunicamos%20de%20West%20House%20English%20School%20por%20motivos%20administrativos." target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold"><i class="fa-brands fa-whatsapp"></i> ${u.parent_phone}</a></div>` : ''}
                 </td>
                 <td>
                     ${badge}
@@ -216,14 +218,14 @@ Views.Users = {
         
         if (data.role === 'student') {
             data.age = parseInt(document.getElementById('u-age').value) || null;
-            data.parentEmail = document.getElementById('u-parent').value;
-            data.parentPhone = document.getElementById('u-phone').value;
+            data.parent_email = document.getElementById('u-parent').value;
+            data.parent_phone = document.getElementById('u-phone').value;
             data.level = document.getElementById('u-level').value;
             const courseVal = document.getElementById('u-course').value;
             if(courseVal) {
-                data.courseId = parseInt(courseVal);
-                const tCourse = DB.getTable('courses').find(c => Number(c.id) === data.courseId);
-                if(tCourse) data.teacherId = tCourse.teacherId;
+                data.course_id = parseInt(courseVal);
+                const tCourse = DB.getTable('courses').find(c => Number(c.id) === data.course_id);
+                if(tCourse) data.teacher_id = tCourse.teacher_id;
             }
         }
 

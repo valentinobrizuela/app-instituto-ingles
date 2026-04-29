@@ -80,8 +80,8 @@ Views.Dashboard = {
     },
 
     renderTeacher(user, container) {
-        const courses = DB.getTable('courses').filter(c => Number(c.teacherId) === Number(user.id));
-        const students = DB.getTable('users').filter(u => Number(u.teacherId) === Number(user.id));
+        const courses = DB.getTable('courses').filter(c => Number(c.teacher_id) === Number(user.id));
+        const students = DB.getTable('users').filter(u => Number(u.teacher_id) === Number(user.id));
 
         container.innerHTML = `
             <div class="header-section mb-5">

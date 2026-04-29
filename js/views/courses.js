@@ -152,10 +152,10 @@ Views.Courses = {
             await DB.remove('courses', id);
             
             const allUsers = DB.getTable('users');
-            const targets = allUsers.filter(u => Number(u.courseId) === Number(id));
+            const targets = allUsers.filter(u => Number(u.course_id) === Number(id));
             
             for (const u of targets) {
-                await DB.update('users', u.id, { courseId: null });
+                await DB.update('users', u.id, { course_id: null });
             }
 
             UI.showToast('Curso eliminado correctamente', 'success');
