@@ -14,7 +14,8 @@ Views.Users = {
         }
 
         const usersList = DB.getTable('users').filter(u => u.role !== 'admin');
-        const limit = 20; // Aumentar a 20 para manejar mejor los 100 alumnos
+        usersList.sort((a,b) => a.name.localeCompare(b.name));
+        const limit = 20; 
         const pagedData = DB.paginate(usersList, page, limit);
 
         document.getElementById('router-view').innerHTML = `

@@ -98,6 +98,23 @@ Views.Payments = {
 
         const deuda = payments.filter(p => p.status !== 'Pagado').reduce((acc, p) => acc + p.amount, 0);
 
+        if (payments.length === 0) {
+            document.getElementById('router-view').innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h1 class="text-primary" style="font-size:2rem; margin-bottom:0;"><i class="fa-solid fa-file-invoice"></i> Mi Estado de Pagos</h1>
+                        <p class="text-muted mt-2">No tienes pagos registrados actualmente.</p>
+                    </div>
+                </div>
+                <div class="card" style="text-align:center; padding: 4rem;">
+                    <i class="fa-solid fa-circle-check text-success" style="font-size:3.5rem;"></i>
+                    <h2 class="mt-4">¡Todo en orden!</h2>
+                    <p class="text-muted">No se registran deudas ni historial de pagos a tu nombre en el sistema.</p>
+                </div>
+            `;
+            return;
+        }
+
         document.getElementById('router-view').innerHTML = `
             <div class="flex items-center justify-between mb-4">
                 <div>
@@ -180,6 +197,8 @@ Views.Payments = {
 
     openModal() {
         const students = DB.getTable('users').filter(u => u.role === 'student');
+        students.sort((a,b) => a.name.localeCompare(b.name));
+        
         UI.openModal('Registrar Cobro / Deuda', `
             <form id="form-payment" onsubmit="Views.Payments.save(event)">
                 <div class="form-group">
