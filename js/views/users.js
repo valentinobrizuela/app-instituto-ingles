@@ -69,8 +69,6 @@ Views.Users = {
 
         const allCourses = DB.getTable('courses');
 
-        const allCourses = DB.getTable('courses');
-
         if(u.role === 'student' && u.course_id) {
             const c = allCourses.find(c => Number(c.id) === Number(u.course_id));
             if(c) courseHtml = `<span class="badge" style="background:#f3f4f6; color:#4b5563; border:1px solid #e5e7eb">${c.name}</span>`;
