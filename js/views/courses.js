@@ -71,6 +71,11 @@ Views.Courses = {
                         <button class="btn btn-primary" style="flex:1" onclick="UI.openModal('Info: ${c.name}', \`<div style='max-height:300px; overflow-y:auto;'><h4>Profesor: ${teacher.name}</h4><h5 class='mt-3 mb-2'>Alumnos Inscriptos (${studentsCount}):</h5>${studentsListHTML.replace(/"/g, '&quot;')}</div>\`)">
                             <i class="fa-solid fa-eye"></i> Ver Lista
                         </button>
+                        ${isAdmin ? `
+                        <button class="btn btn-secondary" style="background:#e0f2fe; color:#0369a1; border:none;" onclick="Views.Courses.openModal('${c.id}')" title="Editar Curso">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        ` : ''}
                     </div>
                     
                     <div style="margin-top:0.5rem; display:flex; gap:0.5rem; justify-content:space-between">
@@ -88,27 +93,33 @@ Views.Courses = {
         `;
     },
 
-    openModal() {
+    openModal(id = null) {
         const teachers = DB.getTable('users').filter(u => u.role === 'teacher');
-        UI.openModal('Crear Nuevo Curso', `
-            <form id="form-course" onsubmit="Views.Courses.save(event)">
+        let course = { name: '', level: 'Beginner', schedule: '', teacher_id: '' };
+        
+        if (id) {
+            course = DB.getTable('courses').find(c => String(c.id) === String(id));
+        }
+
+        UI.openModal(id ? 'Editar Curso' : 'Crear Nuevo Curso', `
+            <form id="form-course" onsubmit="Views.Courses.save(event, ${id ? `'${id}'` : 'null'})">
                 <div class="form-group">
                     <label>Nombre del Curso / Nomenclatura *</label>
-                    <input type="text" id="c-name" class="form-control" required placeholder="Ej: Inglés Kids Nivel 2">
+                    <input type="text" id="c-name" class="form-control" required value="${course.name}" placeholder="Ej: Inglés Kids Nivel 2">
                 </div>
                 
                 <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
                     <div class="form-group">
                         <label>Nivel General *</label>
                         <select id="c-level" class="form-control" required style="background:#f9fafb">
-                            <option value="Beginner">Beginner (A1-A2)</option>
-                            <option value="Intermediate">Intermediate (B1-B2)</option>
-                            <option value="Advanced">Advanced (C1-C2)</option>
+                            <option value="Beginner" ${course.level === 'Beginner' ? 'selected' : ''}>Beginner (A1-A2)</option>
+                            <option value="Intermediate" ${course.level === 'Intermediate' ? 'selected' : ''}>Intermediate (B1-B2)</option>
+                            <option value="Advanced" ${course.level === 'Advanced' ? 'selected' : ''}>Advanced (C1-C2)</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Horario Base (Opcional)</label>
-                        <input type="text" id="c-schedule" class="form-control" placeholder="Ej: Lun-Mié 18hs">
+                        <input type="text" id="c-schedule" class="form-control" value="${course.schedule}" placeholder="Ej: Lun-Mié 18hs">
                     </div>
                 </div>
 
@@ -116,32 +127,50 @@ Views.Courses = {
                     <label>Profesor Asignado *</label>
                     <select id="c-teacher" class="form-control" required style="background:#f9fafb">
                         <option value="">-- Selecciona profesor --</option>
-                        ${teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+                        ${teachers.map(t => `<option value="${t.id}" ${String(t.id) === String(course.teacher_id) ? 'selected' : ''}>${t.name}</option>`).join('')}
                     </select>
                 </div>
                 
                 <div class="form-group mt-4 pt-4" style="border-top:1px solid #eee">
-                    <button type="submit" class="btn btn-primary w-full shadow-md" style="padding:0.75rem;"><i class="fa-solid fa-layer-group"></i> Crear Curso Oficial</button>
+                    <button type="submit" class="btn btn-primary w-full shadow-md" style="padding:0.75rem;"><i class="fa-solid fa-save"></i> ${id ? 'Guardar Cambios' : 'Crear Curso Oficial'}</button>
                 </div>
             </form>
         `);
     },
 
-    async save(e) {
+    async save(e, id = null) {
         e.preventDefault();
         UI.showLoader();
         try {
-            await DB.insert('courses', {
+            const data = {
                 name: document.getElementById('c-name').value,
                 level: document.getElementById('c-level').value,
                 schedule: document.getElementById('c-schedule').value,
                 teacher_id: document.getElementById('c-teacher').value
-            });
+            };
+
+            if (id) {
+                await DB.update('courses', id, data);
+                
+                // Actualizar teacher_id de todos los alumnos en este curso para consistencia
+                const allUsers = DB.getTable('users');
+                const students = allUsers.filter(u => u.role === 'student' && String(u.course_id) === String(id));
+                for (const student of students) {
+                    if (String(student.teacher_id) !== String(data.teacher_id)) {
+                        await DB.update('users', student.id, { teacher_id: data.teacher_id });
+                    }
+                }
+                
+                UI.showToast('Curso actualizado correctamente', 'success');
+            } else {
+                await DB.insert('courses', data);
+                UI.showToast('Curso creado y publicado en la plataforma', 'success');
+            }
+            
             UI.closeModal();
-            UI.showToast('Curso creado y publicado en la plataforma', 'success');
             this.render();
         } catch (err) {
-            UI.showToast('Error al crear curso', 'danger');
+            UI.showToast('Error al procesar curso', 'danger');
         }
         UI.hideLoader();
     },

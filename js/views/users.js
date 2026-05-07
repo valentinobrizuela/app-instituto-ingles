@@ -94,6 +94,9 @@ Views.Users = {
                 </td>
                 <td>${courseHtml}</td>
                 <td style="text-align:center">
+                    <button class="btn" style="background:var(--primary-light); color:var(--primary); border:none; padding:0.4rem 0.6rem; border-radius:6px; cursor:pointer; margin-right:4px" onclick="Views.Users.openModal(${u.id})" title="Editar">
+                        <i class="fa-solid fa-user-pen"></i>
+                    </button>
                     <button class="btn" style="background:#fee2e2; color:#b91c1c; border:none; padding:0.4rem 0.6rem; border-radius:6px; cursor:pointer;" onclick="Views.Users.delete(${u.id})" title="Eliminar">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
@@ -102,55 +105,62 @@ Views.Users = {
         `;
     },
 
-    openModal() {
+    openModal(id = null) {
+        const allUsers = DB.getTable('users');
         const courses = DB.getTable('courses');
-        const courseOptions = courses.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        
+        let u = { name: '', email: '', role: 'student', password: 'westhouse123', age: '', parent_email: '', parent_phone: '', level: 'Beginner', course_id: '' };
+        if (id) {
+            u = allUsers.find(user => Number(user.id) === Number(id));
+        }
 
-        UI.openModal('Registrar Nuevo Usuario', `
-            <form id="form-user" onsubmit="Views.Users.save(event)">
+        const courseOptions = courses.map(c => `<option value="${c.id}" ${Number(c.id) === Number(u.course_id) ? 'selected' : ''}>${c.name}</option>`).join('');
+
+        UI.openModal(id ? 'Editar Usuario' : 'Registrar Nuevo Usuario', `
+            <form id="form-user" onsubmit="Views.Users.save(event, ${id || 'null'})">
                 
                 <h3 class="mb-2" style="font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:0.5rem; color:var(--primary)"><i class="fa-solid fa-id-card"></i> Datos Base</h3>
                 <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
                     <div class="form-group">
                         <label>Nombre Completo *</label>
-                        <input type="text" id="u-name" class="form-control" placeholder="Ej: Carlos Pinto" required>
+                        <input type="text" id="u-name" class="form-control" placeholder="Ej: Carlos Pinto" required value="${u.name}">
                     </div>
                     <div class="form-group">
                         <label>Email *</label>
-                        <input type="email" id="u-email" class="form-control" placeholder="carlos@gmail.com" required>
+                        <input type="email" id="u-email" class="form-control" placeholder="carlos@gmail.com" required value="${u.email}">
                     </div>
                 </div>
                 
                 <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
                     <div class="form-group">
                         <label>Rol en el Sistema *</label>
-                        <select id="u-role" class="form-control" required style="background:#f9fafb; font-weight:600;">
-                            <option value="student">Alumno</option>
-                            <option value="teacher">Profesor</option>
+                        <select id="u-role" class="form-control" required style="background:#f9fafb; font-weight:600;" ${id ? 'disabled' : ''}>
+                            <option value="student" ${u.role === 'student' ? 'selected' : ''}>Alumno</option>
+                            <option value="teacher" ${u.role === 'teacher' ? 'selected' : ''}>Profesor</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Contraseña Provisional *</label>
-                        <input type="text" id="u-password" class="form-control" value="westhouse123" required>
+                        <label>${id ? 'Nueva Contraseña (Opcional)' : 'Contraseña Provisional *'}</label>
+                        <input type="text" id="u-password" class="form-control" value="${id ? '' : 'westhouse123'}" ${id ? '' : 'required'}>
                     </div>
                 </div>
 
                 <!-- ALUMNOS FIELDS -->
-                <div id="u-student-fields" style="background:#f8fafc; padding:1rem; border-radius:8px; border:1px solid #e2e8f0; margin-top:1.5rem">
+                <div id="u-student-fields" style="background:#f8fafc; padding:1rem; border-radius:8px; border:1px solid #e2e8f0; margin-top:1.5rem; display: ${u.role === 'student' ? 'block' : 'none'}">
                     <h3 class="mb-4" style="font-size:1.1rem; color:var(--info)"><i class="fa-solid fa-graduation-cap"></i> Ficha Académica del Alumno</h3>
                     
                     <div style="display:grid; grid-template-columns: 100px 1fr 1fr; gap:1rem;">
                         <div class="form-group">
                             <label>Edad</label>
-                            <input type="number" id="u-age" class="form-control" min="4" max="99">
+                            <input type="number" id="u-age" class="form-control" min="4" max="99" value="${u.age || ''}">
                         </div>
                         <div class="form-group">
                             <label>Email Tutor *</label>
-                            <input type="email" id="u-parent" class="form-control" required>
+                            <input type="email" id="u-parent" class="form-control" ${u.role === 'student' ? 'required' : ''} value="${u.parent_email || ''}">
                         </div>
                         <div class="form-group">
                             <label>WhatsApp Tutor *</label>
-                            <input type="tel" id="u-phone" class="form-control" placeholder="+54 9 ..." required>
+                            <input type="tel" id="u-phone" class="form-control" placeholder="+54 9 ..." ${u.role === 'student' ? 'required' : ''} value="${u.parent_phone || ''}">
                         </div>
                     </div>
 
@@ -158,9 +168,9 @@ Views.Users = {
                         <div class="form-group">
                             <label>Nivel de Inglés</label>
                             <select id="u-level" class="form-control">
-                                <option value="Beginner">Beginner (A1-A2)</option>
-                                <option value="Intermediate">Intermediate (B1-B2)</option>
-                                <option value="Advanced">Advanced (C1-C2)</option>
+                                <option value="Beginner" ${u.level === 'Beginner' ? 'selected' : ''}>Beginner (A1-A2)</option>
+                                <option value="Intermediate" ${u.level === 'Intermediate' ? 'selected' : ''}>Intermediate (B1-B2)</option>
+                                <option value="Advanced" ${u.level === 'Advanced' ? 'selected' : ''}>Advanced (C1-C2)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -174,7 +184,7 @@ Views.Users = {
                 </div>
                 
                 <div class="form-group mt-4 pt-4" style="border-top:1px solid #eee;">
-                    <button type="submit" class="btn btn-primary w-full" style="font-size:1.1rem; padding:0.75rem;"><i class="fa-solid fa-save"></i> Guardar Usuario y Encriptar</button>
+                    <button type="submit" class="btn btn-primary w-full" style="font-size:1.1rem; padding:0.75rem;"><i class="fa-solid fa-save"></i> ${id ? 'Actualizar Usuario' : 'Guardar Usuario y Encriptar'}</button>
                 </div>
             </form>
         `);
@@ -199,20 +209,22 @@ Views.Users = {
         }, 100);
     },
 
-    async save(e) {
+    async save(e, id = null) {
         e.preventDefault();
         UI.showLoader();
         
         const rawPassword = document.getElementById('u-password').value;
-        // NOTA: No hasheamos aquí, dejamos que el Backend lo haga por seguridad centralizada
-        // El backend detecta si el pass es corto y lo hashea.
+        const role = id ? DB.getTable('users').find(u => Number(u.id) === Number(id)).role : document.getElementById('u-role').value;
 
         const data = {
             name: document.getElementById('u-name').value,
             email: document.getElementById('u-email').value,
-            role: document.getElementById('u-role').value,
-            password: rawPassword
+            role: role
         };
+        
+        if (rawPassword) {
+            data.password = rawPassword;
+        }
         
         if (data.role === 'student') {
             data.age = parseInt(document.getElementById('u-age').value) || null;
@@ -224,16 +236,24 @@ Views.Users = {
                 data.course_id = parseInt(courseVal);
                 const tCourse = DB.getTable('courses').find(c => Number(c.id) === data.course_id);
                 if(tCourse) data.teacher_id = tCourse.teacher_id;
+            } else {
+                data.course_id = null;
+                data.teacher_id = null;
             }
         }
 
         try {
-            await DB.insert('users', data);
+            if (id) {
+                await DB.update('users', id, data);
+                UI.showToast('Usuario actualizado con éxito.', 'success');
+            } else {
+                await DB.insert('users', data);
+                UI.showToast('Usuario guardado con éxito y sincronizado.', 'success');
+            }
             UI.closeModal();
-            UI.showToast('Usuario guardado con éxito y sincronizado.', 'success');
             this.render();
         } catch (err) {
-            UI.showToast('Error al guardar usuario', 'danger');
+            UI.showToast('Error al procesar usuario', 'danger');
         }
         UI.hideLoader();
     },

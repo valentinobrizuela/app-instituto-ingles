@@ -21,6 +21,13 @@ Views.Dashboard = {
         const payments = DB.getTable('payments');
         
         const totalRevenue = payments.filter(p => p.status === 'Pagado').reduce((acc, p) => acc + p.amount, 0);
+        const totalExpected = payments.reduce((acc, p) => acc + p.amount, 0);
+        const efficiency = totalExpected > 0 ? (totalRevenue / totalExpected) * 100 : 0;
+
+        const attendance = DB.getTable('attendance');
+        const presentes = attendance.filter(a => a.status === 'Presente').length;
+        const totalAsist = attendance.length;
+        const attendanceRate = totalAsist > 0 ? Math.round((presentes / totalAsist) * 100) : 100;
 
         container.innerHTML = `
             <div class="header-section mb-5">
@@ -28,37 +35,50 @@ Views.Dashboard = {
                 <p class="text-muted">Bienvenido de nuevo, ${user.name}. Aquí tienes un resumen de la academia.</p>
             </div>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                <div class="card" style="border-bottom: 4px solid var(--primary)">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="card" style="border-bottom: 4px solid var(--primary); padding: 1.25rem;">
                     <div style="display:flex; justify-content:space-between; align-items:start">
                         <div>
-                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:1px">Alumnos</p>
-                            <h2 style="font-size:2.5rem; margin-top:0.5rem">${students.length}</h2>
+                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:0.5px; font-size:0.7rem">Alumnos Activos</p>
+                            <h2 style="font-size:2rem; margin-top:0.5rem">${students.length}</h2>
                         </div>
-                        <div style="background:var(--primary-light); color:var(--primary); padding:10px; border-radius:10px">
-                            <i class="fa-solid fa-user-graduate fa-xl"></i>
+                        <div style="background:var(--primary-light); color:var(--primary); padding:8px; border-radius:8px">
+                            <i class="fa-solid fa-user-graduate fa-lg"></i>
                         </div>
                     </div>
                 </div>
-                <div class="card" style="border-bottom: 4px solid var(--success)">
+                <div class="card" style="border-bottom: 4px solid var(--success); padding: 1.25rem;">
                     <div style="display:flex; justify-content:space-between; align-items:start">
                         <div>
-                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:1px">Recaudación</p>
-                            <h2 style="font-size:2.5rem; margin-top:0.5rem">$${totalRevenue.toFixed(0)}</h2>
+                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:0.5px; font-size:0.7rem">Eficiencia Cobro</p>
+                            <h2 style="font-size:2rem; margin-top:0.5rem">${efficiency.toFixed(1)}%</h2>
                         </div>
-                        <div style="background:#dcfce7; color:var(--success); padding:10px; border-radius:10px">
-                            <i class="fa-solid fa-wallet fa-xl"></i>
+                        <div style="background:#dcfce7; color:var(--success); padding:8px; border-radius:8px">
+                            <i class="fa-solid fa-hand-holding-dollar fa-lg"></i>
                         </div>
                     </div>
+                    <div class="text-muted" style="font-size:0.75rem; margin-top:0.5rem">$${totalRevenue.toFixed(0)} cobrados</div>
                 </div>
-                <div class="card" style="border-bottom: 4px solid var(--accent)">
+                <div class="card" style="border-bottom: 4px solid var(--info); padding: 1.25rem;">
                     <div style="display:flex; justify-content:space-between; align-items:start">
                         <div>
-                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:1px">Profesores</p>
-                            <h2 style="font-size:2.5rem; margin-top:0.5rem">${teachers.length}</h2>
+                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:0.5px; font-size:0.7rem">Asistencia Prom.</p>
+                            <h2 style="font-size:2rem; margin-top:0.5rem">${attendanceRate}%</h2>
                         </div>
-                        <div style="background:#fef3c7; color:var(--accent); padding:10px; border-radius:10px">
-                            <i class="fa-solid fa-chalkboard-user fa-xl"></i>
+                        <div style="background:#e0f2fe; color:var(--info); padding:8px; border-radius:8px">
+                            <i class="fa-solid fa-calendar-check fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="text-muted" style="font-size:0.75rem; margin-top:0.5rem">Media institucional</div>
+                </div>
+                <div class="card" style="border-bottom: 4px solid var(--accent); padding: 1.25rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:start">
+                        <div>
+                            <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:0.5px; font-size:0.7rem">Profesores</p>
+                            <h2 style="font-size:2rem; margin-top:0.5rem">${teachers.length}</h2>
+                        </div>
+                        <div style="background:#fef3c7; color:var(--accent); padding:8px; border-radius:8px">
+                            <i class="fa-solid fa-chalkboard-user fa-lg"></i>
                         </div>
                     </div>
                 </div>
