@@ -6,9 +6,9 @@ Views.Materials = {
         let courses = DB.getTable('courses');
         
         if(user.role === 'teacher') {
-            courses = courses.filter(c => c.teacherId === user.id);
+            courses = courses.filter(c => String(c.teacher_id) === String(user.id));
         } else if (user.role === 'student') {
-            courses = courses.filter(c => c.id === user.courseId && c.level === user.level);
+            courses = courses.filter(c => String(c.id) === String(user.course_id));
         }
         
         const materials = DB.getTable('materials');
@@ -36,7 +36,7 @@ Views.Materials = {
         }
 
         html += courses.map(course => {
-            const courseMats = materials.filter(m => m.courseId === course.id);
+            const courseMats = materials.filter(m => Number(m.course_id) === Number(course.id));
             return `
                 <div class="card mb-4" style="border-left: 4px solid var(--primary);">
                     <h2 style="font-size:1.4rem;color:var(--text-main);margin-bottom:1.5rem;border-bottom:1px solid var(--border-color);padding-bottom:0.75rem">
@@ -72,9 +72,21 @@ Views.Materials = {
                             } else if (isDrive) {
                                 typeText = 'Google Drive / Documento';
                                 icon = 'fa-brands fa-google-drive text-success';
-                            } else if (m.url.endsWith('.pdf')) {
+                            } else if (m.url.toLowerCase().endsWith('.pdf')) {
                                 typeText = 'Documento PDF';
                                 icon = 'fa-solid fa-file-pdf text-danger';
+                            } else if (m.url.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/)) {
+                                typeText = 'Imagen / Foto';
+                                icon = 'fa-solid fa-file-image text-warning';
+                            } else if (m.url.toLowerCase().match(/\.(doc|docx)$/)) {
+                                typeText = 'Documento Word';
+                                icon = 'fa-solid fa-file-word text-info';
+                            } else if (m.url.toLowerCase().match(/\.(xls|xlsx)$/)) {
+                                typeText = 'Planilla Excel';
+                                icon = 'fa-solid fa-file-excel text-success';
+                            } else {
+                                typeText = 'Recurso / Archivo';
+                                icon = 'fa-solid fa-file text-muted';
                             }
 
                             return `
@@ -116,12 +128,10 @@ Views.Materials = {
         const user = Auth.getUser();
         let courses = DB.getTable('courses');
 
-        if(user.role === 'teacher') courses = courses.filter(c => Number(c.teacherId) === Number(user.id));
+        if(user.role === 'teacher') courses = courses.filter(c => String(c.teacher_id) === String(user.id));
         
         UI.openModal('Publicar Material', `
             <form id="form-material" onsubmit="Views.Materials.save(event)">
-                <p class="text-muted mb-4" style="font-size:0.9rem">Soporta enlaces automáticos de YouTube y Google Drive.</p>
-                
                 <div class="form-group">
                     <label>Curso Destino *</label>
                     <select id="m-course" class="form-control" required style="background:#f9fafb">
@@ -132,33 +142,124 @@ Views.Materials = {
                     <label>Título del Recurso *</label>
                     <input type="text" id="m-title" class="form-control" required placeholder="Ej: Clase 1: Present Simple">
                 </div>
-                <div class="form-group">
-                    <label>URL (Enlace al archivo o video) *</label>
-                    <input type="url" id="m-url" class="form-control" placeholder="https://youtube.com/... o https://drive.google.com/..." required>
-                    <small style="color:var(--text-muted); margin-top:0.5rem; display:block;"><i class="fa-solid fa-circle-info text-info"></i> Pega aquí el enlace de YouTube para incrustar el video, o el enlace de compartición de Drive.</small>
+
+                <div class="tabs mb-3" style="display:flex; gap:0.5rem; background:#f1f5f9; padding:0.25rem; border-radius:8px;">
+                    <button type="button" class="btn btn-sm w-full" id="btn-tab-link" onclick="Views.Materials.switchTab('link')" style="background:white; shadow:0 1px 2px rgba(0,0,0,0.05)">Enlace URL</button>
+                    <button type="button" class="btn btn-sm w-full" id="btn-tab-file" onclick="Views.Materials.switchTab('file')">Subir Archivo</button>
+                </div>
+
+                <div id="container-link">
+                    <div class="form-group">
+                        <label>URL del Recurso *</label>
+                        <input type="url" id="m-url" class="form-control" placeholder="https://youtube.com/... o https://drive.google.com/...">
+                        <small style="color:var(--text-muted); margin-top:0.5rem; display:block;"><i class="fa-solid fa-circle-info text-info"></i> Pega el enlace de YouTube o Drive.</small>
+                    </div>
+                </div>
+
+                <div id="container-file" style="display:none">
+                    <div class="form-group">
+                        <label>Seleccionar Archivo *</label>
+                        <input type="file" id="m-file" class="form-control" style="padding:0.4rem">
+                        <small style="color:var(--text-muted); margin-top:0.5rem; display:block;"><i class="fa-solid fa-file-shield text-success"></i> El archivo se guardará de forma segura en la nube.</small>
+                    </div>
                 </div>
                 
                 <div class="form-group mt-4 pt-4" style="border-top:1px solid #eee">
-                    <button type="submit" class="btn btn-primary w-full" style="padding:0.75rem;"><i class="fa-solid fa-cloud-arrow-up"></i> Publicar Material</button>
+                    <button type="submit" id="btn-submit-material" class="btn btn-primary w-full" style="padding:0.75rem;"><i class="fa-solid fa-cloud-arrow-up"></i> Publicar Material</button>
                 </div>
             </form>
         `);
     },
 
-    save(e) {
+    uploadType: 'link',
+
+    switchTab(type) {
+        this.uploadType = type;
+        const btnLink = document.getElementById('btn-tab-link');
+        const btnFile = document.getElementById('btn-tab-file');
+        const contLink = document.getElementById('container-link');
+        const contFile = document.getElementById('container-file');
+        const inputUrl = document.getElementById('m-url');
+        const inputFile = document.getElementById('m-file');
+
+        if(type === 'link') {
+            btnLink.style.background = 'white';
+            btnLink.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+            btnFile.style.background = 'transparent';
+            btnFile.style.boxShadow = 'none';
+            contLink.style.display = 'block';
+            contFile.style.display = 'none';
+            inputUrl.setAttribute('required', 'true');
+            inputFile.removeAttribute('required');
+        } else {
+            btnFile.style.background = 'white';
+            btnFile.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+            btnLink.style.background = 'transparent';
+            btnLink.style.boxShadow = 'none';
+            contFile.style.display = 'block';
+            contLink.style.display = 'none';
+            inputFile.setAttribute('required', 'true');
+            inputUrl.removeAttribute('required');
+        }
+    },
+
+    async save(e) {
         e.preventDefault();
-        UI.showLoader();
-        DB.insert('materials', {
-            courseId: parseInt(document.getElementById('m-course').value),
-            title: document.getElementById('m-title').value,
-            url: document.getElementById('m-url').value,
-            type: 'link',
-            addedBy: Auth.getUser().id
-        });
-        UI.closeModal();
-        UI.showToast('Material publicado y clasificado con éxito.', 'success');
-        this.render();
-        UI.hideLoader();
+        const btn = document.getElementById('btn-submit-material');
+        const originalText = btn.innerHTML;
+        
+        try {
+            UI.showLoader();
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
+
+            let finalUrl = document.getElementById('m-url').value;
+            let type = 'link';
+
+            if (this.uploadType === 'file') {
+                const file = document.getElementById('m-file').files[0];
+                if (!file) throw new Error("No se seleccionó ningún archivo");
+
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+                const filePath = `uploads/${fileName}`;
+
+                const { data, error } = await sb.storage
+                    .from('materials')
+                    .upload(filePath, file);
+
+                if (error) throw error;
+
+                const { data: { publicUrl } } = sb.storage
+                    .from('materials')
+                    .getPublicUrl(filePath);
+                
+                finalUrl = publicUrl;
+                type = 'file';
+            }
+
+            await DB.insert('materials', {
+                course_id: parseInt(document.getElementById('m-course').value),
+                title: document.getElementById('m-title').value,
+                url: finalUrl,
+                type: type,
+                added_by: Auth.getUser().id
+            });
+
+            UI.closeModal();
+            UI.showToast('Material publicado con éxito.', 'success');
+            
+            // Forzar resincronización de materiales para ver el nuevo
+            await DB.init(); 
+            this.render();
+        } catch (err) {
+            console.error(err);
+            UI.showToast('Error: ' + err.message, 'danger');
+        } finally {
+            UI.hideLoader();
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     },
 
     delete(id) {
