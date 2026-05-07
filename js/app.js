@@ -110,6 +110,10 @@ const App = {
                 if (Views.Grades && !Auth.hasRole('student')) Views.Grades.render();
                 else window.location.hash = '#/';
                 break;
+            case '#/logs':
+                if (Views.Logs && Auth.hasRole('admin')) Views.Logs.render();
+                else window.location.hash = '#/';
+                break;
             default:
                 viewContainer.innerHTML = `
                     <div style="text-align:center;margin-top:50px;">
