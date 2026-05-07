@@ -64,14 +64,16 @@ Views.Dashboard = {
                 </div>
             </div>
 
-            <div class="responsive-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
-                <div class="card">
-                    <h3 class="mb-4"><i class="fa-solid fa-chart-column text-primary"></i> Ingresos Mensuales</h3>
-                    <canvas id="mainChart" style="max-height: 300px; width: 100%;"></canvas>
-                </div>
-                <div class="card">
-                    <h3 class="mb-4"><i class="fa-solid fa-chart-pie text-accent"></i> Alumnos por Nivel</h3>
-                    <canvas id="pieChart" style="max-height: 300px; width: 100%;"></canvas>
+            <div id="dashboard-charts" style="min-height:300px">
+                <div class="responsive-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                    <div class="card">
+                        <h3 class="mb-4"><i class="fa-solid fa-chart-column text-primary"></i> Ingresos Mensuales</h3>
+                        <canvas id="mainChart" style="max-height: 300px; width: 100%;"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3 class="mb-4"><i class="fa-solid fa-chart-pie text-accent"></i> Alumnos por Nivel</h3>
+                        <canvas id="pieChart" style="max-height: 300px; width: 100%;"></canvas>
+                    </div>
                 </div>
             </div>
         `;

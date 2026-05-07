@@ -21,6 +21,7 @@ Views.Attendance = {
                     <h1 class="text-primary" style="font-size:2rem; margin-bottom:0;"><i class="fa-regular fa-calendar-check"></i> Registro de Asistencia</h1>
                     <p class="text-muted mt-2">Seguimiento de presencia y faltas en los cursos asignados.</p>
                 </div>
+                <button class="btn btn-secondary shadow-sm" onclick="Views.Attendance.exportAll()"><i class="fa-solid fa-file-csv"></i> Exportar Todo</button>
             </div>
             
             <div class="card mb-4" style="background:#fff; border-radius:var(--radius-lg)">
@@ -186,7 +187,7 @@ Views.Attendance = {
         const filtered = records.filter(a => Number(a.course_id) === Number(courseId) && a.date === date);
 
         filtered.forEach(r => {
-            const container = document.getElementById(`status-btns-${r.studentId}`);
+            const container = document.getElementById(`status-btns-${r.student_id}`);
             if(container) {
                 const btns = container.querySelectorAll('button');
                 btns.forEach(b => {
@@ -215,7 +216,7 @@ Views.Attendance = {
 
         UI.showLoader();
         const attendanceRecords = DB.getTable('attendance');
-        const existing = attendanceRecords.find(a => Number(a.courseId) === Number(courseId) && Number(a.studentId) === Number(studentId) && a.date === date);
+        const existing = attendanceRecords.find(a => Number(a.course_id) === Number(courseId) && Number(a.student_id) === Number(studentId) && a.date === date);
 
         if(existing) {
             DB.update('attendance', existing.id, { status: status });
@@ -231,5 +232,24 @@ Views.Attendance = {
         this.highlightExistingRecords(courseId);
         UI.hideLoader();
         UI.showToast(`Marcado como ${status}`, "success");
+    },
+
+    exportAll() {
+        const data = DB.getTable('attendance');
+        const users = DB.getTable('users');
+        const courses = DB.getTable('courses');
+        
+        const report = data.map(a => {
+            const s = users.find(u => u.id === a.student_id) || {name: '?'};
+            const c = courses.find(co => co.id === a.course_id) || {name: '?'};
+            return {
+                Fecha: a.date,
+                Alumno: s.name,
+                Curso: c.name,
+                Estado: a.status
+            };
+        });
+        
+        UI.downloadCSV('asistencia_westhouse.csv', report);
     }
 };

@@ -36,8 +36,10 @@ Views.Payments = {
                 <div>
                     <h1 class="text-primary" style="font-size:2rem; margin-bottom:0;"><i class="fa-solid fa-money-check-dollar"></i> Panel Financiero</h1>
                     <p class="text-muted mt-2">Control de cobros, cuotas pendientes y reportes económicos.</p>
+                <div>
+                    <button class="btn btn-secondary shadow-sm" onclick="Views.Payments.exportAll()" style="margin-right:0.5rem"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+                    <button class="btn btn-primary shadow-md" onclick="Views.Payments.openModal()"><i class="fa-solid fa-file-invoice-dollar"></i> Registrar Nuevo Pago</button>
                 </div>
-                <button class="btn btn-primary shadow-md" onclick="Views.Payments.openModal()"><i class="fa-solid fa-file-invoice-dollar"></i> Registrar Nuevo Pago</button>
             </div>
             
             <div class="responsive-grid" style="display:flex; gap:1rem; mb-4">
@@ -189,6 +191,11 @@ Views.Payments = {
                     <button class="btn btn-secondary shadow-sm" style="font-size:0.8rem; padding:0.4rem 0.6rem" onclick="Views.Payments.toggleStatus(${p.id})">
                         <i class="fa-solid fa-rotate"></i> Estado
                     </button>
+                    ${p.status !== 'Pagado' && student && student.parent_phone ? `
+                    <a class="btn" style="background:#dcfce7; color:#166534; padding:0.4rem 0.6rem" href="https://wa.me/${student.parent_phone.replace(/\D/g,'')}?text=Hola%20${student.name},%20te%20recordamos%20que%20tienes%20una%20cuota%20pendiente%20de%20$${p.amount}%20con%20vencimiento%20el%20${p.date}.%20Saludos%20West%20House." target="_blank" title="Recordatorio WhatsApp">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </a>
+                    ` : ''}
                     <button class="btn" style="background:#fee2e2; color:#b91c1c; border:none; padding:0.4rem 0.6rem; border-radius:6px; cursor:pointer;" onclick="Views.Payments.delete(${p.id})" title="Eliminar">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
@@ -303,5 +310,22 @@ Views.Payments = {
             if(!silent) UI.showToast('Error de conexión con el servidor de correos', 'danger');
         }
         if(!silent) UI.hideLoader();
+    },
+
+    exportAll() {
+        const data = DB.getTable('payments');
+        const users = DB.getTable('users');
+        
+        const report = data.map(p => {
+            const s = users.find(u => u.id === p.student_id) || {name: '?'};
+            return {
+                Fecha: p.date,
+                Alumno: s.name,
+                Monto: p.amount,
+                Estado: p.status
+            };
+        });
+        
+        UI.downloadCSV('pagos_westhouse.csv', report);
     }
 };

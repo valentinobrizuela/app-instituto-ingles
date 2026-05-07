@@ -88,6 +88,9 @@ const UI = {
                         <div class="nav-item">
                             <a href="#/users" class="nav-link" id="nav-users"><i class="fa-solid fa-user-group"></i> Alumnos</a>
                         </div>
+                        <div class="nav-item">
+                            <a href="#/logs" class="nav-link" id="nav-logs"><i class="fa-solid fa-shield-halved"></i> Auditoría</a>
+                        </div>
                         ` : ''}
 
                         ${!Auth.hasRole('student') ? `
@@ -174,12 +177,15 @@ const UI = {
 
     toggleTheme() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const icon = document.querySelector('[onclick="UI.toggleTheme()"] i');
         if (isDark) {
             document.documentElement.removeAttribute('data-theme');
             localStorage.setItem('westhouse_theme', 'light');
+            if(icon) icon.className = 'fa-solid fa-moon';
         } else {
             document.documentElement.setAttribute('data-theme', 'dark');
             localStorage.setItem('westhouse_theme', 'dark');
+            if(icon) icon.className = 'fa-solid fa-sun';
         }
     },
 
@@ -217,6 +223,34 @@ const UI = {
     hideLoader() {
         const loader = document.getElementById('global-loader');
         if (loader) loader.classList.remove('active');
+    },
+
+    showSkeleton(containerId, type = 'table', rows = 5) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        let html = '';
+        if (type === 'table') {
+            html = `
+                <div class="skeleton-title mb-4"></div>
+                ${Array(rows).fill(0).map(() => `
+                    <div style="display:flex; gap:1rem; margin-bottom:1rem">
+                        <div class="skeleton" style="width:40px; height:40px; border-radius:50%"></div>
+                        <div style="flex:1">
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton" style="width:50%"></div>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        } else if (type === 'cards') {
+            html = `
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:1.5rem">
+                    ${Array(rows).fill(0).map(() => `<div class="skeleton skeleton-card"></div>`).join('')}
+                </div>
+            `;
+        }
+        container.innerHTML = html;
     },
 
     showToast(message, type = 'info') {
@@ -284,5 +318,33 @@ const UI = {
         // Limpiar
         window.deferredPrompt = null;
         document.getElementById('install-pwa-container').style.display = 'none';
+    },
+
+    downloadCSV(filename, data) {
+        if (!data || !data.length) return;
+        
+        const csvRows = [];
+        const headers = Object.keys(data[0]);
+        csvRows.push(headers.join(','));
+
+        for (const row of data) {
+            const values = headers.map(header => {
+                const escaped = ('' + row[header]).replace(/"/g, '\\"');
+                return `"${escaped}"`;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     }
 };

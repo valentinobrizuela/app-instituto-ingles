@@ -21,6 +21,23 @@ const DB = {
         localStorage.setItem(`westhouse_${tableName}`, JSON.stringify(data));
     },
 
+    async logAction(tableName, action, details) {
+        if (!sb || tableName === 'logs') return;
+        const user = window.Auth ? Auth.getUser() : null;
+        try {
+            await sb.from('logs').insert([{
+                user_id: user ? user.id : null,
+                user_name: user ? user.name : 'Sistema/Desconocido',
+                action: action,
+                table_name: tableName,
+                details: typeof details === 'object' ? JSON.stringify(details) : details,
+                created_at: new Date().toISOString()
+            }]);
+        } catch (err) {
+            console.warn("Error recording log:", err.message);
+        }
+    },
+
     // ── OPERACIONES CON SUPABASE ──
 
     async insert(tableName, data) {
@@ -42,6 +59,7 @@ const DB = {
                 this.saveTable(tableName, table);
                 
                 console.log(`[DB] ${tableName} insertado con éxito en Supabase`);
+                this.logAction(tableName, 'INSERT', newRecord);
                 return newRecord;
             }
         } catch (err) {
@@ -72,6 +90,7 @@ const DB = {
                     this.saveTable(tableName, table);
                 }
                 console.log(`[DB] ${tableName} ${id} actualizado en Supabase`);
+                this.logAction(tableName, 'UPDATE', { id, ...updatedFields });
                 return updatedRecord;
             }
         } catch (err) {
@@ -95,6 +114,7 @@ const DB = {
             table = table.filter(t => t.id !== id);
             this.saveTable(tableName, table);
             console.log(`[DB] ${tableName} ${id} eliminado en Supabase`);
+            this.logAction(tableName, 'DELETE', { id });
         } catch (err) {
             console.error("Supabase Delete Error:", err.message);
         }
