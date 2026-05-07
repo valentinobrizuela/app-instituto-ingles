@@ -600,8 +600,13 @@ tr:last-child td {
 
 /* --- Responsiveness (PWA & Mobile) --- */
 @media (max-width: 768px) {
+    :root {
+        --sidebar-w: 280px;
+    }
+
     .sidebar {
         transform: translateX(-100%);
+        box-shadow: 20px 0 50px rgba(0,0,0,0.1);
     }
     
     .sidebar.open {
@@ -610,42 +615,90 @@ tr:last-child td {
 
     .main-content {
         margin-left: 0;
-        padding: 1.5rem 1rem;
+        padding: 1rem;
         width: 100%;
     }
     
     .mobile-nav-toggle {
-        display: block; /* Show hamburger menu on mobile */
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     header {
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
     }
     
     #section-title-wrapper {
         display: flex;
         align-items: center;
         width: 100%;
-        margin-bottom: 1rem;
+        justify-content: space-between;
+    }
+
+    header > div:last-child {
+        width: 100%;
+        justify-content: space-between;
+        background: var(--bg-card);
+        padding: 0.75rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
     }
 
     .hero-welcome {
         padding: 1.5rem;
+        border-radius: 16px;
     }
 
     .hero-title {
-        font-size: 1.8rem;
+        font-size: 1.75rem;
     }
 
     .login-card {
-        padding: 2rem;
+        padding: 2rem 1.5rem;
         margin: 1rem;
+        border-radius: 24px;
     }
 
-    /* Make tables horizontally scrollable */
-    table {
-        display: block;
+    /* Stack grids on mobile */
+    .responsive-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Table Improvements */
+    .table-container {
         overflow-x: auto;
-        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+    }
+
+    table {
+        min-width: 600px;
+    }
+
+    /* Modal adjustments */
+    .modal-content {
+        width: 95% !important;
+        padding: 1.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 1.5rem;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .sidebar-footer {
+        padding: 1rem;
     }
 }

@@ -28,7 +28,7 @@ Views.Users = {
             </div>
             
             <div class="card mb-4" style="padding:0; overflow:hidden;">
-                <div class="table-responsive">
+                <div class="table-container">
                     <table id="users-table" style="width:100%">
                         <thead style="background:var(--bg-color)">
                             <tr>
@@ -112,7 +112,7 @@ Views.Users = {
             <form id="form-user" onsubmit="Views.Users.save(event)">
                 
                 <h3 class="mb-2" style="font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:0.5rem; color:var(--primary)"><i class="fa-solid fa-id-card"></i> Datos Base</h3>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
                     <div class="form-group">
                         <label>Nombre Completo *</label>
                         <input type="text" id="u-name" class="form-control" placeholder="Ej: Carlos Pinto" required>
@@ -122,8 +122,8 @@ Views.Users = {
                         <input type="email" id="u-email" class="form-control" placeholder="carlos@gmail.com" required>
                     </div>
                 </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
+                
+                <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem;">
                     <div class="form-group">
                         <label>Rol en el Sistema *</label>
                         <select id="u-role" class="form-control" required style="background:#f9fafb; font-weight:600;">

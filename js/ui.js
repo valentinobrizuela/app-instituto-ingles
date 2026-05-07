@@ -243,10 +243,10 @@ const UI = {
         modalLayer.style = "position:fixed; inset:0; background:rgba(67, 20, 7, 0.4); backdrop-filter:blur(4px); z-index:1500; display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; transition:opacity 0.2s;";
 
         modalLayer.innerHTML = `
-            <div class="card" style="width:100%; max-width:500px; margin:0; animation:slideUp 0.3s ease-out">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border-color)">
+            <div class="card modal-content" style="width:100%; max-width:550px; margin:0; animation:slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border-color); position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
                     <h3 style="font-family:'Outfit'">${title}</h3>
-                    <button class="btn" style="padding:0.4rem" onclick="UI.closeModal('${modalId}')"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="btn" style="padding:0.4rem; background: var(--primary-light); color: var(--primary)" onclick="UI.closeModal('${modalId}')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div id="modal-body">${content}</div>
             </div>

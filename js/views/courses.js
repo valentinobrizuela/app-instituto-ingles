@@ -22,7 +22,7 @@ Views.Courses = {
                 ${isAdmin ? `<button class="btn btn-primary shadow-md" onclick="Views.Courses.openModal()"><i class="fa-solid fa-folder-plus"></i> Nuevo Curso</button>` : ''}
             </div>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem;">
+            <div class="responsive-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem;">
                 ${courses.map(c => this.renderCourseCard(c, isAdmin)).join('')}
                 ${courses.length === 0 ? '<div class="card" style="grid-column: 1 / -1"><p class="text-muted text-center py-4">No hay cursos disponibles actualmente.</p></div>' : ''}
             </div>
@@ -97,7 +97,7 @@ Views.Courses = {
                     <input type="text" id="c-name" class="form-control" required placeholder="Ej: Inglés Kids Nivel 2">
                 </div>
                 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
                     <div class="form-group">
                         <label>Nivel General *</label>
                         <select id="c-level" class="form-control" required style="background:#f9fafb">

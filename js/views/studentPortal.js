@@ -24,7 +24,7 @@ Views.StudentPortal = {
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <div class="responsive-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                 <div class="card">
                     <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
                         <i class="fa-solid fa-book-open-reader"></i> Mi Clase Actual

@@ -40,16 +40,16 @@ Views.Payments = {
                 <button class="btn btn-primary shadow-md" onclick="Views.Payments.openModal()"><i class="fa-solid fa-file-invoice-dollar"></i> Registrar Nuevo Pago</button>
             </div>
             
-            <div class="flex gap-4 mb-4">
-                <div class="card metric-card" style="flex:1; border-left: 4px solid var(--success);">
+            <div class="responsive-grid" style="display:flex; gap:1rem; mb-4">
+                <div class="card metric-card" style="flex:1; border-left: 4px solid var(--success); min-width: 200px;">
                     <h3 class="text-muted text-sm uppercase"><i class="fa-solid fa-vault"></i> Recaudado</h3>
                     <div style="font-size:2.5rem;font-weight:700;color:var(--success);margin-top:0.5rem">$${recaudado.toFixed(2)}</div>
                 </div>
-                <div class="card metric-card" style="flex:1; border-left: 4px solid var(--danger);">
+                <div class="card metric-card" style="flex:1; border-left: 4px solid var(--danger); min-width: 200px;">
                     <h3 class="text-muted text-sm uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Deuda Activa</h3>
                     <div style="font-size:2.5rem;font-weight:700;color:var(--danger);margin-top:0.5rem">$${deuda.toFixed(2)}</div>
                 </div>
-                <div class="card metric-card" style="flex:1; border-left: 4px solid var(--info);">
+                <div class="card metric-card" style="flex:1; border-left: 4px solid var(--info); min-width: 200px;">
                     <h3 class="text-muted text-sm uppercase"><i class="fa-solid fa-file-lines"></i> Transacciones</h3>
                     <div style="font-size:2.5rem;font-weight:700;color:var(--info);margin-top:0.5rem">${payments.length}</div>
                 </div>
@@ -59,7 +59,7 @@ Views.Payments = {
                 <div style="padding:1.25rem 1.5rem; border-bottom:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center">
                     <h3 style="font-size:1.1rem" class="text-main"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Historial de Movimientos</h3>
                 </div>
-                <div class="table-responsive">
+                <div class="table-container">
                     <table id="payments-table" class="w-full">
                         <thead style="background:#f1f5f9">
                             <tr>
@@ -134,9 +134,10 @@ Views.Payments = {
                     <p class="text-muted mt-2" style="font-size:1.1rem">No tienes ninguna cuota pendiente. ¡Gracias por tu puntualidad!</p>
                 </div>
             `}
-
+            
             <div class="card p-0 shadow-sm" style="overflow:hidden">
-                <table class="w-full">
+                <div class="table-container">
+                    <table class="w-full">
                     <thead style="background:#f8fafc">
                         <tr>
                             <th style="padding:1rem">Mes / Fecha</th>
@@ -156,6 +157,7 @@ Views.Payments = {
                         `}).join('')}
                     </tbody>
                 </table>
+                </div>
             </div>
         `;
     },
@@ -208,7 +210,7 @@ Views.Payments = {
                     </select>
                 </div>
                 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
                     <div class="form-group">
                         <label>Monto a Cobrar ($) *</label>
                         <input type="number" step="0.01" id="p-amount" class="form-control" required placeholder="0.00">

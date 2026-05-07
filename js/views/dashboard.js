@@ -64,7 +64,7 @@ Views.Dashboard = {
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+            <div class="responsive-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
                 <div class="card">
                     <h3 class="mb-4"><i class="fa-solid fa-chart-column text-primary"></i> Ingresos Mensuales</h3>
                     <canvas id="mainChart" style="max-height: 300px; width: 100%;"></canvas>
