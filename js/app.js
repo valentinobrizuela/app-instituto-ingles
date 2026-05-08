@@ -77,44 +77,59 @@ const App = {
         switch (path) {
             case '#/':
                 if (Auth.hasRole('student')) {
+                    UI.setSectionTitle('Mi Portal de Alumno', 'fa-solid fa-graduation-cap');
                     if (Views.StudentPortal) Views.StudentPortal.render();
                 } else {
+                    UI.setSectionTitle('Panel de Control', 'fa-solid fa-chart-pie');
                     Views.Dashboard.render();
                 }
                 break;
             case '#/about':
+                UI.setSectionTitle('Quiénes Somos', 'fa-solid fa-leaf');
                 if (Views.About) Views.About.render();
                 break;
             case '#/users':
+                UI.setSectionTitle('Gestión de Alumnos', 'fa-solid fa-user-group');
                 Views.Users.render();
                 break;
             case '#/courses':
+                UI.setSectionTitle('Cursos y Niveles', 'fa-solid fa-book');
                 Views.Courses.render();
                 break;
             case '#/attendance':
+                UI.setSectionTitle('Control de Asistencia', 'fa-solid fa-calendar-check');
                 Views.Attendance.render();
                 break;
             case '#/payments':
+                UI.setSectionTitle('Panel Financiero', 'fa-solid fa-file-invoice-dollar');
                 Views.Payments.render();
                 break;
             case '#/materials':
+                UI.setSectionTitle('Materiales de Estudio', 'fa-solid fa-folder-open');
                 Views.Materials.render();
                 break;
             case '#/calendar':
+                UI.setSectionTitle('Calendario Institucional', 'fa-solid fa-calendar-days');
                 if (Views.Calendar) Views.Calendar.render();
                 break;
             case '#/notifications':
+                UI.setSectionTitle('Notificaciones', 'fa-regular fa-bell');
                 if (Views.Notifications) Views.Notifications.render();
                 break;
             case '#/grades':
-                if (Views.Grades && !Auth.hasRole('student')) Views.Grades.render();
-                else window.location.hash = '#/';
+                if (Views.Grades && !Auth.hasRole('student')) {
+                    UI.setSectionTitle('Calificaciones', 'fa-solid fa-star');
+                    Views.Grades.render();
+                } else window.location.hash = '#/';
                 break;
             case '#/logs':
-                if (Views.Logs && Auth.hasRole('admin')) Views.Logs.render();
-                else window.location.hash = '#/';
+                if (Views.Logs && Auth.hasRole('admin')) {
+                    UI.setSectionTitle('Auditoría de Sistema', 'fa-solid fa-shield-halved');
+                    Views.Logs.render();
+                } else window.location.hash = '#/';
                 break;
             default:
+                UI.setSectionTitle('Error 404', 'fa-solid fa-triangle-exclamation');
                 viewContainer.innerHTML = `
                     <div style="text-align:center;margin-top:50px;">
                         <i class="fa-solid fa-triangle-exclamation" style="font-size:3rem;color:var(--warning);margin-bottom:1rem"></i>

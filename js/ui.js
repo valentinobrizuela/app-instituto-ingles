@@ -274,7 +274,13 @@ const UI = {
         const modalId = 'modal-' + Date.now();
         const modalLayer = document.createElement('div');
         modalLayer.id = modalId;
-        modalLayer.style = "position:fixed; inset:0; background:rgba(67, 20, 7, 0.4); backdrop-filter:blur(4px); z-index:1500; display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; transition:opacity 0.2s;";
+        modalLayer.className = "modal-overlay";
+        modalLayer.style = "position:fixed; inset:0; background:rgba(0, 0, 0, 0.4); backdrop-filter:blur(4px); z-index:1500; display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; transition:opacity 0.2s;";
+        
+        // Cierra al hacer clic fuera del card
+        modalLayer.onclick = (e) => {
+            if (e.target === modalLayer) UI.closeModal(modalId);
+        };
 
         modalLayer.innerHTML = `
             <div class="card modal-content" style="width:100%; max-width:550px; margin:0; animation:slideUp 0.3s ease-out; max-height: 90vh; overflow-y: auto;">
@@ -329,7 +335,8 @@ const UI = {
 
         for (const row of data) {
             const values = headers.map(header => {
-                const escaped = ('' + row[header]).replace(/"/g, '\\"');
+                let val = row[header] === null || row[header] === undefined ? '' : row[header];
+                const escaped = ('' + val).replace(/"/g, '""'); // CSV escape double quotes
                 return `"${escaped}"`;
             });
             csvRows.push(values.join(','));
@@ -345,6 +352,23 @@ const UI = {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+    },
+
+    setSectionTitle(title, icon = '') {
+        const wrapper = document.getElementById('section-title-wrapper');
+        if (wrapper) {
+            wrapper.innerHTML = `
+                <div style="display:flex; align-items:center; gap:0.75rem">
+                    <button class="mobile-nav-toggle" onclick="UI.toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h2 style="font-family:'Outfit'; font-size:1.25rem; margin:0; display:flex; align-items:center; gap:0.5rem">
+                        ${icon ? `<i class="${icon}" style="color:var(--primary); font-size:1rem"></i>` : ''}
+                        ${title}
+                    </h2>
+                </div>
+            `;
         }
     }
 };

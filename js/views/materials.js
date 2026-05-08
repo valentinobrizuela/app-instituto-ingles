@@ -249,8 +249,6 @@ Views.Materials = {
             UI.closeModal();
             UI.showToast('Material publicado con éxito.', 'success');
             
-            // Forzar resincronización de materiales para ver el nuevo
-            await DB.init(); 
             this.render();
         } catch (err) {
             console.error(err);

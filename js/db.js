@@ -40,6 +40,17 @@ const DB = {
 
     // ── OPERACIONES CON SUPABASE ──
 
+    // Custom fetch for authenticated API calls
+    async authFetch(url, options = {}) {
+        const session = await this.getSession();
+        const headers = {
+            ...options.headers,
+            'Content-Type': 'application/json',
+            'Authorization': session ? `Bearer ${session.access_token}` : ''
+        };
+        return fetch(url, { ...options, headers });
+    },
+
     async insert(tableName, data) {
         if (!sb) return null;
 
@@ -64,7 +75,7 @@ const DB = {
             }
         } catch (err) {
             console.error("Supabase Insert Error:", err.message);
-            UI.showToast("Error al guardar: " + err.message, "error");
+            UI.showToast("Error al guardar: " + err.message, "danger");
         }
         return null;
     },
@@ -95,6 +106,7 @@ const DB = {
             }
         } catch (err) {
             console.error("Supabase Update Error:", err.message);
+            UI.showToast("Error al actualizar: " + err.message, "danger");
         }
         return null;
     },
@@ -117,6 +129,7 @@ const DB = {
             this.logAction(tableName, 'DELETE', { id });
         } catch (err) {
             console.error("Supabase Delete Error:", err.message);
+            UI.showToast("Error al eliminar: " + err.message, "danger");
         }
     },
 
@@ -162,6 +175,7 @@ const DB = {
             console.log("✅ Sincronización completada.");
         } catch (error) {
             console.error("Error crítico en DB.init:", error);
+            UI.showToast("Error de sincronización con el servidor", "danger");
         } finally {
             UI.hideLoader();
         }

@@ -12,27 +12,40 @@ const Auth = {
     async init() {
         if (!sb) return;
         
-        // Verificar si hay sesión activa en Supabase
-        const { data: { session } } = await sb.auth.getSession();
-        
-        if (session) {
-            // Obtener datos del perfil desde la tabla pública
-            const { data: profile, error } = await sb
-                .from('users')
-                .select('*')
-                .eq('email', session.user.email)
-                .single();
+        try {
+            // Verificar si hay sesión activa en Supabase
+            const { data: { session }, error: sessionError } = await sb.auth.getSession();
             
-            if (profile) {
-                this.currentUser = profile;
-                localStorage.setItem('westhouse_session', JSON.stringify(profile));
+            if (sessionError) throw sessionError;
+
+            if (session) {
+                // Obtener datos del perfil desde la tabla pública
+                const { data: profile, error } = await sb
+                    .from('users')
+                    .select('*')
+                    .eq('email', session.user.email)
+                    .single();
+                
+                if (profile) {
+                    this.currentUser = profile;
+                    localStorage.setItem('westhouse_session', JSON.stringify(profile));
+                } else {
+                    console.warn("Sesión activa pero perfil no encontrado en public.users");
+                    // Intentar recuperar de localStorage como último recurso si ya estaba logueado
+                    const cachedUser = localStorage.getItem('westhouse_session');
+                    if (cachedUser) this.currentUser = JSON.parse(cachedUser);
+                }
+            } else {
+                // Si no hay sesión en Supabase, limpiar local
+                localStorage.removeItem('westhouse_session');
+                localStorage.removeItem('westhouse_token');
+                this.currentUser = null;
             }
-        } else {
-            // Intentar recuperar de localStorage si no hay sesión (opcional, mejor confiar en Supabase)
-            const user = localStorage.getItem('westhouse_session');
-            if (user) {
-                this.currentUser = JSON.parse(user);
-            }
+        } catch (err) {
+            console.error("Auth Init Error:", err.message);
+            // Fallback a caché local si falla la conexión
+            const cachedUser = localStorage.getItem('westhouse_session');
+            if (cachedUser) this.currentUser = JSON.parse(cachedUser);
         }
     },
 

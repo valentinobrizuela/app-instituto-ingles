@@ -84,7 +84,7 @@ Views.Attendance = {
                     </thead>
                     <tbody>
                         ${attendance.reverse().map(a => {
-                            const c = coursesList.find(c => Number(c.id) === Number(a.courseId));
+                            const c = coursesList.find(c => Number(c.id) === Number(a.course_id));
                             const badge = a.status === 'Presente' ? '<span class="badge badge-success">Presente</span>' : 
                                           a.status === 'Tarde' ? '<span class="badge badge-warning">Tarde</span>' :
                                           '<span class="badge badge-danger">Ausente</span>';
@@ -207,7 +207,7 @@ Views.Attendance = {
         });
     },
 
-    mark(courseId, studentId, status, btnElem) {
+    async mark(courseId, studentId, status, btnElem) {
         const date = document.getElementById('a-date').value;
         if(!date) {
             UI.showToast("Selecciona una fecha válida", "error");
@@ -218,20 +218,24 @@ Views.Attendance = {
         const attendanceRecords = DB.getTable('attendance');
         const existing = attendanceRecords.find(a => Number(a.course_id) === Number(courseId) && Number(a.student_id) === Number(studentId) && a.date === date);
 
-        if(existing) {
-            DB.update('attendance', existing.id, { status: status });
-        } else {
-            DB.insert('attendance', {
-                course_id: Number(courseId),
-                student_id: Number(studentId),
-                date,
-                status
-            });
+        try {
+            if(existing) {
+                await DB.update('attendance', existing.id, { status: status });
+            } else {
+                await DB.insert('attendance', {
+                    course_id: Number(courseId),
+                    student_id: Number(studentId),
+                    date,
+                    status
+                });
+            }
+            UI.showToast(`Marcado como ${status}`, "success");
+        } catch (err) {
+            UI.showToast("Error al registrar asistencia", "danger");
+        } finally {
+            this.highlightExistingRecords(courseId);
+            UI.hideLoader();
         }
-        
-        this.highlightExistingRecords(courseId);
-        UI.hideLoader();
-        UI.showToast(`Marcado como ${status}`, "success");
     },
 
     exportAll() {

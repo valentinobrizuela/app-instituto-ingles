@@ -29,9 +29,9 @@
     --text-muted: #94a3b8;
     --border-color: #262626;
     --primary-light: #2d1808;
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.4);
 }
 
 * {
@@ -207,20 +207,21 @@ body {
     height: 38px;
     width: 38px;
     color: var(--danger);
-    background: #fee2e2;
-    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    border: none;
+    transition: var(--transition);
+    border: 1px solid rgba(239, 68, 68, 0.1);
     cursor: pointer;
 }
 
 .logout-btn-top:hover {
     background: var(--danger);
     color: white;
-    transform: scale(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 @keyframes cardEntrance {
@@ -261,8 +262,8 @@ body {
 
 .btn-primary:hover {
     background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(249, 115, 22, 0.25);
 }
 
 .btn-secondary {
