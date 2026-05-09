@@ -136,16 +136,34 @@ Views.Dashboard = {
         setTimeout(() => {
             const payments = DB.getTable('payments');
             const users = DB.getTable('users').filter(u => u.role === 'student');
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             
+            // Normalize levels to handle different casings or missing values
             const levels = { Beginner: 0, Intermediate: 0, Advanced: 0 };
-            users.forEach(u => { if (levels[u.level] !== undefined) levels[u.level]++; });
+            users.forEach(u => { 
+                const level = u.level ? u.level.charAt(0).toUpperCase() + u.level.slice(1).toLowerCase() : 'Beginner';
+                if (levels[level] !== undefined) {
+                    levels[level]++; 
+                } else {
+                    levels['Beginner']++; // Fallback
+                }
+            });
             
             const currentMonthRevenue = payments.reduce((sum, p) => p.status === 'Pagado' ? sum + p.amount : sum, 0);
 
-            Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#7c2d12';
+            // Chart configuration based on theme
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            
+            Chart.defaults.color = textColor;
+            Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
             const ctx = document.getElementById('mainChart');
             if (ctx) {
+                // Destroy existing chart if it exists to avoid overlap on re-render
+                const existingChart = Chart.getChart(ctx);
+                if (existingChart) existingChart.destroy();
+
                 new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -154,15 +172,43 @@ Views.Dashboard = {
                             label: 'Cobros ($)',
                             data: [1200, 1900, 1750, 2500, 2100, currentMonthRevenue],
                             backgroundColor: 'rgba(249, 115, 22, 0.8)',
-                            borderRadius: 6
+                            hoverBackgroundColor: 'rgba(249, 115, 22, 1)',
+                            borderRadius: 8
                         }]
                     },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                                titleColor: isDark ? '#f8fafc' : '#0f172a',
+                                bodyColor: isDark ? '#f8fafc' : '#0f172a',
+                                borderColor: 'var(--border-color)',
+                                borderWidth: 1
+                            }
+                        }, 
+                        scales: { 
+                            y: { 
+                                beginAtZero: true,
+                                grid: { color: gridColor },
+                                ticks: { color: textColor }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: textColor }
+                            }
+                        } 
+                    }
                 });
             }
 
             const ctxPie = document.getElementById('pieChart');
             if (ctxPie) {
+                const existingChart = Chart.getChart(ctxPie);
+                if (existingChart) existingChart.destroy();
+
                 new Chart(ctxPie, {
                     type: 'doughnut',
                     data: {
@@ -170,10 +216,26 @@ Views.Dashboard = {
                         datasets: [{
                             data: [levels.Beginner, levels.Intermediate, levels.Advanced],
                             backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                            borderWidth: 0
+                            hoverOffset: 10,
+                            borderWidth: isDark ? 2 : 0,
+                            borderColor: isDark ? '#1e293b' : '#ffffff'
                         }]
                     },
-                    options: { responsive: true, cutout: '70%'}
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true,
+                                    color: textColor
+                                }
+                            }
+                        }
+                    }
                 });
             }
         }, 100);

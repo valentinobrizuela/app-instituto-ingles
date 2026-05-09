@@ -84,9 +84,25 @@ Views.Users = {
                     ${u.age ? `<div class="text-muted" style="font-size:0.8rem">Edad: ${u.age}</div>` : ''}
                 </td>
                 <td style="font-size:0.9rem">
-                    <div><i class="fa-regular fa-envelope text-muted"></i> ${u.email || '-'}</div>
-                    ${u.parent_email ? `<div style="margin-top:0.25rem; font-size:0.8rem; color:var(--text-muted)"><i class="fa-solid fa-user-shield text-info"></i> Tutor: ${u.parent_email}</div>` : ''}
-                    ${u.parent_phone ? `<div style="margin-top:0.25rem; font-size:0.8rem;"><a href="https://wa.me/${u.parent_phone.replace(/\D/g,'')}?text=Hola,%20nos%20comunicamos%20de%20West%20House%20English%20School%20por%20motivos%20administrativos." target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold"><i class="fa-brands fa-whatsapp"></i> ${u.parent_phone}</a></div>` : ''}
+                    <div style="display:flex; align-items:center; gap:0.5rem">
+                        <i class="fa-regular fa-envelope text-muted"></i> 
+                        <span>${u.email || '-'}</span>
+                        ${u.email ? `<button class="btn" style="padding:2px 5px; background:transparent; color:var(--info); font-size:0.8rem" onclick="UI.composeEmail('${u.email}', 'Consulta del Instituto West House', 'Hola ${u.name.split(' ')[0]},')" title="Enviar Email"><i class="fa-solid fa-paper-plane"></i></button>` : ''}
+                    </div>
+                    ${u.parent_email ? `
+                        <div style="margin-top:0.25rem; font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; gap:0.5rem">
+                            <i class="fa-solid fa-user-shield text-info"></i> 
+                            <span>Tutor: ${u.parent_email}</span>
+                            <button class="btn" style="padding:2px 5px; background:transparent; color:var(--info); font-size:0.7rem" onclick="UI.composeEmail('${u.parent_email}', 'Consulta sobre el alumno ${u.name}', 'Estimados padres de ${u.name},')" title="Email al Tutor"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>` : ''}
+                    ${u.parent_phone ? `
+                        <div style="margin-top:0.25rem; font-size:0.8rem;">
+                            <a href="https://wa.me/${u.parent_phone.replace(/\D/g,'')}?text=Hola,%20nos%20comunicamos%20de%20West%20House%20English%20School%20por%20motivos%20administrativos." 
+                               target="_blank" 
+                               style="color:#10b981; text-decoration:none; font-weight:bold; display:flex; align-items:center; gap:0.4rem">
+                                <i class="fa-brands fa-whatsapp"></i> ${u.parent_phone}
+                            </a>
+                        </div>` : ''}
                 </td>
                 <td>
                     ${badge}
@@ -94,12 +110,14 @@ Views.Users = {
                 </td>
                 <td>${courseHtml}</td>
                 <td style="text-align:center">
-                    <button class="btn" style="background:var(--primary-light); color:var(--primary); border:none; padding:0.4rem 0.6rem; border-radius:6px; cursor:pointer; margin-right:4px" onclick="Views.Users.openModal(${u.id})" title="Editar">
-                        <i class="fa-solid fa-user-pen"></i>
-                    </button>
-                    <button class="btn" style="background:#fee2e2; color:#b91c1c; border:none; padding:0.4rem 0.6rem; border-radius:6px; cursor:pointer;" onclick="Views.Users.delete(${u.id})" title="Eliminar">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                    <div style="display:flex; justify-content:center; gap:0.5rem">
+                        <button class="btn" style="background:var(--primary-light); color:var(--primary); border:none; padding:0.5rem; border-radius:10px; cursor:pointer;" onclick="Views.Users.openModal(${u.id})" title="Editar">
+                            <i class="fa-solid fa-user-pen"></i>
+                        </button>
+                        <button class="btn" style="background:rgba(239, 68, 68, 0.1); color:var(--danger); border:none; padding:0.5rem; border-radius:10px; cursor:pointer;" onclick="Views.Users.delete(${u.id})" title="Eliminar">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;

@@ -132,13 +132,11 @@ const UI = {
                             </div>
                         </div>
                     </div>
-                </aside>
-
-                <main class="main-content">
+                 <main class="main-content">
                     <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
                         <div id="section-title-wrapper">
                              <button class="mobile-nav-toggle" onclick="UI.toggleSidebar()">
-                                 <i class="fa-solid fa-bars"></i>
+                                  <i class="fa-solid fa-bars"></i>
                              </button>
                              <!-- Dinámico -->
                         </div>
@@ -162,8 +160,35 @@ const UI = {
                     </header>
 
                     <div id="router-view"></div>
+
+                    <!-- Menú de WhatsApp (Multi-contacto) -->
+                    <div id="wa-menu" class="wa-menu">
+                        <div class="wa-menu-header">¿Con quién quieres hablar?</div>
+                        <a href="https://wa.me/54938041352708?text=Hola%20Directora%20Maricel,%20le%20escribo%20desde%20la%20App%20del%20Instituto." 
+                           target="_blank" class="wa-menu-item">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <div class="contact-info">
+                                <span class="contact-name">Maricel</span>
+                                <span class="contact-role">Directora del Instituto</span>
+                            </div>
+                        </a>
+                        <a href="https://wa.me/5491176086865?text=Hola%20Morena,%20tengo%20una%20consulta%20administrativa%20desde%20la%20App." 
+                           target="_blank" class="wa-menu-item">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <div class="contact-info">
+                                <span class="contact-name">Morena Brizuela</span>
+                                <span class="contact-role">Secretaria</span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Botón Flotante WhatsApp -->
+                    <button class="wa-floating" onclick="UI.toggleWhatsAppMenu()" title="Consultas por WhatsApp">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </button>
                 </main>
             </div>
+        `;           </div>
         `;
         this.initTheme();
     },
@@ -186,6 +211,13 @@ const UI = {
             document.documentElement.setAttribute('data-theme', 'dark');
             localStorage.setItem('westhouse_theme', 'dark');
             if(icon) icon.className = 'fa-solid fa-sun';
+        }
+
+        // Re-render current view if it has charts (like dashboard)
+        if (window.location.hash === '#/' || window.location.hash === '') {
+            if (window.Views && Views.Dashboard) {
+                Views.Dashboard.render();
+            }
         }
     },
 
@@ -369,6 +401,29 @@ const UI = {
                     </h2>
                 </div>
             `;
+        }
+    },
+
+    composeEmail(recipient, subject = '', body = '') {
+        const mailto = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailto;
+    },
+
+    toggleWhatsAppMenu() {
+        const menu = document.getElementById('wa-menu');
+        if (menu) {
+            menu.classList.toggle('active');
+            
+            // Cerrar al hacer clic fuera
+            if (menu.classList.contains('active')) {
+                const closeHandler = (e) => {
+                    if (!menu.contains(e.target) && !e.target.closest('.wa-floating')) {
+                        menu.classList.remove('active');
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                setTimeout(() => document.addEventListener('click', closeHandler), 10);
+            }
         }
     }
 };
