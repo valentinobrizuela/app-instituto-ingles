@@ -26,6 +26,14 @@ const App = {
         // Sincronización de Datos (Backend unificado)
         await DB.init();
         await Auth.init();
+        
+        // Command Palette Shortcut (Ctrl+K)
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                UI.showCommandPalette();
+            }
+        });
 
         console.log("✓ Sistema sincronizado con backend.");
 
@@ -67,8 +75,10 @@ const App = {
             UI.renderLayout();
         }
 
-        // Actualizar activo en la barra lateral
+        // Actualizar UI
         UI.updateActiveNavLink();
+        UI.renderBreadcrumbs();
+        UI.renderNotifications();
 
         // Limpiar vista actual
         const viewContainer = document.getElementById('router-view');
@@ -127,6 +137,11 @@ const App = {
                     UI.setSectionTitle('Auditoría de Sistema', 'fa-solid fa-shield-halved');
                     Views.Logs.render();
                 } else window.location.hash = '#/';
+                break;
+            case '#/settings':
+            case '#/profile':
+                UI.setSectionTitle('Configuración de Usuario', 'fa-solid fa-user-gear');
+                if (Views.Settings) Views.Settings.render();
                 break;
             default:
                 UI.setSectionTitle('Error 404', 'fa-solid fa-triangle-exclamation');

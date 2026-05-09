@@ -81,18 +81,45 @@ Views.Dashboard = {
                             <i class="fa-solid fa-chalkboard-user fa-lg"></i>
                         </div>
                     </div>
+            </div>
+            
+            <div id="quick-actions" style="margin-bottom: 2rem;">
+                <div style="display:flex; gap:1rem; flex-wrap:wrap">
+                    <button class="btn btn-secondary" onclick="window.location.hash='#/users'"><i class="fa-solid fa-user-plus"></i> Nuevo Alumno</button>
+                    <button class="btn btn-secondary" onclick="window.location.hash='#/payments'"><i class="fa-solid fa-file-invoice"></i> Registrar Pago</button>
+                    <button class="btn btn-secondary" onclick="window.location.hash='#/attendance'"><i class="fa-solid fa-calendar-plus"></i> Tomar Asistencia</button>
+                    <button class="btn btn-secondary" onclick="UI.showCommandPalette()"><i class="fa-solid fa-magnifying-glass"></i> Búsqueda Rápida</button>
                 </div>
             </div>
 
             <div id="dashboard-charts" style="min-height:300px">
-                <div class="responsive-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
-                    <div class="card">
-                        <h3 class="mb-4"><i class="fa-solid fa-chart-column text-primary"></i> Ingresos Mensuales</h3>
-                        <canvas id="mainChart" style="max-height: 300px; width: 100%;"></canvas>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem">
+                        <h3 style="margin:0"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Actividad Reciente</h3>
+                        <a href="#/logs" class="text-sm text-primary" style="text-decoration:none">Ver todo</a>
                     </div>
-                    <div class="card">
-                        <h3 class="mb-4"><i class="fa-solid fa-chart-pie text-accent"></i> Alumnos por Nivel</h3>
-                        <canvas id="pieChart" style="max-height: 300px; width: 100%;"></canvas>
+                    <div id="activity-feed-container">
+                        ${this.renderActivityFeed()}
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="mb-4"><i class="fa-solid fa-circle-info text-info"></i> Estado del Sistema</h3>
+                    <div style="display:flex; flex-direction:column; gap:1rem">
+                        <div style="display:flex; justify-content:space-between">
+                            <span class="text-muted">Servidor</span>
+                            <span class="badge badge-success">Online</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between">
+                            <span class="text-muted">Base de Datos</span>
+                            <span class="badge badge-success">Conectada</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between">
+                            <span class="text-muted">Último Backup</span>
+                            <span style="font-size:0.8rem">Hace 2 horas</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,5 +266,35 @@ Views.Dashboard = {
                 });
             }
         }, 100);
+    },
+
+    renderActivityFeed() {
+        const logs = DB.getTable('logs').slice(-6).reverse();
+        if (logs.length === 0) return '<p class="text-muted">No hay actividad reciente.</p>';
+
+        return `
+            <ul class="activity-feed">
+                ${logs.map(log => {
+                    let icon = 'fa-solid fa-circle-dot';
+                    let color = 'var(--text-muted)';
+                    
+                    if (log.action.includes('Pago')) { icon = 'fa-solid fa-money-bill-wave'; color = 'var(--success)'; }
+                    if (log.action.includes('Alumno')) { icon = 'fa-solid fa-user'; color = 'var(--info)'; }
+                    if (log.action.includes('Asistencia')) { icon = 'fa-solid fa-calendar-check'; color = 'var(--warning)'; }
+
+                    return `
+                        <li class="activity-item">
+                            <div class="activity-icon" style="background:${color}22; color:${color}">
+                                <i class="${icon}" style="font-size:0.8rem"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p style="font-size:0.9rem; margin:0">${log.action}</p>
+                                <p class="activity-time">${log.timestamp}</p>
+                            </div>
+                        </li>
+                    `;
+                }).join('')}
+            </ul>
+        `;
     }
 };

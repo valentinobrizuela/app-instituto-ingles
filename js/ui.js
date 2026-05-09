@@ -135,26 +135,53 @@ const UI = {
                 </aside>
 
                 <main class="main-content">
-                    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-                        <div id="section-title-wrapper">
-                             <button class="mobile-nav-toggle" onclick="UI.toggleSidebar()">
-                                  <i class="fa-solid fa-bars"></i>
-                             </button>
-                             <!-- Dinámico -->
+                    <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; gap: 2rem;">
+                        <div id="section-header-left" style="display:flex; flex-direction:column; gap:0.25rem; flex:1">
+                             <div id="breadcrumbs" class="breadcrumbs"></div>
+                             <div id="section-title-wrapper"></div>
                         </div>
+
+                        <!-- Global Search Bar -->
+                        <div class="search-container">
+                            <div class="search-input-wrapper">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" class="search-input" placeholder="Buscar alumnos, cursos..." onfocus="UI.showCommandPalette()" readonly>
+                                <span class="search-shortcut">Ctrl K</span>
+                            </div>
+                        </div>
+
                         <div style="display:flex; gap:1rem; align-items:center">
                             <div style="position:relative">
-                                <i class="fa-regular fa-bell" style="font-size:1.25rem; color:var(--text-muted)"></i>
-                                <span style="position:absolute; top:-5px; right:-5px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:2px solid #fff"></span>
+                                <button class="btn" style="padding:0.4rem; background:transparent; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;" onclick="UI.toggleNotifications()">
+                                    <i class="fa-regular fa-bell"></i>
+                                    <span id="notif-badge" style="position:absolute; top:2px; right:2px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:2px solid var(--bg-card); display:none"></span>
+                                </button>
+                                
+                                <!-- Popover de Notificaciones -->
+                                <div id="notification-popover" class="notification-popover">
+                                    <div class="notification-header">
+                                        <span>Notificaciones</span>
+                                        <button class="btn-text" style="font-size:0.7rem; color:var(--primary)" onclick="UI.clearNotifications()">Limpiar</button>
+                                    </div>
+                                    <div id="notification-list" style="max-height: 300px; overflow-y: auto;">
+                                        <div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem">No tienes notificaciones nuevas</div>
+                                    </div>
+                                </div>
                             </div>
+
                             <div style="width:1px; height:24px; background:var(--border-color)"></div>
+                            
                             <button class="btn" style="padding:0.4rem; background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;" onclick="UI.toggleTheme()" title="Modo Oscuro/Claro">
                                 <i class="fa-solid fa-moon"></i>
                             </button>
+
                             <div style="width:1px; height:24px; background:var(--border-color)"></div>
-                            <p class="text-sm font-bold text-muted">${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
                             
-                            <div style="width:1px; height:24px; background:var(--border-color)"></div>
+                            <div style="display:flex; align-items:center; gap:0.5rem; cursor:pointer" onclick="window.location.hash='#/settings'">
+                                <div class="avatar" style="width:32px; height:32px; font-size:0.8rem">${user.name[0]}</div>
+                                <i class="fa-solid fa-chevron-down" style="font-size:0.7rem; color:var(--text-muted)"></i>
+                            </div>
+                            
                             <button class="btn logout-btn-top" onclick="Auth.logout()" title="Cerrar Sesión">
                                 <i class="fa-solid fa-power-off"></i>
                             </button>
@@ -431,5 +458,149 @@ const UI = {
                 setTimeout(() => document.addEventListener('click', closeHandler), 10);
             }
         }
+    },
+
+    // --- PROFESSIONAL UPGRADES ---
+    renderBreadcrumbs() {
+        const hash = window.location.hash || '#/';
+        const container = document.getElementById('breadcrumbs');
+        if (!container) return;
+
+        const parts = hash.replace('#/', '').split('/').filter(p => p);
+        let html = `<span class="breadcrumb-item"><a href="#/" style="color:inherit;text-decoration:none">Inicio</a></span>`;
+        
+        parts.forEach((part, index) => {
+            const isLast = index === parts.length - 1;
+            const label = part.charAt(0).toUpperCase() + part.slice(1);
+            html += `<span class="breadcrumb-item ${isLast ? 'active' : ''}">${label}</span>`;
+        });
+
+        container.innerHTML = html;
+    },
+
+    showCommandPalette() {
+        if (document.querySelector('.command-palette-overlay')) return;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'command-palette-overlay';
+        overlay.onclick = (e) => {
+            if (e.target === overlay) UI.hideCommandPalette();
+        };
+
+        overlay.innerHTML = `
+            <div class="command-palette">
+                <div class="command-palette-search">
+                    <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                    <input type="text" class="command-palette-input" placeholder="¿Qué estás buscando? (Esc para salir)" autofocus oninput="UI.handleSearch(this.value)">
+                </div>
+                <div id="command-results" class="command-palette-results">
+                    <div style="padding:2rem; text-align:center; color:var(--text-muted)">
+                        Escribe para buscar alumnos, cursos o materiales...
+                    </div>
+                </div>
+                <div style="padding:0.75rem 1.5rem; background:var(--bg-main); border-top:1px solid var(--border-color); font-size:0.7rem; color:var(--text-muted); display:flex; gap:1.5rem">
+                    <span><kbd style="background:#eee;padding:2px 4px;border-radius:4px">↑↓</kbd> Navegar</span>
+                    <span><kbd style="background:#eee;padding:2px 4px;border-radius:4px">Enter</kbd> Seleccionar</span>
+                    <span><kbd style="background:#eee;padding:2px 4px;border-radius:4px">Esc</kbd> Cerrar</span>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        document.querySelector('.command-palette-input').focus();
+
+        // Esc listener
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                UI.hideCommandPalette();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    },
+
+    hideCommandPalette() {
+        const overlay = document.querySelector('.command-palette-overlay');
+        if (overlay) overlay.remove();
+    },
+
+    handleSearch(term) {
+        const results = Search.query(term);
+        const container = document.getElementById('command-results');
+        if (!container) return;
+
+        if (results.length === 0) {
+            container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted)">No se encontraron resultados para "${term}"</div>`;
+            return;
+        }
+
+        container.innerHTML = results.map((res, index) => `
+            <div class="command-result-item" onclick="UI.navigateSearch('${res.link}')">
+                <div class="command-result-icon">
+                    <i class="${res.icon}"></i>
+                </div>
+                <div style="flex:1">
+                    <div style="font-weight:600; color:var(--text-main)">${res.title}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted)">${res.subtitle}</div>
+                </div>
+                <div class="badge badge-info" style="font-size:0.6rem">${res.type}</div>
+            </div>
+        `).join('');
+    },
+
+    navigateSearch(link) {
+        this.hideCommandPalette();
+        window.location.hash = link;
+    },
+
+    toggleNotifications() {
+        const popover = document.getElementById('notification-popover');
+        if (popover) {
+            popover.classList.toggle('active');
+            
+            if (popover.classList.contains('active')) {
+                this.renderNotifications();
+                const closeHandler = (e) => {
+                    if (!popover.contains(e.target) && !e.target.closest('[onclick="UI.toggleNotifications()"]')) {
+                        popover.classList.remove('active');
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                setTimeout(() => document.addEventListener('click', closeHandler), 10);
+            }
+        }
+    },
+
+    renderNotifications() {
+        const logs = DB.getTable('logs').slice(-5).reverse();
+        const container = document.getElementById('notification-list');
+        const badge = document.getElementById('notif-badge');
+
+        if (logs.length === 0) {
+            container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem">No tienes notificaciones nuevas</div>`;
+            if (badge) badge.style.display = 'none';
+            return;
+        }
+
+        if (badge) badge.style.display = 'block';
+
+        container.innerHTML = logs.map(log => `
+            <div style="padding:1rem; border-bottom:1px solid var(--border-color); cursor:pointer" onclick="window.location.hash='#/logs'">
+                <div style="display:flex; gap:0.75rem">
+                    <div style="width:8px; height:8px; background:var(--primary); border-radius:50%; margin-top:5px"></div>
+                    <div style="flex:1">
+                        <p style="font-size:0.85rem; margin-bottom:0.25rem">${log.action}</p>
+                        <p style="font-size:0.7rem; color:var(--text-muted)">${log.timestamp}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    clearNotifications() {
+        const container = document.getElementById('notification-list');
+        const badge = document.getElementById('notif-badge');
+        container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem">No tienes notificaciones nuevas</div>`;
+        if (badge) badge.style.display = 'none';
     }
 };
