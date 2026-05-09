@@ -132,7 +132,9 @@ const UI = {
                             </div>
                         </div>
                     </div>
-                 <main class="main-content">
+                </aside>
+
+                <main class="main-content">
                     <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
                         <div id="section-title-wrapper">
                              <button class="mobile-nav-toggle" onclick="UI.toggleSidebar()">
@@ -188,7 +190,6 @@ const UI = {
                     </button>
                 </main>
             </div>
-        `;           </div>
         `;
         this.initTheme();
     },
