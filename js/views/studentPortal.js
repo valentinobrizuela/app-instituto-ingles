@@ -102,6 +102,15 @@ Views.StudentPortal = {
 
                 <div class="card" style="grid-column: 1 / -1;">
                     <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
+                        <i class="fa-solid fa-trophy"></i> Mi Sala de Trofeos
+                    </h3>
+                    <div id="trophy-room" style="display:flex; gap:1.5rem; flex-wrap:wrap">
+                        ${this.renderBadges(user)}
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;">
+                    <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
                         <i class="fa-solid fa-timeline"></i> Mi Camino de Aprendizaje
                     </h3>
                     <div id="learning-timeline">
@@ -155,5 +164,32 @@ Views.StudentPortal = {
                 `).join('')}
             </div>
         `;
+    },
+
+    renderBadges(user) {
+        const badges = user.badges || [];
+        const badgeData = {
+            'Scholar': { icon: 'fa-graduation-cap', color: '#3b82f6', desc: 'Por llegar al Nivel 2' },
+            'Master': { icon: 'fa-award', color: '#8b5cf6', desc: 'Por llegar al Nivel 5' },
+            'Perfect-Attendance': { icon: 'fa-calendar-check', color: '#10b981', desc: 'Asistencia perfecta' },
+            'Early-Bird': { icon: 'fa-bolt', color: '#f59e0b', desc: 'Inscripción temprana' }
+        };
+
+        if (badges.length === 0) {
+            return `<p class="text-muted" style="padding:1rem; border:1px dashed var(--border-color); width:100%; text-align:center; border-radius:12px">Aún no has ganado medallas. ¡Sigue estudiando para desbloquearlas!</p>`;
+        }
+
+        return badges.map(b => {
+            const data = badgeData[b] || { icon: 'fa-certificate', color: '#64748b', desc: 'Logro desbloqueado' };
+            return `
+                <div class="badge-card" style="text-align:center; width:120px; padding:1rem; background:var(--bg-main); border-radius:16px; border:1px solid var(--border-color)">
+                    <div style="width:60px; height:60px; background:${data.color}22; color:${data.color}; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 0.75rem; font-size:1.5rem">
+                        <i class="fa-solid ${data.icon}"></i>
+                    </div>
+                    <p style="font-weight:700; font-size:0.85rem; margin-bottom:0.25rem">${b}</p>
+                    <p style="font-size:0.65rem; color:var(--text-muted)">${data.desc}</p>
+                </div>
+            `;
+        }).join('');
     }
 };

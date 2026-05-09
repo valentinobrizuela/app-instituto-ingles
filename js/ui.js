@@ -168,6 +168,9 @@ const UI = {
                         </div>
 
                         <div style="display:flex; gap:1rem; align-items:center">
+                            <button class="btn" style="padding:0.4rem; background:transparent; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;" onclick="UI.toggleTheme()" title="Cambiar Tema">
+                                <i class="fa-solid ${document.documentElement.getAttribute('data-theme') === 'dark' ? 'fa-sun' : 'fa-moon'}"></i>
+                            </button>
                             <div style="position:relative">
                                 <button class="btn" style="padding:0.4rem; background:transparent; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;" onclick="UI.toggleNotifications()">
                                     <i class="fa-regular fa-bell"></i>
@@ -246,6 +249,36 @@ const UI = {
                         <i class="fa-brands fa-whatsapp"></i>
                     </button>
                 </main>
+
+                <!-- Floating Mila -->
+                <div class="mila-floating-btn" onclick="UI.toggleMilaChat()" title="Hablar con Mila">
+                    <img src="img/mila.png" alt="Mila AI">
+                </div>
+                <div id="mila-floating-chat" class="mila-floating-chat">
+                    <div class="mila-chat-header">
+                        <img src="img/mila.png" style="width:30px; height:30px; border-radius:50%; background:white">
+                        <div style="flex:1">
+                            <p style="font-weight:700; font-size:0.9rem; margin:0">Mila — Tu Asistente</p>
+                            <p style="font-size:0.65rem; margin:0; opacity:0.8">¡Miau! Siempre lista para ayudar</p>
+                        </div>
+                        <i class="fa-solid fa-xmark" style="cursor:pointer" onclick="UI.toggleMilaChat()"></i>
+                    </div>
+                    <div class="mila-chat-body">
+                        <p style="font-size:0.85rem; line-height:1.4">¡Hola! Soy <strong>Mila</strong>. Mi misión es ayudarte a que tu experiencia en West House sea increíble.</p>
+                        <hr style="margin:1rem 0; border:0; border-top:1px solid var(--border-color)">
+                        <div style="display:flex; flex-direction:column; gap:0.5rem">
+                            <button class="btn btn-secondary btn-sm w-full" style="justify-content:flex-start; text-align:left" onclick="UI.showToast('Mila: ¡Sigue sumando XP para ganar medallas!', 'info')">
+                                <i class="fa-solid fa-lightbulb text-warning"></i> ¿Cómo gano XP?
+                            </button>
+                            <button class="btn btn-secondary btn-sm w-full" style="justify-content:flex-start; text-align:left" onclick="UI.showToast('Mila: Puedes ver tus tareas en la sección de Materiales.', 'info')">
+                                <i class="fa-solid fa-book text-primary"></i> Ver tareas pendientes
+                            </button>
+                            <button class="btn btn-secondary btn-sm w-full" style="justify-content:flex-start; text-align:left" onclick="window.location.hash='#/settings'">
+                                <i class="fa-solid fa-user-gear"></i> Editar mi perfil
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
         this.initTheme();
@@ -696,6 +729,25 @@ const UI = {
             }
             return "¡Hola! Soy Mila, tu asistente. ¿En qué puedo ayudarte hoy?";
         }
+    },
+
+    initTheme() {
+        const savedTheme = localStorage.getItem('westhouse_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    },
+
+    toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('westhouse_theme', next);
+        UI.renderLayout(); // Re-render to update icon and styles
+        UI.showToast(`Modo ${next === 'dark' ? 'Oscuro' : 'Claro'} activado`, 'info');
+    },
+
+    toggleMilaChat() {
+        const chat = document.getElementById('mila-floating-chat');
+        if (chat) chat.classList.toggle('active');
     },
 
     clearNotifications() {

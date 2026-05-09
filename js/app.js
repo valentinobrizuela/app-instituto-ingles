@@ -1,6 +1,7 @@
 // Bootstrapper y Router
 const App = {
     async init() {
+        UI.initTheme();
         console.log("Iniciando West House OS (Backend Ready)...");
 
         // PWA Service Worker Registration
