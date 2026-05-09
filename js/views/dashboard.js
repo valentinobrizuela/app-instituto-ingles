@@ -35,7 +35,8 @@ Views.Dashboard = {
                 <p class="text-muted">Bienvenido de nuevo, ${user.name}. Aquí tienes un resumen de la academia.</p>
             </div>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <!-- Metric Cards -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
                 <div class="card" style="border-bottom: 4px solid var(--primary); padding: 1.25rem;">
                     <div style="display:flex; justify-content:space-between; align-items:start">
                         <div>
@@ -81,46 +82,54 @@ Views.Dashboard = {
                             <i class="fa-solid fa-chalkboard-user fa-lg"></i>
                         </div>
                     </div>
-            </div>
-            
-            <div id="quick-actions" style="margin-bottom: 2rem;">
-                <div style="display:flex; gap:1rem; flex-wrap:wrap">
-                    <button class="btn btn-secondary" onclick="window.location.hash='#/users'"><i class="fa-solid fa-user-plus"></i> Nuevo Alumno</button>
-                    <button class="btn btn-secondary" onclick="window.location.hash='#/payments'"><i class="fa-solid fa-file-invoice"></i> Registrar Pago</button>
-                    <button class="btn btn-secondary" onclick="window.location.hash='#/attendance'"><i class="fa-solid fa-calendar-plus"></i> Tomar Asistencia</button>
-                    <button class="btn btn-secondary" onclick="UI.showCommandPalette()"><i class="fa-solid fa-magnifying-glass"></i> Búsqueda Rápida</button>
                 </div>
             </div>
 
-            <div id="dashboard-charts" style="min-height:300px">
-            </div>
-
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem">
-                        <h3 style="margin:0"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Actividad Reciente</h3>
-                        <a href="#/logs" class="text-sm text-primary" style="text-decoration:none">Ver todo</a>
-                    </div>
-                    <div id="activity-feed-container">
-                        ${this.renderActivityFeed()}
-                    </div>
+            <!-- Main Dashboard Grid -->
+            <div style="display:grid; grid-template-columns: 240px 1fr; gap: 2rem;">
+                
+                <!-- Left: Quick Actions -->
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    <h3 style="font-size:1.1rem; margin-bottom:0.5rem"><i class="fa-solid fa-bolt text-warning"></i> Acciones</h3>
+                    <button class="btn btn-secondary w-full" style="justify-content:flex-start; padding:1rem" onclick="window.location.hash='#/users'">
+                        <i class="fa-solid fa-user-plus"></i> Nuevo Alumno
+                    </button>
+                    <button class="btn btn-secondary w-full" style="justify-content:flex-start; padding:1rem" onclick="window.location.hash='#/payments'">
+                        <i class="fa-solid fa-file-invoice"></i> Registrar Pago
+                    </button>
+                    <button class="btn btn-secondary w-full" style="justify-content:flex-start; padding:1rem" onclick="window.location.hash='#/attendance'">
+                        <i class="fa-solid fa-calendar-plus"></i> Tomar Asistencia
+                    </button>
+                    <button class="btn btn-secondary w-full" style="justify-content:flex-start; padding:1rem" onclick="UI.showCommandPalette()">
+                        <i class="fa-solid fa-magnifying-glass"></i> Búsqueda (Ctrl+K)
+                    </button>
                 </div>
-                <div class="card">
-                    <h3 class="mb-4"><i class="fa-solid fa-circle-info text-info"></i> Estado del Sistema</h3>
-                    <div style="display:flex; flex-direction:column; gap:1rem">
-                        <div style="display:flex; justify-content:space-between">
-                            <span class="text-muted">Servidor</span>
-                            <span class="badge badge-success">Online</span>
+
+                <!-- Right: Charts and Activity -->
+                <div style="display:flex; flex-direction:column; gap:2rem;">
+                    
+                    <!-- Charts Row -->
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem">
+                        <div class="card">
+                            <h3 class="mb-4"><i class="fa-solid fa-chart-column text-primary"></i> Ingresos Mensuales</h3>
+                            <canvas id="mainChart" style="max-height: 280px; width: 100%;"></canvas>
                         </div>
-                        <div style="display:flex; justify-content:space-between">
-                            <span class="text-muted">Base de Datos</span>
-                            <span class="badge badge-success">Conectada</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between">
-                            <span class="text-muted">Último Backup</span>
-                            <span style="font-size:0.8rem">Hace 2 horas</span>
+                        <div class="card">
+                            <h3 class="mb-4"><i class="fa-solid fa-chart-pie text-accent"></i> Alumnos por Nivel</h3>
+                            <canvas id="pieChart" style="max-height: 280px; width: 100%;"></canvas>
                         </div>
                     </div>
+
+                    <!-- Activity Row -->
+                    <div class="card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem">
+                            <h3 style="margin:0"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Actividad Reciente</h3>
+                        </div>
+                        <div id="activity-feed-container">
+                            ${this.renderActivityFeed()}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         `;
@@ -165,20 +174,15 @@ Views.Dashboard = {
             const users = DB.getTable('users').filter(u => u.role === 'student');
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             
-            // Normalize levels to handle different casings or missing values
             const levels = { Beginner: 0, Intermediate: 0, Advanced: 0 };
             users.forEach(u => { 
                 const level = u.level ? u.level.charAt(0).toUpperCase() + u.level.slice(1).toLowerCase() : 'Beginner';
-                if (levels[level] !== undefined) {
-                    levels[level]++; 
-                } else {
-                    levels['Beginner']++; // Fallback
-                }
+                if (levels[level] !== undefined) levels[level]++; 
+                else levels['Beginner']++;
             });
             
             const currentMonthRevenue = payments.reduce((sum, p) => p.status === 'Pagado' ? sum + p.amount : sum, 0);
 
-            // Chart configuration based on theme
             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
             const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
             
@@ -187,7 +191,6 @@ Views.Dashboard = {
 
             const ctx = document.getElementById('mainChart');
             if (ctx) {
-                // Destroy existing chart if it exists to avoid overlap on re-render
                 const existingChart = Chart.getChart(ctx);
                 if (existingChart) existingChart.destroy();
 
@@ -197,7 +200,7 @@ Views.Dashboard = {
                         labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Mes Actual'],
                         datasets: [{
                             label: 'Cobros ($)',
-                            data: [1200, 1900, 1750, 2500, 2100, currentMonthRevenue],
+                            data: [12000, 19000, 17500, 25000, 21000, currentMonthRevenue],
                             backgroundColor: 'rgba(249, 115, 22, 0.8)',
                             hoverBackgroundColor: 'rgba(249, 115, 22, 1)',
                             borderRadius: 8
@@ -207,25 +210,11 @@ Views.Dashboard = {
                         responsive: true, 
                         maintainAspectRatio: false,
                         plugins: { 
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                                titleColor: isDark ? '#f8fafc' : '#0f172a',
-                                bodyColor: isDark ? '#f8fafc' : '#0f172a',
-                                borderColor: 'var(--border-color)',
-                                borderWidth: 1
-                            }
+                            legend: { display: false }
                         }, 
                         scales: { 
-                            y: { 
-                                beginAtZero: true,
-                                grid: { color: gridColor },
-                                ticks: { color: textColor }
-                            },
-                            x: {
-                                grid: { display: false },
-                                ticks: { color: textColor }
-                            }
+                            y: { beginAtZero: true, grid: { color: gridColor } },
+                            x: { grid: { display: false } }
                         } 
                     }
                 });
@@ -243,7 +232,6 @@ Views.Dashboard = {
                         datasets: [{
                             data: [levels.Beginner, levels.Intermediate, levels.Advanced],
                             backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                            hoverOffset: 10,
                             borderWidth: isDark ? 2 : 0,
                             borderColor: isDark ? '#1e293b' : '#ffffff'
                         }]
@@ -253,14 +241,7 @@ Views.Dashboard = {
                         maintainAspectRatio: false,
                         cutout: '75%',
                         plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    usePointStyle: true,
-                                    color: textColor
-                                }
-                            }
+                            legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, color: textColor } }
                         }
                     }
                 });
@@ -269,31 +250,45 @@ Views.Dashboard = {
     },
 
     renderActivityFeed() {
-        const logs = DB.getTable('logs').slice(-6).reverse();
-        if (logs.length === 0) return '<p class="text-muted">No hay actividad reciente.</p>';
+        // Aggregate recent actions from different tables
+        const payments = DB.getTable('payments').slice(-3).map(p => ({
+            action: `Pago de ${p.student_name}: $${p.amount}`,
+            date: p.date,
+            icon: 'fa-solid fa-money-bill-wave',
+            color: 'var(--success)'
+        }));
+        
+        const attendance = DB.getTable('attendance').slice(-3).map(a => ({
+            action: `Asistencia tomada en ${a.course_name}`,
+            date: a.date,
+            icon: 'fa-solid fa-calendar-check',
+            color: 'var(--warning)'
+        }));
+
+        const students = DB.getTable('users').filter(u => u.role === 'student').slice(-3).map(u => ({
+            action: `Nuevo alumno inscrito: ${u.name}`,
+            date: u.created_at || 'Reciente',
+            icon: 'fa-solid fa-user-plus',
+            color: 'var(--info)'
+        }));
+
+        const activities = [...payments, ...attendance, ...students].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 6);
+
+        if (activities.length === 0) return '<p class="text-muted">No hay actividad reciente.</p>';
 
         return `
             <ul class="activity-feed">
-                ${logs.map(log => {
-                    let icon = 'fa-solid fa-circle-dot';
-                    let color = 'var(--text-muted)';
-                    
-                    if (log.action.includes('Pago')) { icon = 'fa-solid fa-money-bill-wave'; color = 'var(--success)'; }
-                    if (log.action.includes('Alumno')) { icon = 'fa-solid fa-user'; color = 'var(--info)'; }
-                    if (log.action.includes('Asistencia')) { icon = 'fa-solid fa-calendar-check'; color = 'var(--warning)'; }
-
-                    return `
-                        <li class="activity-item">
-                            <div class="activity-icon" style="background:${color}22; color:${color}">
-                                <i class="${icon}" style="font-size:0.8rem"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p style="font-size:0.9rem; margin:0">${log.action}</p>
-                                <p class="activity-time">${log.timestamp}</p>
-                            </div>
-                        </li>
-                    `;
-                }).join('')}
+                ${activities.map(act => `
+                    <li class="activity-item">
+                        <div class="activity-icon" style="background:${act.color}22; color:${act.color}">
+                            <i class="${act.icon}" style="font-size:0.8rem"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p style="font-size:0.9rem; margin:0">${act.action}</p>
+                            <p class="activity-time">${act.date}</p>
+                        </div>
+                    </li>
+                `).join('')}
             </ul>
         `;
     }

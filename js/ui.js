@@ -88,9 +88,6 @@ const UI = {
                         <div class="nav-item">
                             <a href="#/users" class="nav-link" id="nav-users"><i class="fa-solid fa-user-group"></i> Alumnos</a>
                         </div>
-                        <div class="nav-item">
-                            <a href="#/logs" class="nav-link" id="nav-logs"><i class="fa-solid fa-shield-halved"></i> Auditoría</a>
-                        </div>
                         ` : ''}
 
                         ${Auth.hasRole('admin') || Auth.hasRole('teacher') ? `
@@ -124,7 +121,7 @@ const UI = {
                             </button>
                         </div>
 
-                        <div class="user-profile-small">
+                        <div class="user-profile-small" onclick="window.location.hash='#/settings'" style="cursor:pointer">
                             <div class="avatar">${user.name[0]}</div>
                             <div style="flex:1; overflow:hidden">
                                 <p style="font-weight:700; font-size:0.85rem; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${user.name}</p>
@@ -177,14 +174,27 @@ const UI = {
 
                             <div style="width:1px; height:24px; background:var(--border-color)"></div>
                             
-                            <div style="display:flex; align-items:center; gap:0.5rem; cursor:pointer" onclick="window.location.hash='#/settings'">
-                                <div class="avatar" style="width:32px; height:32px; font-size:0.8rem">${user.name[0]}</div>
-                                <i class="fa-solid fa-chevron-down" style="font-size:0.7rem; color:var(--text-muted)"></i>
+                            <div class="user-menu-container">
+                                <div class="avatar-wrapper" onclick="UI.toggleUserMenu()">
+                                    <div class="avatar" style="width:32px; height:32px; font-size:0.8rem">${user.name[0]}</div>
+                                    <i class="fa-solid fa-chevron-down" style="font-size:0.7rem; color:var(--text-muted)"></i>
+                                </div>
+                                
+                                <div id="user-menu-dropdown" class="user-menu-dropdown">
+                                    <div class="user-menu-header">
+                                        <p style="font-weight:700; margin:0">${user.name}</p>
+                                        <p style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase">${user.role}</p>
+                                    </div>
+                                    <div style="padding:0.5rem 0">
+                                        <a href="#/settings" class="user-menu-item"><i class="fa-solid fa-user-gear"></i> Mi Perfil</a>
+                                        ${user.role === 'admin' ? `<a href="#/settings" class="user-menu-item"><i class="fa-solid fa-building-columns"></i> Configuración</a>` : ''}
+                                        <hr style="border:0; border-top:1px solid var(--border-color); margin:0.5rem 0">
+                                        <a href="javascript:void(0)" onclick="Auth.logout()" class="user-menu-item" style="color:var(--danger)">
+                                            <i class="fa-solid fa-power-off"></i> Cerrar Sesión
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <button class="btn logout-btn-top" onclick="Auth.logout()" title="Cerrar Sesión">
-                                <i class="fa-solid fa-power-off"></i>
-                            </button>
                         </div>
                     </header>
 
@@ -595,6 +605,23 @@ const UI = {
                 </div>
             </div>
         `).join('');
+    },
+
+    toggleUserMenu() {
+        const menu = document.getElementById('user-menu-dropdown');
+        if (menu) {
+            menu.classList.toggle('active');
+            
+            if (menu.classList.contains('active')) {
+                const closeHandler = (e) => {
+                    if (!menu.contains(e.target) && !e.target.closest('.avatar-wrapper')) {
+                        menu.classList.remove('active');
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                setTimeout(() => document.addEventListener('click', closeHandler), 10);
+            }
+        }
     },
 
     clearNotifications() {

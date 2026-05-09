@@ -3,7 +3,7 @@
 // ============================================================
 
 const DB = {
-    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades', 'logs'],
+    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades'],
 
     // Utility to get current session token if needed (Supabase JS handles this automatically usually)
     async getSession() {
@@ -22,20 +22,8 @@ const DB = {
     },
 
     async logAction(tableName, action, details) {
-        if (!sb || tableName === 'logs') return;
-        const user = window.Auth ? Auth.getUser() : null;
-        try {
-            await sb.from('logs').insert([{
-                user_id: user ? user.id : null,
-                user_name: user ? user.name : 'Sistema/Desconocido',
-                action: action,
-                table_name: tableName,
-                details: typeof details === 'object' ? JSON.stringify(details) : details,
-                created_at: new Date().toISOString()
-            }]);
-        } catch (err) {
-            console.warn("Error recording log:", err.message);
-        }
+        // Auditoría desactivada por solicitud del usuario
+        return;
     },
 
     // ── OPERACIONES CON SUPABASE ──
@@ -143,6 +131,69 @@ const DB = {
         };
     },
 
+    async cleanupData() {
+        console.log("🛠️ Ejecutando limpieza de datos...");
+        const users = this.getTable('users');
+        const courses = this.getTable('courses');
+        let hasChanges = false;
+
+        // 1. Limpiar gmails temporales/placeholders
+        const placeholders = ['westhouse.com', 'example.com', 'test.com', 'temp.com'];
+        users.forEach(u => {
+            if (u.email && placeholders.some(p => u.email.includes(p))) {
+                u.email = '';
+                hasChanges = true;
+            }
+        });
+
+        // 2. Lógica de hermanos (Mismo apellido -> mismo gmail si falta uno)
+        const families = {};
+        users.forEach(u => {
+            if (u.role === 'student' && u.name) {
+                const parts = u.name.trim().split(' ');
+                const lastName = parts.length > 1 ? parts[parts.length - 1].toLowerCase() : null;
+                if (lastName) {
+                    if (!families[lastName]) families[lastName] = [];
+                    families[lastName].push(u);
+                }
+            }
+        });
+
+        Object.keys(families).forEach(name => {
+            const family = families[name];
+            if (family.length > 1) {
+                const familyEmail = family.find(m => m.email && m.email.includes('@'))?.email;
+                if (familyEmail) {
+                    family.forEach(m => {
+                        if (!m.email) {
+                            m.email = familyEmail;
+                            hasChanges = true;
+                            console.log(`   🔗 Vinculando hermano: ${m.name} -> ${familyEmail}`);
+                        }
+                    });
+                }
+            }
+        });
+
+        // 3. Consistencia de profesores
+        courses.forEach(c => {
+            if (c.teacher_id) {
+                users.forEach(u => {
+                    if (String(u.course_id) === String(c.id) && String(u.teacher_id) !== String(c.teacher_id)) {
+                        u.teacher_id = c.teacher_id;
+                        hasChanges = true;
+                    }
+                });
+            }
+        });
+
+        if (hasChanges) {
+            this.saveTable('users', users);
+            // Sincronización asíncrona en segundo plano (opcional/lento, mejor que el usuario guarde manualmente si edita)
+            console.log("   ✓ Datos saneados localmente.");
+        }
+    },
+
     // ── INIT: Sincronización completa con Supabase ──
     async init() {
         if (!sb) {
@@ -172,6 +223,9 @@ const DB = {
                     console.log(`   ✓ ${table}: ${data.length} registros`);
                 }
             }
+            
+            await this.cleanupData();
+
             console.log("✅ Sincronización completada.");
         } catch (error) {
             console.error("Error crítico en DB.init:", error);
