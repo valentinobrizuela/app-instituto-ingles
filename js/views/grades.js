@@ -132,6 +132,15 @@ Views.Grades = {
                 observations: document.getElementById('g-obs').value,
                 date: new Date().toISOString()
             });
+
+            // Award XP
+            const score = parseFloat(document.getElementById('g-score').value);
+            if (score >= 9) {
+                await Gamification.awardXP(studentId, Gamification.XP_MAP.EXAM_EXCELLENT, "Excelencia Académica");
+            } else if (score >= 6) {
+                await Gamification.awardXP(studentId, Gamification.XP_MAP.EXAM_PASS, "Examen Aprobado");
+            }
+
             UI.closeModal();
             UI.showToast('Calificación guardada correctamente', 'success');
             this.loadStudents();

@@ -36,6 +36,7 @@ Views.Users = {
                                 <th>Contacto</th>
                                 <th>Rol / Nivel</th>
                                 <th>Curso</th>
+                                <th>Estado Pago</th>
                                 <th style="text-align:center">Acciones</th>
                             </tr>
                         </thead>
@@ -109,6 +110,18 @@ Views.Users = {
                     ${levelHtml}
                 </td>
                 <td>${courseHtml}</td>
+                <td>
+                    ${u.role === 'student' ? `
+                        <div style="display:flex; align-items:center; gap:0.5rem">
+                            ${(() => {
+                                const status = DB.getStudentStatus(u.id);
+                                if (status === 'paid') return '<span class="status-dot" style="background:#10b981" title="Al día"></span> <span style="font-size:0.75rem; color:#10b981; font-weight:700">Al día</span>';
+                                if (status === 'pending') return '<span class="status-dot" style="background:#f59e0b" title="Pendiente"></span> <span style="font-size:0.75rem; color:#f59e0b; font-weight:700">Pendiente</span>';
+                                return '<span class="status-dot" style="background:#ef4444" title="Moroso"></span> <span style="font-size:0.75rem; color:#ef4444; font-weight:700">Moroso</span>';
+                            })()}
+                        </div>
+                    ` : '-'}
+                </td>
                 <td style="text-align:center">
                     <div style="display:flex; justify-content:center; gap:0.5rem">
                         <button class="btn" style="background:var(--primary-light); color:var(--primary); border:none; padding:0.5rem; border-radius:10px; cursor:pointer;" onclick="Views.Users.openModal(${u.id})" title="Editar">

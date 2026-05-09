@@ -131,6 +131,26 @@ const DB = {
         };
     },
 
+    getStudentStatus(studentId) {
+        const payments = this.getTable('payments').filter(p => String(p.student_id) === String(studentId));
+        const now = new Date();
+        const currentMonth = now.getMonth(); // 0-11
+        const currentYear = now.getFullYear();
+        const currentDay = now.getDate();
+
+        // Check if there is a payment for the current month
+        const paidThisMonth = payments.some(p => {
+            const pDate = new Date(p.date);
+            return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear && p.status === 'Pagado';
+        });
+
+        if (paidThisMonth) return 'paid'; // Green
+
+        // If not paid, check if we are past the 10th day
+        if (currentDay <= 10) return 'pending'; // Yellow
+        return 'overdue'; // Red
+    },
+
     async cleanupData() {
         console.log("🛠️ Ejecutando limpieza de datos...");
         const users = this.getTable('users');
@@ -187,9 +207,17 @@ const DB = {
             }
         });
 
+        // 4. Inicializar campos de Gamificación si no existen
+        users.forEach(u => {
+            if (u.role === 'student') {
+                if (u.xp === undefined) u.xp = 0;
+                if (u.level === undefined) u.level = 1;
+                if (!u.badges) u.badges = [];
+            }
+        });
+
         if (hasChanges) {
             this.saveTable('users', users);
-            // Sincronización asíncrona en segundo plano (opcional/lento, mejor que el usuario guarde manualmente si edita)
             console.log("   ✓ Datos saneados localmente.");
         }
     },

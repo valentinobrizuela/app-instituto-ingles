@@ -228,6 +228,13 @@ Views.Attendance = {
                     date,
                     status
                 });
+
+                // Award XP for NEW records only to avoid farming
+                if (status === 'Presente') {
+                    await Gamification.awardXP(studentId, Gamification.XP_MAP.ATTENDANCE, "Asistencia");
+                } else if (status === 'Tarde') {
+                    await Gamification.awardXP(studentId, 5, "Asistencia (Tarde)");
+                }
             }
             UI.showToast(`Marcado como ${status}`, "success");
         } catch (err) {

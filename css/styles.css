@@ -1214,3 +1214,71 @@ tr:last-child td {
     color: var(--text-muted);
 }
 
+
+/* Status Dots */
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+
+/* Mila AI Assistant Styles */
+.mila-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(249, 115, 22, 0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(249, 115, 22, 0.1);
+    margin: 1rem 0;
+}
+
+.mila-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+    background: white;
+}
+
+.mila-bubble {
+    position: relative;
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-main);
+    flex: 1;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.mila-bubble-arrow {
+    position: absolute;
+    left: -8px;
+    top: 20px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid white;
+}
+
+.mila-bubble-arrow::after {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: -8px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid var(--border-color);
+    z-index: -1;
+}
+

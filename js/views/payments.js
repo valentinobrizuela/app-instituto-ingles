@@ -185,20 +185,25 @@ Views.Payments = {
                     ${this.getBadge(p.status)}
                 </td>
                 <td style="text-align:center">
-                    <button class="btn btn-primary shadow-sm" style="font-size:0.8rem; padding:0.4rem 0.6rem; margin-right:4px;" onclick="Views.Payments.sendInvoice(${p.id})" title="Enviar Factura por Email">
-                        <i class="fa-solid fa-envelope"></i> Factura
-                    </button>
-                    <button class="btn btn-secondary shadow-sm" style="font-size:0.8rem; padding:0.4rem 0.6rem" onclick="Views.Payments.toggleStatus(${p.id})">
-                        <i class="fa-solid fa-rotate"></i> Estado
-                    </button>
-                    ${p.status !== 'Pagado' && student && student.parent_phone ? `
-                    <a class="btn" style="background:#dcfce7; color:#166534; padding:0.4rem 0.6rem" href="https://wa.me/${student.parent_phone.replace(/\D/g,'')}?text=Hola%20${student.name},%20te%20recordamos%20que%20tienes%20una%20cuota%20pendiente%20de%20$${p.amount}%20con%20vencimiento%20el%20${p.date}.%20Saludos%20West%20House." target="_blank" title="Recordatorio WhatsApp">
-                        <i class="fa-brands fa-whatsapp"></i>
-                    </a>
-                    ` : ''}
-                    <button class="btn" style="background:#fee2e2; color:#b91c1c; border:none; padding:0.4rem 0.6rem; border-radius:6px; cursor:pointer;" onclick="Views.Payments.delete(${p.id})" title="Eliminar">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                    <div style="display:flex; justify-content:center; gap:0.25rem; flex-wrap:wrap">
+                        <button class="btn btn-secondary" style="font-size:0.75rem; padding:0.4rem" onclick="Views.Payments.printReceipt(${p.id})" title="Ver Recibo Digital">
+                            <i class="fa-solid fa-receipt"></i> Recibo
+                        </button>
+                        <button class="btn btn-primary" style="font-size:0.75rem; padding:0.4rem" onclick="Views.Payments.sendInvoice(${p.id})" title="Enviar Factura por Email">
+                            <i class="fa-solid fa-envelope"></i>
+                        </button>
+                        <button class="btn btn-secondary" style="font-size:0.75rem; padding:0.4rem" onclick="Views.Payments.toggleStatus(${p.id})" title="Cambiar Estado">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                        ${p.status !== 'Pagado' && student && student.parent_phone ? `
+                        <a class="btn" style="background:#dcfce7; color:#166534; padding:0.4rem" href="https://wa.me/${student.parent_phone.replace(/\D/g,'')}?text=Hola%20${student.name},%20te%20recordamos%20que%20tienes%20una%20cuota%20pendiente%20de%20$${p.amount}%20con%20vencimiento%20el%20${p.date}.%20Saludos%20West%20House." target="_blank" title="Recordatorio WhatsApp">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </a>
+                        ` : ''}
+                        <button class="btn" style="background:#fee2e2; color:#b91c1c; border:none; padding:0.4rem; border-radius:6px; cursor:pointer;" onclick="Views.Payments.delete(${p.id})" title="Eliminar">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -327,5 +332,45 @@ Views.Payments = {
         });
         
         UI.downloadCSV('pagos_westhouse.csv', report);
+    },
+
+    printReceipt(id) {
+        const p = DB.getTable('payments').find(item => String(item.id) === String(id));
+        const s = DB.getTable('users').find(u => String(u.id) === String(p.student_id));
+        const settings = JSON.parse(localStorage.getItem('wh_settings') || '{}');
+        
+        const modalContent = `
+            <div id="printable-receipt" style="padding:2rem; font-family:'Courier New', Courier, monospace; background:#fff; color:#000; border:1px solid #ccc; max-width:500px; margin:0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1)">
+                <div style="text-align:center; border-bottom:2px dashed #000; padding-bottom:1rem; margin-bottom:1rem">
+                    <h2 style="margin:0; font-size:1.5rem">${settings.instituteName || 'West House English School'}</h2>
+                    <p style="margin:5px 0; font-size:0.8rem">Recibo de Pago Oficial</p>
+                    <p style="margin:0; font-size:0.7rem">Fecha: ${new Date(p.date).toLocaleString()}</p>
+                </div>
+                
+                <div style="margin-bottom:1rem">
+                    <p><strong>Nro. de Operación:</strong> #${p.id.toString().padStart(6, '0')}</p>
+                    <p><strong>Alumno:</strong> ${s ? s.name : 'N/A'}</p>
+                    <p><strong>Concepto:</strong> Cuota Mensual de Inglés</p>
+                </div>
+                
+                <div style="border-top:1px solid #000; border-bottom:1px solid #000; padding:1rem 0; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center">
+                    <span style="font-size:1.2rem; font-weight:700">TOTAL</span>
+                    <span style="font-size:1.5rem; font-weight:900">$${Number(p.amount).toFixed(2)}</span>
+                </div>
+                
+                <div style="text-align:center; font-size:0.8rem">
+                    <p style="margin-bottom:2rem">Estado: <strong>${p.status.toUpperCase()}</strong></p>
+                    <div style="border-top:1px solid #ccc; width:150px; margin:0 auto; padding-top:0.5rem">
+                        Firma Autorizada
+                    </div>
+                    <p style="margin-top:2rem; font-style:italic">¡Gracias por confiar en West House!</p>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:2rem" class="no-print">
+                <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimir o Guardar PDF</button>
+            </div>
+        `;
+        
+        UI.openModal('Recibo Digital', modalContent);
     }
 };

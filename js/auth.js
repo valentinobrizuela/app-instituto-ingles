@@ -67,19 +67,21 @@ const Auth = {
             if (error) throw error;
 
             if (data.user) {
-                // 2. Obtener el perfil extendido desde public.users
-                const { data: profile, error: profileError } = await sb
+                // 2. Obtener el perfil extendido desde public.users (pueden ser varios si son hermanos)
+                const { data: profiles, error: profileError } = await sb
                     .from('users')
                     .select('*')
-                    .eq('email', email)
-                    .single();
+                    .eq('email', email);
 
-                if (profileError) {
+                if (profileError || !profiles || profiles.length === 0) {
                     console.warn("Sesión iniciada pero no se encontró perfil en public.users");
-                    // Fallback: usar datos básicos del auth user
                     this.currentUser = { email: data.user.email, role: 'student', name: email.split('@')[0] };
+                } else if (profiles.length > 1) {
+                    // Múltiples perfiles (hermanos)
+                    this.multipleProfiles = profiles;
+                    this.currentUser = profiles[0]; // Default al primero mientras elige
                 } else {
-                    this.currentUser = profile;
+                    this.currentUser = profiles[0];
                 }
 
                 localStorage.setItem('westhouse_session', JSON.stringify(this.currentUser));
@@ -123,5 +125,21 @@ const Auth = {
 
     getUser() {
         return this.currentUser;
+    },
+
+    async switchProfile(profileId) {
+        if (!sb) return;
+        
+        const allProfiles = DB.getTable('users').filter(u => u.email === this.currentUser.email);
+        const newProfile = allProfiles.find(u => String(u.id) === String(profileId));
+        
+        if (newProfile) {
+            this.currentUser = newProfile;
+            localStorage.setItem('westhouse_session', JSON.stringify(this.currentUser));
+            UI.showToast(`Cambiando perfil a ${newProfile.name}...`, 'info');
+            setTimeout(() => {
+                window.location.reload(); // Recargar para limpiar vistas previas
+            }, 500);
+        }
     }
 };

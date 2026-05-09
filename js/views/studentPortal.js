@@ -17,10 +17,37 @@ Views.StudentPortal = {
                     <h1 class="hero-title">¡Welcome to West House English School!</h1>
                     <p class="hero-subtitle">Hola <strong>${user.name}</strong>, nos alegra mucho tenerte de vuelta. Sigue practicando y alcanzando tus metas.</p>
                     
-                    <div style="margin-top:2rem; display:flex; gap:1rem">
+                    <div style="margin-top:2rem; display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
                         <button class="btn btn-primary" onclick="window.location.hash='#/materials'">Ver mis materiales <i class="fa-solid fa-arrow-right"></i></button>
                         <button class="btn" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2)" onclick="window.location.hash='#/calendar'">Mi Horario</button>
+                        
+                        <!-- Mila Welcome -->
+                        <div id="mila-welcome-student" style="margin-left:auto">
+                             ${(() => {
+                                 // Simple logic to show Mila welcome
+                                 return `
+                                    <div class="mila-wrapper" style="background:rgba(255,255,255,0.1); border:none; padding:0.5rem 1rem">
+                                        <img src="mila_the_ai_cat_1778347273587.png" class="mila-avatar" style="width:40px; height:40px; border-color:white">
+                                        <p style="color:white; font-size:0.8rem; margin:0">${UI.Mila.getSuggestion('welcome_student')}</p>
+                                    </div>
+                                 `;
+                             })()}
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="card mb-4" style="background:var(--bg-card); border:1px solid var(--primary-light)">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+                    <h3 style="font-size:1rem; margin:0"><i class="fa-solid fa-bolt text-primary"></i> Mi Nivel de Aprendizaje</h3>
+                    <span class="badge badge-primary">Nivel ${user.level || 1}</span>
+                </div>
+                <div style="background:var(--bg-main); height:12px; border-radius:10px; position:relative; overflow:hidden">
+                    <div style="background:var(--primary); height:100%; width:${(user.xp % 100)}%; transition: width 1s ease-out"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:0.5rem">
+                    <span class="text-xs text-muted">${user.xp || 0} XP totales</span>
+                    <span class="text-xs text-muted">Próximo nivel: ${100 - (user.xp % 100)} XP</span>
                 </div>
             </div>
 
@@ -73,42 +100,59 @@ Views.StudentPortal = {
                     </div>
                 </div>
 
-                <div class="card" style="grid-column: span 1 md:span 2;">
-                    <h3 class="mb-3">Tus Calificaciones (Promedios)</h3>
-                    <div id="student-grades">
-                        Cargando...
+                <div class="card" style="grid-column: 1 / -1;">
+                    <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
+                        <i class="fa-solid fa-timeline"></i> Mi Camino de Aprendizaje
+                    </h3>
+                    <div id="learning-timeline">
+                        Cargando progreso...
                     </div>
-                    <button class="btn btn-secondary mt-4" onclick="window.location.hash='#/grades'">Ver Detalle Completo</button>
                 </div>
             </div>
         `;
         
-        this.renderGradesSummary(user);
+        this.renderTimeline(user);
     },
 
-    renderGradesSummary(user) {
-        // Obtenemos calificaciones del estudiante logueado
+    renderTimeline(user) {
         const grades = DB.getTable('grades').filter(g => Number(g.studentId) === Number(user.id));
-        const div = document.getElementById('student-grades');
-        if (!div) return;
+        const container = document.getElementById('learning-timeline');
+        if (!container) return;
         
         if (grades.length === 0) {
-            div.innerHTML = '<p class="text-muted">Aún no tienes calificaciones registradas.</p>';
+            container.innerHTML = `
+                <div style="text-align:center; padding:3rem; background:var(--bg-main); border-radius:12px; border:1px dashed var(--border-color)">
+                    <i class="fa-solid fa-graduation-cap fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aún no hay evaluaciones registradas. ¡Tu camino empieza pronto!</p>
+                </div>
+            `;
             return;
         }
 
-        const avg = grades.reduce((acc, g) => acc + parseFloat(g.score), 0) / grades.length;
-        
-        div.innerHTML = `
-            <div style="display:flex; align-items:center; gap: 2rem;">
-                <div style="text-align:center; border: 4px solid ${avg >= 6 ? 'var(--success)' : 'var(--danger)'}; border-radius:50%; width: 100px; height: 100px; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:800; color:${avg >= 6 ? 'var(--success)' : 'var(--danger)'}">
-                    ${avg.toFixed(1)}
-                </div>
-                <div>
-                    <h4 style="font-size:1.2rem; color:var(--text-main)">Promedio General</h4>
-                    <p class="text-muted">${grades.length} evaluaciones rendidas</p>
-                    ${avg >= 8 ? '<p style="color:var(--primary); font-weight:bold"><i class="fa-solid fa-star"></i> ¡Excelente rendimiento!</p>' : ''}
-                </div>
+        // Sort by date if available, or by entry
+        const sortedGrades = [...grades].sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        container.innerHTML = `
+            <div class="timeline-container" style="display:flex; overflow-x:auto; padding:1rem 0; gap:2rem; scrollbar-width:thin">
+                ${sortedGrades.map((g, index) => `
+                    <div class="timeline-item" style="min-width:250px; position:relative">
+                        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem">
+                            <div style="width:40px; height:40px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; z-index:2">
+                                ${g.score}
+                            </div>
+                            <div style="flex:1">
+                                <p style="font-weight:700; font-size:0.9rem">${g.examType}</p>
+                                <p style="font-size:0.75rem; color:var(--text-muted)">${new Date(g.date).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <div style="background:var(--bg-main); padding:1rem; border-radius:12px; border-left:4px solid ${g.score >= 6 ? 'var(--success)' : 'var(--danger)'}; position:relative">
+                            <p style="font-size:0.85rem; font-style:italic; color:var(--text-main)">"${g.observations || 'Sin comentarios adicionales.'}"</p>
+                        </div>
+                        ${index < sortedGrades.length - 1 ? `
+                            <div style="position:absolute; top:20px; left:40px; right:-20px; height:2px; background:var(--border-color); z-index:1"></div>
+                        ` : ''}
+                    </div>
+                `).join('')}
             </div>
         `;
     }

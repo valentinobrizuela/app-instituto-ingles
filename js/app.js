@@ -138,6 +138,10 @@ const App = {
                     Views.Logs.render();
                 } else window.location.hash = '#/';
                 break;
+            case '#/notifications':
+                UI.setSectionTitle('Notificaciones', 'fa-regular fa-bell');
+                if (Views.Notifications) Views.Notifications.render();
+                break;
             case '#/settings':
             case '#/profile':
                 UI.setSectionTitle('Configuración de Usuario', 'fa-solid fa-user-gear');

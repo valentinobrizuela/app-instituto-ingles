@@ -78,8 +78,25 @@ const UI = {
 
                     <nav class="nav-links">
                         <div class="nav-item">
-                            <a href="#/" class="nav-link" id="nav-home"><i class="fa-solid fa-chart-pie"></i> ${Auth.hasRole('student') ? 'Mi Portal' : 'Dashboard'}</a>
+                            <a href="#/" class="nav-link active" id="nav-dashboard"><i class="fa-solid fa-house"></i> Dashboard</a>
                         </div>
+
+                        ${(() => {
+                            const user = Auth.getUser();
+                            const siblings = DB.getTable('users').filter(u => u.email === user.email && u.role === 'student');
+                            if (siblings.length > 1) {
+                                return `
+                                    <div style="margin:1rem; padding:0.75rem; background:var(--bg-hover); border-radius:10px; border:1px solid var(--border-color)">
+                                        <p style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:0.5rem">Cambiar de Alumno</p>
+                                        <select style="width:100%; padding:0.4rem; border-radius:6px; border:1px solid var(--border-color); font-size:0.8rem; background:white; cursor:pointer" onchange="Auth.switchProfile(this.value)">
+                                            ${siblings.map(s => `<option value="${s.id}" ${String(s.id) === String(user.id) ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                `;
+                            }
+                            return '';
+                        })()}
+
                         <div class="nav-item">
                             <a href="#/about" class="nav-link" id="nav-about"><i class="fa-solid fa-leaf"></i> Quiénes Somos</a>
                         </div>
@@ -87,6 +104,9 @@ const UI = {
                         ${Auth.hasRole('admin') ? `
                         <div class="nav-item">
                             <a href="#/users" class="nav-link" id="nav-users"><i class="fa-solid fa-user-group"></i> Alumnos</a>
+                        </div>
+                        <div class="nav-item">
+                            <a href="#/notifications" class="nav-link" id="nav-notifs"><i class="fa-solid fa-bullhorn"></i> Comunicados</a>
                         </div>
                         ` : ''}
 
@@ -582,29 +602,52 @@ const UI = {
     },
 
     renderNotifications() {
-        const logs = DB.getTable('logs').slice(-5).reverse();
+        const user = Auth.getUser();
+        const allNotifs = DB.getTable('notifications');
+        const notifs = allNotifs.filter(n => n.target === 'all' || n.target === user.role).slice(-5).reverse();
+        
         const container = document.getElementById('notification-list');
         const badge = document.getElementById('notif-badge');
 
-        if (logs.length === 0) {
-            container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem">No tienes notificaciones nuevas</div>`;
+        if (notifs.length === 0) {
+            container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem">No hay comunicados oficiales</div>`;
             if (badge) badge.style.display = 'none';
             return;
         }
 
         if (badge) badge.style.display = 'block';
 
-        container.innerHTML = logs.map(log => `
-            <div style="padding:1rem; border-bottom:1px solid var(--border-color); cursor:pointer" onclick="window.location.hash='#/logs'">
+        container.innerHTML = notifs.map(n => `
+            <div style="padding:1rem; border-bottom:1px solid var(--border-color); cursor:pointer" onclick="UI.showAnnouncementDetail('${n.id}')">
                 <div style="display:flex; gap:0.75rem">
                     <div style="width:8px; height:8px; background:var(--primary); border-radius:50%; margin-top:5px"></div>
                     <div style="flex:1">
-                        <p style="font-size:0.85rem; margin-bottom:0.25rem">${log.action}</p>
-                        <p style="font-size:0.7rem; color:var(--text-muted)">${log.timestamp}</p>
+                        <p style="font-size:0.85rem; font-weight:700; margin-bottom:0.25rem">${n.title}</p>
+                        <p style="font-size:0.7rem; color:var(--text-muted)">${new Date(n.created_at).toLocaleDateString()}</p>
                     </div>
                 </div>
             </div>
         `).join('');
+    },
+
+    showAnnouncementDetail(id) {
+        const n = DB.getTable('notifications').find(notif => String(notif.id) === String(id));
+        if (!n) return;
+
+        UI.openModal(n.title, `
+            <div style="padding:1rem">
+                <div class="text-muted text-sm mb-4"><i class="fa-solid fa-calendar-day"></i> Fecha: ${new Date(n.created_at).toLocaleString()}</div>
+                <div style="font-size:1.1rem; line-height:1.6; white-space:pre-wrap">${n.message}</div>
+                <div class="mt-5 pt-3" style="border-top:1px solid var(--border-color); text-align:center">
+                    <button class="btn btn-primary" onclick="UI.closeModal()">Entendido</button>
+                </div>
+            </div>
+        `);
+        
+        // Track view (simple)
+        if (n.views === undefined) n.views = 0;
+        n.views++;
+        DB.update('notifications', n.id, { views: n.views });
     },
 
     toggleUserMenu() {
@@ -621,6 +664,37 @@ const UI = {
                 };
                 setTimeout(() => document.addEventListener('click', closeHandler), 10);
             }
+        }
+    },
+
+    // --- MILA AI ASSISTANT ---
+    Mila: {
+        speak(message, containerId = 'mila-bubble-container') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="mila-wrapper">
+                    <img src="mila_the_ai_cat_1778347273587.png" class="mila-avatar" alt="Mila AI">
+                    <div class="mila-bubble">
+                        ${message}
+                        <div class="mila-bubble-arrow"></div>
+                    </div>
+                </div>
+            `;
+        },
+
+        getSuggestion(type, context = {}) {
+            if (type === 'attendance_risk') {
+                return `Mila notó que <strong>${context.name}</strong> ha faltado un par de veces. ¿Le mandamos un saludito para que no se pierda nada? 🐾`;
+            }
+            if (type === 'payment_reminder') {
+                return `¡Hola! Mila sugiere recordarle amablemente a la familia de ${context.name} sobre la cuota pendiente. ¡Miau! 🐈`;
+            }
+            if (type === 'welcome_student') {
+                return `¡Bienvenido de nuevo! Mila está feliz de verte. ¡Hoy es un gran día para aprender inglés! 🌟`;
+            }
+            return "¡Hola! Soy Mila, tu asistente. ¿En qué puedo ayudarte hoy?";
         }
     },
 

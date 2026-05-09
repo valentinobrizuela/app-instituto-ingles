@@ -103,6 +103,13 @@ Views.Dashboard = {
                     <button class="btn btn-secondary w-full" style="justify-content:flex-start; padding:1rem" onclick="UI.showCommandPalette()">
                         <i class="fa-solid fa-magnifying-glass"></i> Búsqueda (Ctrl+K)
                     </button>
+
+                    <div class="card" style="margin-top:1rem; border:1px solid var(--primary-light); background:var(--bg-main)">
+                        <h4 style="font-size:0.85rem; margin-bottom:1rem; color:var(--primary); font-weight:700"><i class="fa-solid fa-paw"></i> Los Consejos de Mila</h4>
+                        <div id="mila-insights">
+                            ${this.renderMilaInsights()}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right: Charts and Activity -->
@@ -115,8 +122,10 @@ Views.Dashboard = {
                             <canvas id="mainChart" style="max-height: 280px; width: 100%;"></canvas>
                         </div>
                         <div class="card">
-                            <h3 class="mb-4"><i class="fa-solid fa-chart-pie text-accent"></i> Alumnos por Nivel</h3>
-                            <canvas id="pieChart" style="max-height: 280px; width: 100%;"></canvas>
+                            <h3 class="mb-4"><i class="fa-solid fa-bullhorn text-warning"></i> Último Aviso</h3>
+                            <div id="latest-announcement-admin">
+                                ${this.renderLatestAnnouncement()}
+                            </div>
                         </div>
                     </div>
 
@@ -164,7 +173,64 @@ Views.Dashboard = {
                     <p class="text-muted mb-4">Total de estudiantes bajo tu seguimiento.</p>
                     <button class="btn btn-primary w-full" onclick="window.location.hash='#/attendance'">Registrar Asistencia</button>
                 </div>
+
+                <div class="card">
+                    <h3 class="mb-4"><i class="fa-solid fa-bullhorn text-warning"></i> Comunicados</h3>
+                    <div id="latest-announcement-teacher">
+                        ${this.renderLatestAnnouncement()}
+                    </div>
+                </div>
             </div>
+        `;
+    },
+
+    renderLatestAnnouncement() {
+        const user = Auth.getUser();
+        const notifs = DB.getTable('notifications').filter(n => n.target === 'all' || n.target === user.role);
+        const last = notifs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+        if (!last) return '<p class="text-muted text-sm">No hay avisos recientes.</p>';
+
+        return `
+            <div style="background:var(--bg-main); padding:1rem; border-radius:12px; cursor:pointer" onclick="UI.showAnnouncementDetail('${last.id}')">
+                <p style="font-weight:700; color:var(--primary); margin-bottom:0.25rem">${last.title}</p>
+                <p class="text-sm text-muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${last.message}</p>
+                <div style="margin-top:0.75rem; font-size:0.7rem; color:var(--text-muted)">${new Date(last.created_at).toLocaleDateString()}</div>
+            </div>
+        `;
+    },
+
+    renderMilaInsights() {
+        const users = DB.getTable('users').filter(u => u.role === 'student');
+        const attendance = DB.getTable('attendance');
+        
+        // Find a student with "risk" (missing last 2 classes)
+        let riskStudent = null;
+        for (const s of users) {
+            const history = attendance.filter(a => String(a.student_id) === String(s.id)).sort((a,b) => new Date(b.date) - new Date(a.date));
+            if (history.length >= 2 && history[0].status === 'Ausente' && history[1].status === 'Ausente') {
+                riskStudent = s;
+                break;
+            }
+        }
+
+        const message = riskStudent 
+            ? UI.Mila.getSuggestion('attendance_risk', { name: riskStudent.name })
+            : "¡Todo se ve excelente por aquí! Mila dice que tus alumnos están súper comprometidos hoy. 🐾";
+
+        return `
+            <div class="mila-wrapper" style="margin:0; padding:0.75rem; border:none; background:transparent">
+                <img src="mila_the_ai_cat_1778347273587.png" class="mila-avatar" style="width:50px; height:50px">
+                <div class="mila-bubble" style="font-size:0.8rem; padding:0.75rem">
+                    ${message}
+                    <div class="mila-bubble-arrow" style="top:15px"></div>
+                </div>
+            </div>
+            ${riskStudent ? `
+                <button class="btn btn-secondary w-full mt-3" style="font-size:0.8rem" onclick="window.location.hash='#/users'">
+                    <i class="fa-solid fa-magnifying-glass"></i> Ver ficha de ${riskStudent.name.split(' ')[0]}
+                </button>
+            ` : ''}
         `;
     },
 
