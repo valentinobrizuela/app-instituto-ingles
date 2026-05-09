@@ -220,7 +220,7 @@ Views.Dashboard = {
 
         return `
             <div class="mila-wrapper" style="margin:0; padding:0.75rem; border:none; background:transparent">
-                <img src="mila_the_ai_cat_1778347273587.png" class="mila-avatar" style="width:50px; height:50px">
+                <img src="img/mila.png" class="mila-avatar" style="width:50px; height:50px">
                 <div class="mila-bubble" style="font-size:0.8rem; padding:0.75rem">
                     ${message}
                     <div class="mila-bubble-arrow" style="top:15px"></div>

@@ -27,7 +27,7 @@ Views.StudentPortal = {
                                  // Simple logic to show Mila welcome
                                  return `
                                     <div class="mila-wrapper" style="background:rgba(255,255,255,0.1); border:none; padding:0.5rem 1rem">
-                                        <img src="mila_the_ai_cat_1778347273587.png" class="mila-avatar" style="width:40px; height:40px; border-color:white">
+                                        <img src="img/mila.png" class="mila-avatar" style="width:40px; height:40px; border-color:white">
                                         <p style="color:white; font-size:0.8rem; margin:0">${UI.Mila.getSuggestion('welcome_student')}</p>
                                     </div>
                                  `;

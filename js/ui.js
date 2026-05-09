@@ -675,7 +675,7 @@ const UI = {
 
             container.innerHTML = `
                 <div class="mila-wrapper">
-                    <img src="mila_the_ai_cat_1778347273587.png" class="mila-avatar" alt="Mila AI">
+                    <img src="img/mila.png" class="mila-avatar" alt="Mila AI">
                     <div class="mila-bubble">
                         ${message}
                         <div class="mila-bubble-arrow"></div>
