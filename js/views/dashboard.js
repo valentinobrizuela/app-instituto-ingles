@@ -182,6 +182,30 @@ Views.Dashboard = {
             });
             
             const currentMonthRevenue = payments.reduce((sum, p) => p.status === 'Pagado' ? sum + p.amount : sum, 0);
+            
+            // Group real payments by month
+            const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const monthlyData = new Array(12).fill(0);
+            
+            payments.forEach(p => {
+                if (p.status === 'Pagado' && p.date) {
+                    const date = new Date(p.date);
+                    if (!isNaN(date)) {
+                        monthlyData[date.getMonth()] += p.amount;
+                    }
+                }
+            });
+
+            // Filter out months with 0 to only show months with activity, or just show last 6
+            const currentMonth = new Date().getMonth();
+            const displayMonths = [];
+            const displayData = [];
+            for (let i = 5; i >= 0; i--) {
+                let m = currentMonth - i;
+                if (m < 0) m += 12;
+                displayMonths.push(monthLabels[m]);
+                displayData.push(monthlyData[m]);
+            }
 
             const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
             const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
@@ -194,30 +218,41 @@ Views.Dashboard = {
                 const existingChart = Chart.getChart(ctx);
                 if (existingChart) existingChart.destroy();
 
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Mes Actual'],
-                        datasets: [{
-                            label: 'Cobros ($)',
-                            data: [12000, 19000, 17500, 25000, 21000, currentMonthRevenue],
-                            backgroundColor: 'rgba(249, 115, 22, 0.8)',
-                            hoverBackgroundColor: 'rgba(249, 115, 22, 1)',
-                            borderRadius: 8
-                        }]
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false }
-                        }, 
-                        scales: { 
-                            y: { beginAtZero: true, grid: { color: gridColor } },
-                            x: { grid: { display: false } }
-                        } 
-                    }
-                });
+                if (payments.length === 0 || displayData.every(v => v === 0)) {
+                    const container = ctx.parentElement;
+                    container.innerHTML = `
+                        <h3 class="mb-4"><i class="fa-solid fa-chart-column text-primary"></i> Ingresos Mensuales</h3>
+                        <div style="height:280px; display:flex; align-items:center; justify-content:center; flex-direction:column; background:var(--bg-main); border-radius:12px; border:1px dashed var(--border-color)">
+                            <i class="fa-solid fa-file-invoice-dollar fa-2xl text-muted mb-3"></i>
+                            <p class="text-muted">Sin datos de cobros registrados</p>
+                        </div>
+                    `;
+                } else {
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: displayMonths,
+                            datasets: [{
+                                label: 'Cobros ($)',
+                                data: displayData,
+                                backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                                hoverBackgroundColor: 'rgba(249, 115, 22, 1)',
+                                borderRadius: 8
+                            }]
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { display: false }
+                            }, 
+                            scales: { 
+                                y: { beginAtZero: true, grid: { color: gridColor } },
+                                x: { grid: { display: false } }
+                            } 
+                        }
+                    });
+                }
             }
 
             const ctxPie = document.getElementById('pieChart');
@@ -225,26 +260,36 @@ Views.Dashboard = {
                 const existingChart = Chart.getChart(ctxPie);
                 if (existingChart) existingChart.destroy();
 
-                new Chart(ctxPie, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Beginner', 'Intermediate', 'Advanced'],
-                        datasets: [{
-                            data: [levels.Beginner, levels.Intermediate, levels.Advanced],
-                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                            borderWidth: isDark ? 2 : 0,
-                            borderColor: isDark ? '#1e293b' : '#ffffff'
-                        }]
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        cutout: '75%',
-                        plugins: {
-                            legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, color: textColor } }
+                if (users.length === 0) {
+                     const container = ctxPie.parentElement;
+                     container.innerHTML = `
+                        <h3 class="mb-4"><i class="fa-solid fa-chart-pie text-accent"></i> Alumnos por Nivel</h3>
+                        <div style="height:280px; display:flex; align-items:center; justify-content:center; background:var(--bg-main); border-radius:12px; border:1px dashed var(--border-color)">
+                            <p class="text-muted">Sin alumnos registrados</p>
+                        </div>
+                    `;
+                } else {
+                    new Chart(ctxPie, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Beginner', 'Intermediate', 'Advanced'],
+                            datasets: [{
+                                data: [levels.Beginner, levels.Intermediate, levels.Advanced],
+                                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                                borderWidth: isDark ? 2 : 0,
+                                borderColor: isDark ? '#1e293b' : '#ffffff'
+                            }]
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false,
+                            cutout: '75%',
+                            plugins: {
+                                legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, color: textColor } }
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         }, 100);
     },
