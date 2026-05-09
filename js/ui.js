@@ -158,7 +158,8 @@ const UI = {
                              <div id="section-title-wrapper"></div>
                         </div>
 
-                        <!-- Global Search Bar -->
+                        <!-- Global Search Bar (Only for Admins/Teachers) -->
+                        ${!Auth.hasRole('student') ? `
                         <div class="search-container">
                             <div class="search-input-wrapper">
                                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -166,6 +167,7 @@ const UI = {
                                 <span class="search-shortcut">Ctrl K</span>
                             </div>
                         </div>
+                        ` : '<div style="flex:1"></div>'}
 
                         <div style="display:flex; gap:1rem; align-items:center">
                             <button class="btn" style="padding:0.4rem; background:transparent; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;" onclick="UI.toggleTheme()" title="Cambiar Tema">

@@ -28,9 +28,10 @@ const App = {
         await DB.init();
         await Auth.init();
         
-        // Command Palette Shortcut (Ctrl+K)
+        // Command Palette Shortcut (Ctrl+K) - Only for Staff
         window.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                if (Auth.hasRole('student')) return;
                 e.preventDefault();
                 UI.showCommandPalette();
             }
