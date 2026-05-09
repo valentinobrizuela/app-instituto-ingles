@@ -645,8 +645,39 @@ tr:last-child td {
     box-shadow: 0 6px 16px rgba(37, 211, 102, 0.5);
 }
 
-[data-theme="dark"] .wa-floating {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+/* --- Calendar Enhancements --- */
+.calendar-grid-cell {
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem;
+    min-height: 120px;
+    transition: var(--transition);
+}
+
+.calendar-grid-cell:hover {
+    background: var(--primary-light);
+    cursor: default;
+}
+
+.calendar-day-number {
+    font-weight: 700;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-main);
+    font-size: 1rem;
+}
+
+.upcoming-item {
+    border-radius: 12px;
+    padding: 1rem !important;
+    margin-bottom: 0.5rem;
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.upcoming-item:hover {
+    background: var(--bg-main);
+    border-color: var(--border-color);
+    transform: translateY(-2px);
 }
 
 .wa-menu {

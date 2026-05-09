@@ -93,7 +93,7 @@ const UI = {
                         </div>
                         ` : ''}
 
-                        ${!Auth.hasRole('student') ? `
+                        ${Auth.hasRole('admin') || Auth.hasRole('teacher') ? `
                         <div class="nav-item">
                             <a href="#/courses" class="nav-link" id="nav-courses"><i class="fa-solid fa-graduation-cap"></i> Cursos</a>
                         </div>

@@ -16,20 +16,33 @@ Views.Calendar = {
                 ${canEdit ? `<button class="btn btn-primary shadow-md" onclick="Views.Calendar.openModal()"><i class="fa-solid fa-plus"></i> Nuevo Evento</button>` : ''}
             </div>
 
-            <!-- Calendar Controls -->
-            <div class="card mb-4" style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 1.5rem;">
-                <button class="btn btn-secondary" onclick="Views.Calendar.changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
-                <h2 id="calendar-month-year" style="font-size:1.5rem; text-transform:capitalize;">${this.getMonthName()}</h2>
-                <button class="btn btn-secondary" onclick="Views.Calendar.changeMonth(1)">Siguiente <i class="fa-solid fa-chevron-right"></i></button>
-            </div>
+            <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start;">
+                <div class="calendar-main">
+                    <!-- Calendar Controls -->
+                    <div class="card mb-4" style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 1.5rem;">
+                        <button class="btn btn-secondary" onclick="Views.Calendar.changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                        <h2 id="calendar-month-year" style="font-size:1.5rem; text-transform:capitalize; color:var(--text-main)">${this.getMonthName()}</h2>
+                        <button class="btn btn-secondary" onclick="Views.Calendar.changeMonth(1)">Siguiente <i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
 
-            <!-- Calendar Grid -->
-            <div class="card p-0 overflow-hidden shadow-sm" style="background:#fff">
-                <div style="display:grid; grid-template-columns: repeat(7, 1fr); background:#f9fafb; border-bottom:1px solid #e5e7eb; text-align:center; font-weight:700; color:var(--text-muted); padding:0.75rem 0;">
-                    <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+                    <!-- Calendar Grid -->
+                    <div class="card p-0 overflow-hidden shadow-sm" style="background:var(--bg-card)">
+                        <div style="display:grid; grid-template-columns: repeat(7, 1fr); background:var(--bg-main); border-bottom:1px solid var(--border-color); text-align:center; font-weight:700; color:var(--text-muted); padding:0.75rem 0;">
+                            <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+                        </div>
+                        <div id="calendar-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); auto-rows: minmax(100px, auto);">
+                            ${this.generateGrid(user, canEdit)}
+                        </div>
+                    </div>
                 </div>
-                <div id="calendar-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); auto-rows: minmax(100px, auto);">
-                    ${this.generateGrid(user, canEdit)}
+
+                <div class="calendar-sidebar">
+                    <div class="card">
+                        <h3 class="mb-4" style="font-size:1.1rem; color:var(--primary)"><i class="fa-solid fa-bell"></i> Próximos Eventos</h3>
+                        <div id="upcoming-events-list">
+                            ${this.renderUpcomingEvents(user)}
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -53,7 +66,7 @@ Views.Calendar = {
             const myCourses = DB.getTable('courses').filter(c => Number(c.teacherId) === Number(user.id)).map(c=>c.id);
             events = events.filter(e => !e.courseId || myCourses.includes(e.courseId));
         } else if (user.role === 'student') {
-            events = events.filter(e => !e.courseId || Number(e.courseId) === Number(user.courseId));
+            events = events.filter(e => !e.courseId || Number(e.courseId) === Number(user.course_id));
         }
 
         const year = this.currentDate.getFullYear();
@@ -65,7 +78,7 @@ Views.Calendar = {
         let gridHtml = '';
         
         for(let i=0; i<firstDay; i++) {
-            gridHtml += `<div style="border-right:1px solid #eee; border-bottom:1px solid #eee; background:#fefefe; padding:0.5rem; min-height:100px;"></div>`;
+            gridHtml += `<div class="calendar-grid-cell" style="background:var(--bg-main); opacity:0.3"></div>`;
         }
         
         for(let d=1; d<=daysInMonth; d++) {
@@ -79,8 +92,8 @@ Views.Calendar = {
             }
 
             gridHtml += `
-                <div style="border-right:1px solid #eee; border-bottom:1px solid #eee; padding:0.5rem; min-height:100px; ${todayStyle}">
-                    <div style="font-weight:600; color:var(--text-muted); margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
+                <div class="calendar-grid-cell" style="${todayStyle}">
+                    <div class="calendar-day-number" style="margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
                         ${d}
                         ${canEdit ? `<button onclick="Views.Calendar.openModal('${dayDateStr}')" style="background:none; border:none; cursor:pointer; color:var(--primary); font-size:0.8rem;" title="Añadir aquí"><i class="fa-solid fa-plus"></i></button>` : ''}
                     </div>
@@ -101,7 +114,7 @@ Views.Calendar = {
         const remainder = totalSlots % 7;
         if(remainder > 0) {
             for(let i=0; i<(7-remainder); i++) {
-                gridHtml += `<div style="border-right:1px solid #eee; border-bottom:1px solid #eee; background:#fefefe; padding:0.5rem; min-height:100px;"></div>`;
+                gridHtml += `<div class="calendar-grid-cell" style="background:var(--bg-main); opacity:0.3"></div>`;
             }
         }
         
@@ -125,22 +138,59 @@ Views.Calendar = {
         }
 
         UI.openModal(`Detalles del Evento`, `
-            <div style="border-left: 4px solid var(--primary); padding-left:1rem; margin-bottom:1rem;">
-                <h3 style="font-size:1.5rem; color:var(--text-main); margin-bottom:0.25rem;">${ev.title}</h3>
+            <div style="border-left: 4px solid var(--primary); padding-left:1rem; margin-bottom:1.5rem;">
+                <h3 style="font-size:1.5rem; color:var(--text-main); margin-bottom:0.5rem;">${ev.title}</h3>
                 <span class="badge badge-info">${ev.type}</span>
             </div>
             
-            <p style="margin-bottom:0.5rem"><i class="fa-solid fa-calendar text-muted"></i> <strong>Fecha Inicio:</strong> ${new Date(ev.start).toLocaleString('es-ES')}</p>
-            <p style="margin-bottom:0.5rem"><i class="fa-solid fa-graduation-cap text-muted"></i> <strong>Aplica a:</strong> ${courseName}</p>
-            <p style="margin-bottom:1rem; background:#f9fafb; padding:1rem; border-radius:8px; border:1px solid #eee;">${ev.description || 'Sin descripción adicional.'}</p>
+            <div style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem">
+                <p><i class="fa-solid fa-calendar text-primary" style="width:20px"></i> <strong>Fecha Inicio:</strong> ${new Date(ev.start).toLocaleString('es-ES')}</p>
+                <p><i class="fa-solid fa-graduation-cap text-primary" style="width:20px"></i> <strong>Aplica a:</strong> ${courseName}</p>
+            </div>
+
+            <div style="background:var(--bg-main); padding:1.25rem; border-radius:12px; border:1px solid var(--border-color); line-height:1.6; color:var(--text-main)">
+                <p style="font-size:0.9rem; font-weight:600; color:var(--text-muted); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.5px">Descripción</p>
+                ${ev.description || 'Sin descripción adicional.'}
+            </div>
             
             ${canEdit ? `
-                <div class="flex gap-4 border-t mt-4 pt-4" style="border-color:#eee">
-                    <button class="btn" style="background:#fee2e2; color:#b91c1c; flex:1;" onclick="Views.Calendar.delete(${ev.id})"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                <div class="flex gap-4 border-t mt-5 pt-4" style="border-color:var(--border-color)">
+                    <button class="btn" style="background:rgba(239, 68, 68, 0.1); color:var(--danger); flex:1; padding:0.75rem" onclick="Views.Calendar.delete(${ev.id})"><i class="fa-solid fa-trash"></i> Eliminar</button>
                 </div>
             ` : ''}
         `);
         UI.hideLoader();
+    },
+
+    renderUpcomingEvents(user) {
+        let events = DB.getTable('events');
+        const now = new Date();
+        
+        // Filter by user role/course
+        if(user.role === 'teacher') {
+            const myCourses = DB.getTable('courses').filter(c => Number(c.teacherId) === Number(user.id)).map(c=>c.id);
+            events = events.filter(e => !e.courseId || myCourses.includes(e.courseId));
+        } else if (user.role === 'student') {
+            events = events.filter(e => !e.courseId || Number(e.courseId) === Number(user.course_id));
+        }
+
+        // Only future events, sorted by date
+        const upcoming = events
+            .filter(e => new Date(e.start) >= now)
+            .sort((a, b) => new Date(a.start) - new Date(b.start))
+            .slice(0, 5);
+
+        if (upcoming.length === 0) return '<p class="text-muted text-sm">No hay eventos próximos.</p>';
+
+        return upcoming.map(e => `
+            <div class="upcoming-item" onclick="Views.Calendar.viewEvent(${e.id})">
+                <p style="font-weight:700; font-size:0.9rem; margin-bottom:0.25rem; color:var(--text-main)">${e.title}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                    <span class="text-muted text-sm"><i class="fa-regular fa-clock"></i> ${new Date(e.start).toLocaleDateString('es-ES', {day:'numeric', month:'short'})}</span>
+                    <span class="badge badge-${e.type === 'Exam' ? 'danger' : e.type === 'Holiday' ? 'success' : 'info'}" style="font-size:0.6rem">${e.type}</span>
+                </div>
+            </div>
+        `).join('');
     },
 
     openModal(defaultDate = '') {
