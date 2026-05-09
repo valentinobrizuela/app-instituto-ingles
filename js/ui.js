@@ -166,7 +166,7 @@ const UI = {
                     <!-- Menú de WhatsApp (Multi-contacto) -->
                     <div id="wa-menu" class="wa-menu">
                         <div class="wa-menu-header">¿Con quién quieres hablar?</div>
-                        <a href="https://wa.me/54938041352708?text=Hola%20Directora%20Maricel,%20le%20escribo%20desde%20la%20App%20del%20Instituto." 
+                        <a href="https://wa.me/5493804135270?text=Hola%20Directora%20Maricel,%20le%20escribo%20desde%20la%20App%20del%20Instituto." 
                            target="_blank" class="wa-menu-item">
                             <i class="fa-brands fa-whatsapp"></i>
                             <div class="contact-info">
