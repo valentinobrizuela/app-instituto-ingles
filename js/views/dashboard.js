@@ -53,7 +53,7 @@ Views.Dashboard = {
                             <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:0.5px; font-size:0.7rem">Eficiencia Cobro</p>
                             <h2 style="font-size:2rem; margin-top:0.5rem">${efficiency.toFixed(1)}%</h2>
                         </div>
-                        <div style="background:#dcfce7; color:var(--success); padding:8px; border-radius:8px">
+                        <div style="background:var(--badge-success-bg); color:var(--success); padding:8px; border-radius:8px">
                             <i class="fa-solid fa-hand-holding-dollar fa-lg"></i>
                         </div>
                     </div>
@@ -65,7 +65,7 @@ Views.Dashboard = {
                             <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:0.5px; font-size:0.7rem">Asistencia Prom.</p>
                             <h2 style="font-size:2rem; margin-top:0.5rem">${attendanceRate}%</h2>
                         </div>
-                        <div style="background:#e0f2fe; color:var(--info); padding:8px; border-radius:8px">
+                        <div style="background:var(--badge-info-bg); color:var(--info); padding:8px; border-radius:8px">
                             <i class="fa-solid fa-calendar-check fa-lg"></i>
                         </div>
                     </div>
@@ -77,7 +77,7 @@ Views.Dashboard = {
                             <p class="text-muted text-sm uppercase font-bold" style="letter-spacing:0.5px; font-size:0.7rem">Profesores</p>
                             <h2 style="font-size:2rem; margin-top:0.5rem">${teachers.length}</h2>
                         </div>
-                        <div style="background:#fef3c7; color:var(--accent); padding:8px; border-radius:8px">
+                        <div style="background:var(--badge-warning-bg); color:var(--accent); padding:8px; border-radius:8px">
                             <i class="fa-solid fa-chalkboard-user fa-lg"></i>
                         </div>
                     </div>

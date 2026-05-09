@@ -1,27 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
-[data-theme="dark"] {
-    --bg-main: #0f172a; /* Slate 900 */
-    --bg-card: #1e293b; /* Slate 800 */
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --border-color: #334155; /* Slate 700 */
-    --primary-light: #2d1808;
-    --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.5);
-    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.5);
-    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.6);
-    
-    /* Dark Mode Badges */
-    --badge-success-bg: rgba(16, 185, 129, 0.2);
-    --badge-success-text: #34d399;
-    --badge-info-bg: rgba(56, 189, 248, 0.2);
-    --badge-info-text: #7dd3fc;
-    --badge-danger-bg: rgba(239, 68, 68, 0.2);
-    --badge-danger-text: #fca5a5;
-    --badge-warning-bg: rgba(245, 158, 11, 0.2);
-    --badge-warning-text: #fcd34d;
-}
-
 :root {
     --primary: #f97316;
     --primary-dark: #ea580c;
@@ -52,6 +30,28 @@
     --badge-danger-text: #991b1b;
     --badge-warning-bg: #fef3c7;
     --badge-warning-text: #92400e;
+}
+
+[data-theme="dark"] {
+    --bg-main: #0f172a; /* Slate 900 */
+    --bg-card: #1e293b; /* Slate 800 */
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #334155; /* Slate 700 */
+    --primary-light: #2d1808;
+    --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.6);
+    
+    /* Dark Mode Badges */
+    --badge-success-bg: rgba(16, 185, 129, 0.2);
+    --badge-success-text: #34d399;
+    --badge-info-bg: rgba(56, 189, 248, 0.2);
+    --badge-info-text: #7dd3fc;
+    --badge-danger-bg: rgba(239, 68, 68, 0.2);
+    --badge-danger-text: #fca5a5;
+    --badge-warning-bg: rgba(245, 158, 11, 0.2);
+    --badge-warning-text: #fcd34d;
 }
 
 * {

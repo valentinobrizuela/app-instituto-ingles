@@ -196,8 +196,13 @@ const UI = {
 
     initTheme() {
         const theme = localStorage.getItem('westhouse_theme') || 'light';
+        const icon = document.querySelector('[onclick="UI.toggleTheme()"] i');
         if (theme === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
+            if(icon) icon.className = 'fa-solid fa-sun';
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            if(icon) icon.className = 'fa-solid fa-moon';
         }
     },
 
