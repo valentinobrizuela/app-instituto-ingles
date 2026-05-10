@@ -44,8 +44,9 @@ const studentsData = [
 async function migrate() {
     console.log("🚀 Iniciando migración de datos reales...");
 
-    // 0. Limpiar datos viejos
-    console.log("🧹 Limpiando base de datos...");
+    // 0. Limpiar datos viejos (DESACTIVADO POR SEGURIDAD)
+    console.log("🧹 Modo seguro activo: No se borrarán datos existentes.");
+    /*
     await supabase.from('logs').delete().neq('id', 0);
     await supabase.from('grades').delete().neq('id', 0);
     await supabase.from('notifications').delete().neq('id', 0);
@@ -53,7 +54,8 @@ async function migrate() {
     await supabase.from('payments').delete().neq('id', 0);
     await supabase.from('attendance').delete().neq('id', 0);
     await supabase.from('courses').delete().neq('id', 0);
-    await supabase.from('users').delete().neq('role', 'none'); // Truncate users except admins if desired, but better all.
+    await supabase.from('users').delete().neq('role', 'none'); 
+    */
     
     // NOTA: Para usuarios Auth, tendríamos que borrarlos manualmente o vía admin API. 
     // Por simplicidad, el script creará usuarios nuevos o ignorará si ya existen.
