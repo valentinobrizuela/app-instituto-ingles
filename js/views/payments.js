@@ -25,8 +25,8 @@ Views.Payments = {
         const payments = [...allPayments];
         payments.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-        const recaudado = payments.filter(p => p.status === 'Pagado').reduce((acc, p) => acc + p.amount, 0);
-        const deuda = payments.filter(p => p.status !== 'Pagado').reduce((acc, p) => acc + p.amount, 0);
+        const recaudado = payments.filter(p => p.status === 'Pagado').reduce((acc, p) => acc + Number(p.amount || 0), 0);
+        const deuda = payments.filter(p => p.status !== 'Pagado').reduce((acc, p) => acc + Number(p.amount || 0), 0);
         
         const limit = 10;
         const pagedData = DB.paginate(payments, page, limit);
@@ -98,7 +98,7 @@ Views.Payments = {
         const payments = allPayments.filter(p => String(p.student_id) === String(student.id));
         payments.sort((a,b) => new Date(b.date) - new Date(a.date));
 
-        const deuda = payments.filter(p => p.status !== 'Pagado').reduce((acc, p) => acc + p.amount, 0);
+        const deuda = payments.filter(p => p.status !== 'Pagado').reduce((acc, p) => acc + Number(p.amount || 0), 0);
 
         if (payments.length === 0) {
             document.getElementById('router-view').innerHTML = `

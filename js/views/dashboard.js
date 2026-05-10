@@ -21,8 +21,8 @@ Views.Dashboard = {
         const teachers = users.filter(u => u.role === 'teacher');
         const payments = DB.getTable('payments');
         
-        const totalRevenue = payments.filter(p => p.status === 'Pagado').reduce((acc, p) => acc + p.amount, 0);
-        const totalExpected = payments.reduce((acc, p) => acc + p.amount, 0);
+        const totalRevenue = payments.filter(p => p.status === 'Pagado').reduce((acc, p) => acc + Number(p.amount || 0), 0);
+        const totalExpected = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0);
         const efficiency = totalExpected > 0 ? (totalRevenue / totalExpected) * 100 : 0;
 
         const attendance = DB.getTable('attendance');
@@ -255,7 +255,7 @@ Views.Dashboard = {
                 else levels['Beginner']++;
             });
             
-            const currentMonthRevenue = payments.reduce((sum, p) => p.status === 'Pagado' ? sum + p.amount : sum, 0);
+            const currentMonthRevenue = payments.reduce((sum, p) => p.status === 'Pagado' ? sum + Number(p.amount || 0) : sum, 0);
             
             // Group real payments by month
             const monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -265,7 +265,7 @@ Views.Dashboard = {
                 if (p.status === 'Pagado' && p.date) {
                     const date = new Date(p.date);
                     if (!isNaN(date)) {
-                        monthlyData[date.getMonth()] += p.amount;
+                        monthlyData[date.getMonth()] += Number(p.amount || 0);
                     }
                 }
             });
