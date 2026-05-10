@@ -2,125 +2,145 @@ window.Views = window.Views || {};
 
 Views.StudentPortal = {
     render() {
-        const user = Auth.getUser();
-        const payments = DB.getTable('payments').filter(p => p.student_id === user.id);
-        const hasDebt = payments.some(p => p.status !== 'Pagado');
-        const course = DB.getTable('courses').find(c => c.id == user.course_id);
-        const teacher = DB.getTable('users').find(u => u.id === user.teacher_id);
+        try {
+            const user = Auth.getUser();
+            if (!user) return;
 
-        const container = document.getElementById('router-view');
+            // Normalizar comparaciones de IDs para evitar errores de tipo
+            const payments = DB.getTable('payments').filter(p => String(p.student_id) === String(user.id));
+            const hasDebt = payments.some(p => p.status !== 'Pagado');
+            const course = DB.getTable('courses').find(c => String(c.id) === String(user.course_id));
+            const teacher = DB.getTable('users').find(u => String(u.id) === String(user.teacher_id));
 
-        container.innerHTML = `
-            <div class="hero-welcome">
-                <div style="position:relative; z-index:2">
-                    <span class="badge" style="background:var(--accent); color:white; margin-bottom:1rem">Estudiante Activo</span>
-                    <h1 class="hero-title">¡Welcome to West House English School!</h1>
-                    <p class="hero-subtitle">Hola <strong>${user.name}</strong>, nos alegra mucho tenerte de vuelta. Sigue practicando y alcanzando tus metas.</p>
-                    
-                    <div style="margin-top:2rem; display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
-                        <button class="btn btn-primary" onclick="window.location.hash='#/materials'">Ver mis materiales <i class="fa-solid fa-arrow-right"></i></button>
-                        <button class="btn" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2)" onclick="window.location.hash='#/calendar'">Mi Horario</button>
+            const container = document.getElementById('router-view');
+            if (!container) return;
+
+            const xp = Number(user.xp || 0);
+            const level = user.level || 1;
+
+            container.innerHTML = `
+                <div class="hero-welcome">
+                    <div style="position:relative; z-index:2">
+                        <span class="badge" style="background:var(--accent); color:white; margin-bottom:1rem">Estudiante Activo</span>
+                        <h1 class="hero-title">¡Welcome to West House English School!</h1>
+                        <p class="hero-subtitle">Hola <strong>${user.name || 'Alumno'}</strong>, nos alegra mucho tenerte de vuelta. Sigue practicando y alcanzando tus metas.</p>
                         
-                        <!-- Mila Welcome -->
-                        <div id="mila-welcome-student" style="margin-left:auto">
-                             ${(() => {
-                                 // Simple logic to show Mila welcome
-                                 return `
-                                    <div class="mila-wrapper" style="background:rgba(255,255,255,0.1); border:none; padding:0.5rem 1rem">
-                                        <img src="img/mila.png" class="mila-avatar" style="width:40px; height:40px; border-color:white">
-                                        <p style="color:white; font-size:0.8rem; margin:0">${UI.Mila.getSuggestion('welcome_student')}</p>
-                                    </div>
-                                 `;
-                             })()}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-4" style="background:var(--bg-card); border:1px solid var(--primary-light)">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
-                    <h3 style="font-size:1rem; margin:0"><i class="fa-solid fa-bolt text-primary"></i> Mi Nivel de Aprendizaje</h3>
-                    <span class="badge badge-primary">Nivel ${user.level || 1}</span>
-                </div>
-                <div style="background:var(--bg-main); height:12px; border-radius:10px; position:relative; overflow:hidden">
-                    <div style="background:var(--primary); height:100%; width:${(user.xp % 100)}%; transition: width 1s ease-out"></div>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-top:0.5rem">
-                    <span class="text-xs text-muted">${user.xp || 0} XP totales</span>
-                    <span class="text-xs text-muted">Próximo nivel: ${100 - (user.xp % 100)} XP</span>
-                </div>
-            </div>
-
-            <div class="responsive-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-                <div class="card">
-                    <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
-                        <i class="fa-solid fa-book-open-reader"></i> Mi Clase Actual
-                    </h3>
-                    <div style="background:var(--primary-light); padding:1.5rem; border-radius:12px; margin-bottom:1rem">
-                        <h4 style="font-size:1.2rem; color:var(--primary-dark)">${course ? course.name : 'No asignado'}</h4>
-                        <p class="text-muted mt-1"><i class="fa-regular fa-clock"></i> ${course ? course.schedule : '-'}</p>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:0.75rem">
-                        <div class="avatar" style="background:var(--accent); color:white">${teacher ? teacher.name[0] : '?'}</div>
-                        <div>
-                            <p style="font-weight:700; font-size:0.9rem">${teacher ? teacher.name : 'Consultar en Recepción'}</p>
-                            <p class="text-muted text-sm">Tu Profesor(a)</p>
+                        <div style="margin-top:2rem; display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
+                            <button class="btn btn-primary" onclick="window.location.hash='#/materials'">Ver mis materiales <i class="fa-solid fa-arrow-right"></i></button>
+                            <button class="btn" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2)" onclick="window.location.hash='#/calendar'">Mi Horario</button>
+                            
+                            <!-- Mila Welcome -->
+                            <div id="mila-welcome-student" style="margin-left:auto">
+                                 ${(() => {
+                                     try {
+                                         return `
+                                            <div class="mila-wrapper" style="background:rgba(255,255,255,0.1); border:none; padding:0.5rem 1rem">
+                                                <img src="img/mila.png" class="mila-avatar" style="width:40px; height:40px; border-color:white">
+                                                <p style="color:white; font-size:0.8rem; margin:0">${UI.Mila.getSuggestion('welcome_student')}</p>
+                                            </div>
+                                         `;
+                                     } catch(e) { return ''; }
+                                 })()}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3 class="mb-4" style="color:var(--success); display:flex; align-items:center; gap:0.5rem">
-                        <i class="fa-solid fa-circle-dollar-to-slot"></i> Mi Estado de Pagos
-                    </h3>
-                    <div style="text-align:center; padding:1rem">
-                        ${hasDebt ? `
-                            <div style="color:var(--danger)">
-                                <i class="fa-solid fa-triangle-exclamation fa-3x mb-2"></i>
-                                <p style="font-weight:700">Tienes cuotas pendientes</p>
+                <div class="card mb-4" style="background:var(--bg-card); border:1px solid var(--primary-light)">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+                        <h3 style="font-size:1rem; margin:0"><i class="fa-solid fa-bolt text-primary"></i> Mi Nivel de Aprendizaje</h3>
+                        <span class="badge badge-primary">Nivel ${level}</span>
+                    </div>
+                    <div style="background:var(--bg-main); height:12px; border-radius:10px; position:relative; overflow:hidden">
+                        <div style="background:var(--primary); height:100%; width:${xp % 100}%; transition: width 1s ease-out"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:0.5rem">
+                        <span class="text-xs text-muted">${xp} XP totales</span>
+                        <span class="text-xs text-muted">Próximo nivel: ${100 - (xp % 100)} XP</span>
+                    </div>
+                </div>
+
+                <div class="responsive-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div class="card">
+                        <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
+                            <i class="fa-solid fa-book-open-reader"></i> Mi Clase Actual
+                        </h3>
+                        <div style="background:var(--primary-light); padding:1.5rem; border-radius:12px; margin-bottom:1rem">
+                            <h4 style="font-size:1.2rem; color:var(--primary-dark)">${course ? course.name : 'No asignado'}</h4>
+                            <p class="text-muted mt-1"><i class="fa-regular fa-clock"></i> ${course ? course.schedule : '-'}</p>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.75rem">
+                            <div class="avatar" style="background:var(--accent); color:white">${teacher && teacher.name ? teacher.name[0] : '?'}</div>
+                            <div>
+                                <p style="font-weight:700; font-size:0.9rem">${teacher ? teacher.name : 'Consultar en Recepción'}</p>
+                                <p class="text-muted text-sm">Tu Profesor(a)</p>
                             </div>
-                        ` : `
-                            <div style="color:var(--success)">
-                                <i class="fa-solid fa-circle-check fa-3x mb-2"></i>
-                                <p style="font-weight:700">¡Estás al día!</p>
-                            </div>
-                        `}
-                        
-                        <div style="margin-top: 1.5rem; text-align: left; background: var(--bg-hover); padding: 1rem; border-radius: 8px;">
-                            <p style="font-weight: bold; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Últimos Pagos</p>
-                            ${payments.length > 0 ? payments.slice(-3).map(p => `
-                                <div style="display:flex; justify-content:space-between; font-size: 0.85rem; padding: 0.25rem 0; border-bottom: 1px solid var(--border-color);">
-                                    <span style="color:var(--text-muted)">${new Date(p.date).toLocaleDateString()}</span>
-                                    <span style="font-weight:bold; color:${p.status === 'Pagado' ? 'var(--success)' : 'var(--danger)'}">$${Number(p.amount).toLocaleString('es-AR')}</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="mb-4" style="color:var(--success); display:flex; align-items:center; gap:0.5rem">
+                            <i class="fa-solid fa-circle-dollar-to-slot"></i> Mi Estado de Pagos
+                        </h3>
+                        <div style="text-align:center; padding:1rem">
+                            ${hasDebt ? `
+                                <div style="color:var(--danger)">
+                                    <i class="fa-solid fa-triangle-exclamation fa-3x mb-2"></i>
+                                    <p style="font-weight:700">Tienes cuotas pendientes</p>
                                 </div>
-                            `).join('') : '<p class="text-xs text-muted">No hay pagos registrados aún.</p>'}
+                            ` : `
+                                <div style="color:var(--success)">
+                                    <i class="fa-solid fa-circle-check fa-3x mb-2"></i>
+                                    <p style="font-weight:700">¡Estás al día!</p>
+                                </div>
+                            `}
+                            
+                            <div style="margin-top: 1.5rem; text-align: left; background: var(--bg-hover); padding: 1rem; border-radius: 8px;">
+                                <p style="font-weight: bold; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Últimos Pagos</p>
+                                ${payments.length > 0 ? payments.slice(-3).map(p => `
+                                    <div style="display:flex; justify-content:space-between; font-size: 0.85rem; padding: 0.25rem 0; border-bottom: 1px solid var(--border-color);">
+                                        <span style="color:var(--text-muted)">${new Date(p.date).toLocaleDateString()}</span>
+                                        <span style="font-weight:bold; color:${p.status === 'Pagado' ? 'var(--success)' : 'var(--danger)'}">$${Number(p.amount || 0).toLocaleString('es-AR')}</span>
+                                    </div>
+                                `).join('') : '<p class="text-xs text-muted">No hay pagos registrados aún.</p>'}
+                            </div>
+
+                            <button class="btn btn-secondary mt-4 w-full" onclick="window.location.hash='#/payments'">Ver Detalle Completo</button>
                         </div>
+                    </div>
 
-                        <button class="btn btn-secondary mt-4 w-full" onclick="window.location.hash='#/payments'">Ver Detalle Completo</button>
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
+                            <i class="fa-solid fa-trophy"></i> Mi Sala de Trofeos
+                        </h3>
+                        <div id="trophy-room" style="display:flex; gap:1.5rem; flex-wrap:wrap">
+                            ${this.renderBadges(user)}
+                        </div>
+                    </div>
+
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
+                            <i class="fa-solid fa-timeline"></i> Mi Camino de Aprendizaje
+                        </h3>
+                        <div id="learning-timeline">
+                            Cargando progreso...
+                        </div>
                     </div>
                 </div>
-
-                <div class="card" style="grid-column: 1 / -1;">
-                    <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
-                        <i class="fa-solid fa-trophy"></i> Mi Sala de Trofeos
-                    </h3>
-                    <div id="trophy-room" style="display:flex; gap:1.5rem; flex-wrap:wrap">
-                        ${this.renderBadges(user)}
-                    </div>
+            `;
+            
+            this.renderTimeline(user);
+        } catch (err) {
+            console.error("Error en StudentPortal.render:", err);
+            document.getElementById('router-view').innerHTML = `
+                <div class="card" style="text-align:center; padding: 4rem;">
+                    <i class="fa-solid fa-circle-exclamation text-warning" style="font-size:3rem;"></i>
+                    <h2 class="mt-4">Lo sentimos</h2>
+                    <p class="text-muted">No pudimos cargar tu panel. Esto puede deberse a datos incompletos en tu perfil.</p>
+                    <button class="btn btn-primary mt-4" onclick="window.location.reload()">Reintentar</button>
                 </div>
-
-                <div class="card" style="grid-column: 1 / -1;">
-                    <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
-                        <i class="fa-solid fa-timeline"></i> Mi Camino de Aprendizaje
-                    </h3>
-                    <div id="learning-timeline">
-                        Cargando progreso...
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        this.renderTimeline(user);
+            `;
+        }
     },
 
     renderTimeline(user) {

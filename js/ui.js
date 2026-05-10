@@ -282,37 +282,6 @@ const UI = {
         this.initTheme();
     },
 
-    initTheme() {
-        const theme = localStorage.getItem('westhouse_theme') || 'light';
-        const icon = document.querySelector('[onclick="UI.toggleTheme()"] i');
-        if (theme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            if(icon) icon.className = 'fa-solid fa-sun';
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-            if(icon) icon.className = 'fa-solid fa-moon';
-        }
-    },
-
-    toggleTheme() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const icon = document.querySelector('[onclick="UI.toggleTheme()"] i');
-        if (isDark) {
-            document.documentElement.removeAttribute('data-theme');
-            localStorage.setItem('westhouse_theme', 'light');
-            if(icon) icon.className = 'fa-solid fa-moon';
-        } else {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('westhouse_theme', 'dark');
-            if(icon) icon.className = 'fa-solid fa-sun';
-        }
-
-        // Re-render current view if it has charts (like dashboard)
-        if (window.location.hash === '#/' || window.location.hash === '') {
-            if (window.Views && Views.Dashboard) {
-                Views.Dashboard.render();
-            }
-        }
     },
 
     updateActiveNavLink() {
@@ -774,6 +743,19 @@ const UI = {
         removeTyping(id) {
             const el = document.getElementById(id);
             if (el) el.remove();
+        },
+
+        getSuggestion(type, context = {}) {
+            if (type === 'attendance_risk') {
+                return `Mila notó que <strong>${context.name}</strong> ha faltado un par de veces. ¿Le mandamos un saludito para que no se pierda nada? 🐾`;
+            }
+            if (type === 'payment_reminder') {
+                return `¡Hola! Mila sugiere recordarle amablemente a la familia de ${context.name} sobre la cuota pendiente. ¡Miau! 🐈`;
+            }
+            if (type === 'welcome_student') {
+                return `¡Bienvenido de nuevo! Mila está feliz de verte. ¡Hoy es un gran día para aprender inglés! 🌟`;
+            }
+            return "¡Hola! Soy Mila, tu asistente. ¿En qué puedo ayudarte hoy?";
         },
 
         speak(message, containerId = 'mila-bubble-container') {
