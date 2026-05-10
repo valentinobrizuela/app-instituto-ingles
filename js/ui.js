@@ -261,22 +261,18 @@ const UI = {
                         <img src="img/mila.png" style="width:30px; height:30px; border-radius:50%; background:white">
                         <div style="flex:1">
                             <p style="font-weight:700; font-size:0.9rem; margin:0">Mila — Tu Asistente</p>
-                            <p style="font-size:0.65rem; margin:0; opacity:0.8">¡Miau! Siempre lista para ayudar</p>
+                            <p id="mila-status" style="font-size:0.65rem; margin:0; opacity:0.8">En línea</p>
                         </div>
                         <i class="fa-solid fa-xmark" style="cursor:pointer" onclick="UI.toggleMilaChat()"></i>
                     </div>
                     <div class="mila-chat-body">
-                        <p style="font-size:0.85rem; line-height:1.4">¡Hola! Soy <strong>Mila</strong>. Mi misión es ayudarte a que tu experiencia en West House sea increíble.</p>
-                        <hr style="margin:1rem 0; border:0; border-top:1px solid var(--border-color)">
-                        <div style="display:flex; flex-direction:column; gap:0.5rem">
-                            <button class="btn btn-secondary btn-sm w-full" style="justify-content:flex-start; text-align:left" onclick="UI.showToast('Mila: ¡Sigue sumando XP para ganar medallas!', 'info')">
-                                <i class="fa-solid fa-lightbulb text-warning"></i> ¿Cómo gano XP?
-                            </button>
-                            <button class="btn btn-secondary btn-sm w-full" style="justify-content:flex-start; text-align:left" onclick="UI.showToast('Mila: Puedes ver tus tareas en la sección de Materiales.', 'info')">
-                                <i class="fa-solid fa-book text-primary"></i> Ver tareas pendientes
-                            </button>
-                            <button class="btn btn-secondary btn-sm w-full" style="justify-content:flex-start; text-align:left" onclick="window.location.hash='#/settings'">
-                                <i class="fa-solid fa-user-gear"></i> Editar mi perfil
+                        <div id="mila-messages" class="mila-messages-container">
+                            <!-- Los mensajes aparecerán aquí -->
+                        </div>
+                        <div class="mila-chat-input-area">
+                            <input type="text" id="mila-input" class="mila-chat-input" placeholder="Pregúntame algo..." onkeydown="if(event.key === 'Enter') UI.Mila.sendMessage()">
+                            <button class="mila-send-btn" onclick="UI.Mila.sendMessage()">
+                                <i class="fa-solid fa-paper-plane"></i>
                             </button>
                         </div>
                     </div>
@@ -704,6 +700,82 @@ const UI = {
 
     // --- MILA AI ASSISTANT ---
     Mila: {
+        isInitialized: false,
+
+        initChat() {
+            if (this.isInitialized) return;
+            const container = document.getElementById('mila-messages');
+            if (!container) return;
+
+            this.addMessage("¡Hola! Soy **Mila**, tu asistente de West House. Puedo decirte tus horarios, notas, estado de cuenta o responder dudas sobre el instituto. ¿En qué te ayudo hoy? 🐾", true);
+            this.isInitialized = true;
+        },
+
+        async sendMessage() {
+            const input = document.getElementById('mila-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            this.addMessage(text, false);
+
+            // Mostrar estado "Escribiendo..."
+            const status = document.getElementById('mila-status');
+            const originalStatus = status.innerText;
+            status.innerText = "Escribiendo...";
+            
+            const typingId = 'typing-' + Date.now();
+            this.showTyping(typingId);
+
+            try {
+                const response = await MilaAI.getResponse(text);
+                
+                // Simular delay natural
+                setTimeout(() => {
+                    this.removeTyping(typingId);
+                    this.addMessage(response, true);
+                    status.innerText = originalStatus;
+                }, 1000);
+            } catch (err) {
+                this.removeTyping(typingId);
+                this.addMessage("Miau... tuve un problema para procesar eso. ¿Podrías intentar de nuevo? 🐾", true);
+                status.innerText = originalStatus;
+            }
+        },
+
+        addMessage(text, isBot) {
+            const container = document.getElementById('mila-messages');
+            if (!container) return;
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `mila-msg ${isBot ? 'mila-msg-bot' : 'mila-msg-user'}`;
+            
+            // Markdown básico (negritas y links)
+            let formattedText = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:inherit; text-decoration:underline">$1</a>')
+                .replace(/\n/g, '<br>');
+
+            msgDiv.innerHTML = formattedText;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        },
+
+        showTyping(id) {
+            const container = document.getElementById('mila-messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = id;
+            typingDiv.className = 'mila-msg mila-msg-bot typing';
+            typingDiv.innerHTML = '<span></span><span></span><span></span>';
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        },
+
+        removeTyping(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        },
+
         speak(message, containerId = 'mila-bubble-container') {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -717,19 +789,6 @@ const UI = {
                     </div>
                 </div>
             `;
-        },
-
-        getSuggestion(type, context = {}) {
-            if (type === 'attendance_risk') {
-                return `Mila notó que <strong>${context.name}</strong> ha faltado un par de veces. ¿Le mandamos un saludito para que no se pierda nada? 🐾`;
-            }
-            if (type === 'payment_reminder') {
-                return `¡Hola! Mila sugiere recordarle amablemente a la familia de ${context.name} sobre la cuota pendiente. ¡Miau! 🐈`;
-            }
-            if (type === 'welcome_student') {
-                return `¡Bienvenido de nuevo! Mila está feliz de verte. ¡Hoy es un gran día para aprender inglés! 🌟`;
-            }
-            return "¡Hola! Soy Mila, tu asistente. ¿En qué puedo ayudarte hoy?";
         }
     },
 
@@ -749,7 +808,13 @@ const UI = {
 
     toggleMilaChat() {
         const chat = document.getElementById('mila-floating-chat');
-        if (chat) chat.classList.toggle('active');
+        if (chat) {
+            chat.classList.toggle('active');
+            if (chat.classList.contains('active')) {
+                this.Mila.initChat();
+                setTimeout(() => document.getElementById('mila-input').focus(), 300);
+            }
+        }
     },
 
     clearNotifications() {
