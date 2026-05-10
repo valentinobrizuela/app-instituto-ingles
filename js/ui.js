@@ -282,8 +282,6 @@ const UI = {
         this.initTheme();
     },
 
-    },
-
     updateActiveNavLink() {
         const hash = window.location.hash || '#/';
         document.querySelectorAll('.nav-link').forEach(link => {
