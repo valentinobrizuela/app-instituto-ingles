@@ -10,7 +10,8 @@ Views.Dashboard = {
         } else if (user.role === 'teacher') {
             this.renderTeacher(user, viewContainer);
         } else {
-            this.renderStudent(user, viewContainer);
+            // Delegar al portal de alumno para consistencia
+            if (Views.StudentPortal) Views.StudentPortal.render();
         }
     },
 

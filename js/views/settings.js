@@ -47,8 +47,34 @@ Views.Settings = {
     },
 
     renderProfileTab(user) {
+        let studentStats = '';
+        if (user.role === 'student') {
+            const course = DB.getTable('courses').find(c => Number(c.id) === Number(user.course_id));
+            studentStats = `
+                <div class="card mb-4" style="background:var(--primary-light); border:1px solid var(--primary); margin-bottom:2rem">
+                    <h4 style="color:var(--primary); margin-bottom:1rem"><i class="fa-solid fa-graduation-cap"></i> Resumen Académico</h4>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:1rem">
+                        <div>
+                            <p class="text-xs text-muted uppercase font-bold">Nivel Actual</p>
+                            <p style="font-weight:800; font-size:1.25rem; color:var(--text-main)">${user.level || 'Beginner'}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-muted uppercase font-bold">Experiencia (XP)</p>
+                            <p style="font-weight:800; font-size:1.25rem; color:var(--text-main)">${user.xp || 0} XP</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-muted uppercase font-bold">Curso</p>
+                            <p style="font-weight:800; font-size:1.25rem; color:var(--text-main)">${course ? course.name : 'Sin asignar'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         return `
             <div class="card fade-in-up">
+                ${studentStats}
+                
                 <h3 class="mb-4">Información Personal</h3>
                 <form onsubmit="event.preventDefault(); UI.showToast('Perfil actualizado (Demo)', 'success')">
                     <div style="display:flex; gap:2rem; margin-bottom:2rem; align-items:center">

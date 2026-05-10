@@ -195,7 +195,7 @@ Views.Users = {
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-top:0.5rem">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem; margin-top:0.5rem">
                         <div class="form-group">
                             <label>Nivel de Inglés</label>
                             <select id="u-level" class="form-control">
@@ -203,6 +203,10 @@ Views.Users = {
                                 <option value="Intermediate" ${u.level === 'Intermediate' ? 'selected' : ''}>Intermediate (B1-B2)</option>
                                 <option value="Advanced" ${u.level === 'Advanced' ? 'selected' : ''}>Advanced (C1-C2)</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Experiencia (XP)</label>
+                            <input type="number" id="u-xp" class="form-control" value="${u.xp || 0}">
                         </div>
                         <div class="form-group">
                             <label>Asignación a Curso</label>
@@ -262,6 +266,7 @@ Views.Users = {
             data.parent_email = document.getElementById('u-parent').value;
             data.parent_phone = document.getElementById('u-phone').value;
             data.level = document.getElementById('u-level').value;
+            data.xp = parseInt(document.getElementById('u-xp').value) || 0;
             const courseVal = document.getElementById('u-course').value;
             if(courseVal) {
                 data.course_id = parseInt(courseVal);
