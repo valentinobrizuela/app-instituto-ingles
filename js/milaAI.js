@@ -32,9 +32,9 @@ const MilaAI = {
 
             // Consulta de Notas
             if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("cómo voy")) {
-                const grades = DB.getTable('grades').filter(g => String(g.student_id) === String(user.id));
+                const grades = DB.getTable('grades').filter(g => String(g.studentId) === String(user.id));
                 if (grades.length > 0) {
-                    const avg = (grades.reduce((sum, g) => sum + Number(g.grade), 0) / grades.length).toFixed(1);
+                    const avg = (grades.reduce((sum, g) => sum + Number(g.score), 0) / grades.length).toFixed(1);
                     return `He revisado tus notas. Tienes ${grades.length} calificaciones registradas y tu promedio actual es **${avg}**. ¡Buen trabajo! 🌟`;
                 }
                 return "Todavía no tengo notas registradas para ti. ¡Sigue esforzándote! 📝";

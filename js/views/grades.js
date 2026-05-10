@@ -50,7 +50,7 @@ Views.Grades = {
             return;
         }
 
-        const students = DB.getTable('users').filter(u => u.role === 'student' && Number(u.courseId) === Number(courseId));
+        const students = DB.getTable('users').filter(u => u.role === 'student' && Number(u.course_id) === Number(courseId));
         const grades = DB.getTable('grades');
 
         if (students.length === 0) {

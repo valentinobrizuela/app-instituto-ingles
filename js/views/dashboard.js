@@ -243,8 +243,15 @@ Views.Dashboard = {
             
             const levels = { Beginner: 0, Intermediate: 0, Advanced: 0 };
             users.forEach(u => { 
-                const level = u.level ? u.level.charAt(0).toUpperCase() + u.level.slice(1).toLowerCase() : 'Beginner';
-                if (levels[level] !== undefined) levels[level]++; 
+                let levelStr = 'Beginner';
+                if (u.level && typeof u.level === 'string') {
+                    levelStr = u.level.charAt(0).toUpperCase() + u.level.slice(1).toLowerCase();
+                } else if (typeof u.level === 'number') {
+                    // Si es nivel numérico, mapear o dejar como Beginner por defecto para el gráfico
+                    levelStr = 'Beginner';
+                }
+                
+                if (levels[levelStr] !== undefined) levels[levelStr]++; 
                 else levels['Beginner']++;
             });
             
