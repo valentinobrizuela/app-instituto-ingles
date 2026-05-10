@@ -1,62 +1,65 @@
 // Bootstrapper y Router
 const App = {
     async init() {
-        UI.initTheme();
-        console.log("Iniciando West House OS (Backend Ready)...");
+        try {
+            UI.initTheme();
+            console.log("Iniciando West House OS (Backend Ready)...");
 
-        // PWA Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            try {
-                const reg = await navigator.serviceWorker.register('./sw.js');
-                console.log('Service Worker Registered:', reg.scope);
-            } catch (err) {
-                console.warn('Service Worker Registration Failed:', err);
+            // PWA Service Worker Registration
+            if ('serviceWorker' in navigator) {
+                try {
+                    const reg = await navigator.serviceWorker.register('./sw.js');
+                    console.log('Service Worker Registered:', reg.scope);
+                } catch (err) {
+                    console.warn('Service Worker Registration Failed:', err);
+                }
             }
-        }
 
-        // PWA Install Prompt Handling
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevenir que el navegador muestre el prompt automático
-            e.preventDefault();
-            // Guardar el evento para dispararlo luego
-            window.deferredPrompt = e;
-            // Mostrar botón de instalación en la UI
-            UI.showInstallButton();
-        });
-
-        // Sincronización de Datos (Backend unificado)
-        await DB.init();
-        await Auth.init();
-        
-        // Command Palette Shortcut (Ctrl+K) - Only for Staff
-        window.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                if (Auth.hasRole('student')) return;
+            // PWA Install Prompt Handling
+            window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
-                UI.showCommandPalette();
-            }
-        });
+                window.deferredPrompt = e;
+                UI.showInstallButton();
+            });
 
-        console.log("✓ Sistema sincronizado con backend.");
+            // Sincronización de Datos (Backend unificado)
+            await DB.init();
+            await Auth.init();
+            
+            // Command Palette Shortcut
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    if (Auth.hasRole('student')) return;
+                    e.preventDefault();
+                    UI.showCommandPalette();
+                }
+            });
 
-        // Listener de rutas
-        window.addEventListener('hashchange', () => {
+            console.log("✓ Sistema sincronizado con backend.");
+
+            // Listener de rutas
+            window.addEventListener('hashchange', () => {
+                requestAnimationFrame(() => this.router());
+            });
+
+            // Ejecuta ruta inicial con RAF
             requestAnimationFrame(() => this.router());
-        });
-
-        // Ejecuta ruta inicial con RAF
-        requestAnimationFrame(() => this.router());
+        } catch (error) {
+            document.body.innerHTML = `<div style="padding:4rem;text-align:center;color:red;font-family:sans-serif"><h1>Error Crítico de Inicialización</h1><p>${error.message}</p><pre style="text-align:left;background:#eee;padding:1rem">${error.stack}</pre></div>`;
+            console.error("Critical Init Error:", error);
+        }
     },
 
     router() {
-        let path = window.location.hash.split('?')[0] || '#/';
-        const authRequired = path !== '#/login';
+        try {
+            let path = window.location.hash.split('?')[0] || '#/';
+            const authRequired = path !== '#/login';
 
-        // Redirigir si no hay sesión
-        if (authRequired && !Auth.isAuthenticated()) {
-            window.location.hash = '#/login';
-            return;
-        }
+            // Redirigir si no hay sesión
+            if (authRequired && !Auth.isAuthenticated()) {
+                window.location.hash = '#/login';
+                return;
+            }
 
         // Redirigir si ya hay sesión pero trata de ir a Login
         if (path === '#/login' && Auth.isAuthenticated()) {
