@@ -165,6 +165,11 @@ const App = {
 
         // Finalizar carga
         UI.hideLoader();
+        } catch (error) {
+            document.body.innerHTML = `<div style="padding:4rem;text-align:center;color:red;font-family:sans-serif"><h1>Error Crítico en Vista</h1><p>${error.message}</p><pre style="text-align:left;background:#eee;padding:1rem">${error.stack}</pre></div>`;
+            console.error("Critical Router Error:", error);
+            UI.hideLoader();
+        }
     }
 };
 
