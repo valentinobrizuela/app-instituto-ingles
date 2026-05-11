@@ -119,9 +119,8 @@ async function migrate() {
 
     console.log(`Listos para importar ${mergedData.length} perfiles combinados.`);
 
-    // 0. Limpiar datos viejos (DESACTIVADO POR SEGURIDAD)
-    console.log("🧹 Modo seguro activo: Preservando datos existentes.");
-    /*
+    // 0. Limpiar datos viejos
+    console.log("🧹 Limpiando base de datos para cargar datos verdaderos...");
     await supabase.from('logs').delete().neq('id', 0);
     await supabase.from('grades').delete().neq('id', 0);
     await supabase.from('notifications').delete().neq('id', 0);
@@ -131,7 +130,6 @@ async function migrate() {
     await supabase.from('courses').delete().neq('id', 0);
     await supabase.from('users').delete().eq('role', 'student'); 
     await supabase.from('users').delete().eq('role', 'teacher'); 
-    */
 
     // Re-crear profesores
     const teacherNames = [...new Set(mergedData.map(s => s.teacher).filter(Boolean))];
