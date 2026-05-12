@@ -1,12 +1,13 @@
 window.Views = window.Views || {};
 
 Views.StudentPortal = {
+    _dailyQuizData: null,
+
     render() {
         try {
             const user = Auth.getUser();
             if (!user) return;
 
-            // Normalizar comparaciones de IDs para evitar errores de tipo
             const payments = DB.getTable('payments').filter(p => String(p.student_id) === String(user.id));
             const hasDebt = payments.some(p => p.status !== 'Pagado');
             const course = DB.getTable('courses').find(c => String(c.id) === String(user.course_id));
@@ -16,46 +17,91 @@ Views.StudentPortal = {
             if (!container) return;
 
             const xp = Number(user.xp || 0);
+            const spendable = Number(user.spendable_xp || 0);
             const level = user.level || 1;
+            const streak = user.streak || 0;
+
+            // Leaderboard: top 5 students by XP
+            const allStudents = DB.getTable('users').filter(u => u.role === 'student')
+                .sort((a, b) => (b.xp || 0) - (a.xp || 0));
+            const top5 = allStudents.slice(0, 5);
+            const myRank = allStudents.findIndex(s => String(s.id) === String(user.id)) + 1;
+
+            // Daily quiz
+            const quiz = this.getDailyQuiz();
+            const quizDoneKey = `quiz_done_${new Date().toISOString().split('T')[0]}_${user.id}`;
+            const quizDone = localStorage.getItem(quizDoneKey);
+
+            const hour = new Date().getHours();
+            let greeting = 'Good morning';
+            if (hour >= 12 && hour < 18) greeting = 'Good afternoon';
+            else if (hour >= 18) greeting = 'Good evening';
+
+            const streakMsg = streak >= 7
+                ? `🔥 ¡Racha de ${streak} días! Eres imparable.`
+                : streak >= 2
+                ? `🔥 ¡Llevas ${streak} días seguidos! Sigue así.`
+                : '¡Conéctate mañana para empezar tu racha!';
 
             container.innerHTML = `
                 <div class="hero-welcome">
                     <div style="position:relative; z-index:2">
                         <span class="badge" style="background:var(--accent); color:white; margin-bottom:1rem">Estudiante Activo</span>
-                        <h1 class="hero-title">¡Welcome to West House English School!</h1>
-                        <p class="hero-subtitle">Hola <strong>${user.name || 'Alumno'}</strong>, nos alegra mucho tenerte de vuelta. Sigue practicando y alcanzando tus metas.</p>
-                        
+                        <h1 class="hero-title">${greeting}, ${user.name ? user.name.split(' ')[0] : 'Alumno'}! 👋</h1>
+                        <p class="hero-subtitle">Bienvenido de vuelta a West House. Sigue practicando y alcanzando tus metas.</p>
                         <div style="margin-top:2rem; display:flex; gap:1rem; align-items:center; flex-wrap:wrap">
                             <button class="btn btn-primary" onclick="window.location.hash='#/materials'">Ver mis materiales <i class="fa-solid fa-arrow-right"></i></button>
                             <button class="btn" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2)" onclick="window.location.hash='#/calendar'">Mi Horario</button>
-                            
-                            <!-- Mila Welcome -->
-                            <div id="mila-welcome-student" style="margin-left:auto">
-                                 ${(() => {
-                                     try {
-                                         return `
-                                            <div class="mila-wrapper" style="background:rgba(255,255,255,0.1); border:none; padding:0.5rem 1rem">
-                                                <img src="img/mila.png" class="mila-avatar" style="width:40px; height:40px; border-color:white">
-                                                <p style="color:white; font-size:0.8rem; margin:0">${UI.Mila.getSuggestion('welcome_student')}</p>
-                                            </div>
-                                         `;
-                                     } catch(e) { return ''; }
-                                 })()}
-                            </div>
+                            <button class="btn" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2)" onclick="window.location.hash='#/rewards'">
+                                <i class="fa-solid fa-store"></i> Tienda (${spendable} XP)
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="card mb-4" style="background:var(--bg-card); border:1px solid var(--primary-light)">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
-                        <h3 style="font-size:1rem; margin:0"><i class="fa-solid fa-bolt text-primary"></i> Mi Nivel de Aprendizaje</h3>
+                <!-- Stats Bar -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:1rem; margin-bottom:1.5rem">
+                    <div class="card" style="margin:0; padding:1rem; display:flex; align-items:center; gap:1rem; border-top:3px solid var(--primary)">
+                        <div style="font-size:2rem">⭐</div>
+                        <div>
+                            <div style="font-size:1.5rem; font-weight:800; color:var(--text-main)">${xp}</div>
+                            <div class="text-xs text-muted uppercase font-bold">XP Total</div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin:0; padding:1rem; display:flex; align-items:center; gap:1rem; border-top:3px solid #f97316">
+                        <div style="font-size:2rem">🔥</div>
+                        <div>
+                            <div style="font-size:1.5rem; font-weight:800; color:var(--text-main)">${streak}</div>
+                            <div class="text-xs text-muted uppercase font-bold">Días de Racha</div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin:0; padding:1rem; display:flex; align-items:center; gap:1rem; border-top:3px solid var(--success)">
+                        <div style="font-size:2rem">🏆</div>
+                        <div>
+                            <div style="font-size:1.5rem; font-weight:800; color:var(--text-main)">#${myRank}</div>
+                            <div class="text-xs text-muted uppercase font-bold">Tu Ranking</div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin:0; padding:1rem; display:flex; align-items:center; gap:1rem; border-top:3px solid var(--accent)">
+                        <div style="font-size:2rem">🎖️</div>
+                        <div>
+                            <div style="font-size:1.5rem; font-weight:800; color:var(--text-main)">Nv. ${level}</div>
+                            <div class="text-xs text-muted uppercase font-bold">Nivel Actual</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- XP Bar -->
+                <div class="card mb-4" style="padding:1rem; border:1px solid var(--primary-light)">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem">
+                        <div style="font-size:0.85rem; font-weight:700">${streakMsg}</div>
                         <span class="badge badge-primary">Nivel ${level}</span>
                     </div>
-                    <div style="background:var(--bg-main); height:12px; border-radius:10px; position:relative; overflow:hidden">
-                        <div style="background:var(--primary); height:100%; width:${xp % 100}%; transition: width 1s ease-out"></div>
+                    <div style="background:var(--bg-main); height:10px; border-radius:10px; overflow:hidden">
+                        <div style="background:linear-gradient(90deg,var(--primary),var(--accent)); height:100%; width:${Math.min((xp % 100),100)}%; transition:width 1.2s ease-out; border-radius:10px"></div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; margin-top:0.5rem">
-                        <span class="text-xs text-muted">${xp} XP totales</span>
+                    <div style="display:flex; justify-content:space-between; margin-top:0.4rem">
+                        <span class="text-xs text-muted">${xp} XP totales · ${spendable} XP disponibles</span>
                         <span class="text-xs text-muted">Próximo nivel: ${100 - (xp % 100)} XP</span>
                     </div>
                 </div>
@@ -109,6 +155,56 @@ Views.StudentPortal = {
                         </div>
                     </div>
 
+                    <!-- Daily Quiz Card -->
+                    <div class="card" style="border-top:3px solid var(--accent); background:var(--bg-card)">
+                        <h3 class="mb-3" style="color:var(--accent); display:flex; align-items:center; gap:0.5rem">
+                            <i class="fa-solid fa-brain"></i> Reto del Día — +${Gamification.XP_MAP.DAILY_QUIZ} XP
+                        </h3>
+                        <div id="daily-quiz-container">
+                            ${quizDone ? `
+                                <div style="text-align:center; padding:1.5rem; background:var(--bg-hover); border-radius:12px">
+                                    <div style="font-size:2.5rem; margin-bottom:0.5rem">✅</div>
+                                    <p style="font-weight:700">¡Ya completaste el reto de hoy!</p>
+                                    <p class="text-muted text-sm">Volvé mañana para uno nuevo. ¡Seguí sumando racha! 🔥</p>
+                                </div>
+                            ` : `
+                                <div>
+                                    <p style="font-weight:700; margin-bottom:1rem; color:var(--text-main)">${quiz.question}</p>
+                                    <div style="display:flex; flex-direction:column; gap:0.5rem">
+                                        ${quiz.options.map((opt, i) => `
+                                            <button class="btn btn-secondary w-full" style="justify-content:flex-start; text-align:left" 
+                                                onclick="Views.StudentPortal.checkAnswer(${i}, ${quiz.correct}, '${quizDoneKey}')">
+                                                <span style="font-weight:700; margin-right:0.5rem">${String.fromCharCode(65+i)}.</span> ${opt}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard -->
+                    <div class="card">
+                        <h3 class="mb-3" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
+                            <i class="fa-solid fa-ranking-star"></i> Top Alumnos esta Semana
+                        </h3>
+                        <div style="display:flex; flex-direction:column; gap:0.75rem">
+                            ${top5.map((s, i) => {
+                                const isMe = String(s.id) === String(user.id);
+                                const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+                                return `
+                                    <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; border-radius:10px; background:${isMe ? 'var(--primary-light)' : 'var(--bg-hover)'}; border:1px solid ${isMe ? 'var(--primary)' : 'transparent'}">
+                                        <span style="font-size:1.25rem; width:28px; text-align:center">${medals[i]}</span>
+                                        <div class="avatar" style="width:30px; height:30px; font-size:0.75rem; background:${isMe ? 'var(--primary)' : 'var(--accent)'}">${(s.name||'?')[0]}</div>
+                                        <span style="flex:1; font-weight:${isMe?'800':'600'}; font-size:0.9rem; color:${isMe?'var(--primary)':'var(--text-main)'}">${s.name ? s.name.split(' ')[0] : 'Alumno'}${isMe?' (Tú)':''}</span>
+                                        <span class="badge badge-primary" style="font-size:0.7rem">${s.xp||0} XP</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Badges -->
                     <div class="card" style="grid-column: 1 / -1;">
                         <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
                             <i class="fa-solid fa-trophy"></i> Mi Sala de Trofeos
@@ -122,9 +218,7 @@ Views.StudentPortal = {
                         <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
                             <i class="fa-solid fa-timeline"></i> Mi Camino de Aprendizaje
                         </h3>
-                        <div id="learning-timeline">
-                            Cargando progreso...
-                        </div>
+                        <div id="learning-timeline">Cargando progreso...</div>
                     </div>
                 </div>
             `;
@@ -211,5 +305,47 @@ Views.StudentPortal = {
                 </div>
             `;
         }).join('');
+    },
+
+    getDailyQuiz() {
+        const pool = [
+            { question: '¿Cómo se dice "Biblioteca" en inglés?', options: ['Library','Cafeteria','Bathroom','Bookshop'], correct: 0 },
+            { question: '¿Cuál es el pasado simple de "go"?', options: ['Goed','Gone','Went','Goes'], correct: 2 },
+            { question: '"I ___ a student." ¿Qué verbo va aquí?', options: ['is','are','am','be'], correct: 2 },
+            { question: '¿Cómo se dice "Rojo" en inglés?', options: ['Blue','Green','Red','Yellow'], correct: 2 },
+            { question: '¿Qué significa "beautiful"?', options: ['Feo','Difícil','Hermoso','Rápido'], correct: 2 },
+            { question: '¿Cuál es el plural de "child"?', options: ['Childs','Childes','Children','Childres'], correct: 2 },
+            { question: '"She ___ to school every day." ¿Qué va?', options: ['go','goes','going','went'], correct: 1 },
+        ];
+        // Use day of year as seed so everyone gets the same quiz each day
+        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+        return pool[dayOfYear % pool.length];
+    },
+
+    async checkAnswer(selected, correct, quizDoneKey) {
+        const buttons = document.querySelectorAll('#daily-quiz-container button');
+        buttons.forEach((btn, i) => {
+            btn.disabled = true;
+            if (i === correct) btn.style.background = 'var(--success)';
+            if (i === selected && selected !== correct) btn.style.background = 'var(--danger)';
+        });
+
+        const user = Auth.getUser();
+        if (selected === correct) {
+            localStorage.setItem(quizDoneKey, '1');
+            await Gamification.awardXP(user.id, Gamification.XP_MAP.DAILY_QUIZ, 'Reto del Día');
+            UI.showToast(`¡Correcto! +${Gamification.XP_MAP.DAILY_QUIZ} XP ganados 🎉`, 'success');
+            setTimeout(() => {
+                const qc = document.getElementById('daily-quiz-container');
+                if (qc) qc.innerHTML = `
+                    <div style="text-align:center; padding:1.5rem; background:var(--bg-hover); border-radius:12px">
+                        <div style="font-size:2.5rem; margin-bottom:0.5rem">🎉</div>
+                        <p style="font-weight:700">¡Excelente! +${Gamification.XP_MAP.DAILY_QUIZ} XP</p>
+                        <p class="text-muted text-sm">Volvé mañana para un nuevo reto. ¡Seguí tu racha! 🔥</p>
+                    </div>`;
+            }, 1200);
+        } else {
+            UI.showToast('¡Casi! La respuesta correcta está resaltada en verde.', 'info');
+        }
     }
 };

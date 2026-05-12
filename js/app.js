@@ -93,7 +93,16 @@ const App = {
             case '#/':
                 if (Auth.hasRole('student')) {
                     UI.setSectionTitle('Mi Portal de Alumno', 'fa-solid fa-graduation-cap');
-                    if (Views.StudentPortal) Views.StudentPortal.render();
+                    if (Views.StudentPortal) {
+                        Views.StudentPortal.render();
+                        // Verificar racha diaria
+                        const currentUser = Auth.getUser();
+                        if (currentUser && Gamification) {
+                            Gamification.checkDailyStreak(currentUser.id);
+                            // Mostrar splash de bienvenida de Mila (solo 1 vez por sesión)
+                            setTimeout(() => UI.showWelcomeSplash(currentUser), 300);
+                        }
+                    }
                 } else {
                     UI.setSectionTitle('Panel de Control', 'fa-solid fa-chart-pie');
                     Views.Dashboard.render();
@@ -151,6 +160,10 @@ const App = {
             case '#/profile':
                 UI.setSectionTitle('Configuración de Usuario', 'fa-solid fa-user-gear');
                 if (Views.Settings) Views.Settings.render();
+                break;
+            case '#/rewards':
+                UI.setSectionTitle('Tienda de Recompensas', 'fa-solid fa-store');
+                if (Views.Rewards) Views.Rewards.render();
                 break;
             default:
                 UI.setSectionTitle('Error 404', 'fa-solid fa-triangle-exclamation');

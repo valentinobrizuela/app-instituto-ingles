@@ -3,7 +3,7 @@
 // ============================================================
 
 const DB = {
-    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades'],
+    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades', 'rewards', 'user_rewards'],
 
     // Utility to get current session token if needed (Supabase JS handles this automatically usually)
     async getSession() {
@@ -211,8 +211,11 @@ const DB = {
         users.forEach(u => {
             if (u.role === 'student') {
                 if (u.xp === undefined) u.xp = 0;
+                if (u.spendable_xp === undefined) u.spendable_xp = u.xp; // Inicia con su XP actual
                 if (u.level === undefined) u.level = 1;
                 if (!u.badges) u.badges = [];
+                if (u.streak === undefined) u.streak = 0;
+                if (u.last_login === undefined) u.last_login = null;
             }
         });
 

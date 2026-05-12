@@ -132,6 +132,14 @@ const UI = {
                         <div class="nav-item">
                             <a href="#/calendar" class="nav-link" id="nav-calendar"><i class="fa-solid fa-calendar-days"></i> Calendario</a>
                         </div>
+
+                        ${Auth.hasRole('student') ? `
+                        <div class="nav-item">
+                            <a href="#/rewards" class="nav-link" id="nav-rewards" style="color:var(--accent); font-weight:700">
+                                <i class="fa-solid fa-store"></i> Tienda de XP
+                            </a>
+                        </div>
+                        ` : ''}
                     </nav>
 
                     <div class="sidebar-footer">
@@ -744,6 +752,9 @@ const UI = {
         },
 
         getSuggestion(type, context = {}) {
+            const hour = new Date().getHours();
+            const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
             if (type === 'attendance_risk') {
                 return `Mila notó que <strong>${context.name}</strong> ha faltado un par de veces. ¿Le mandamos un saludito para que no se pierda nada? 🐾`;
             }
@@ -751,9 +762,17 @@ const UI = {
                 return `¡Hola! Mila sugiere recordarle amablemente a la familia de ${context.name} sobre la cuota pendiente. ¡Miau! 🐈`;
             }
             if (type === 'welcome_student') {
-                return `¡Bienvenido de nuevo! Mila está feliz de verte. ¡Hoy es un gran día para aprender inglés! 🌟`;
+                const msgs = [
+                    `${timeGreeting}! 🌟 Soy Mila y estoy aquí para ayudarte. ¡Hoy es un gran día para aprender inglés!`,
+                    `${timeGreeting}! 🐾 ¡Me alegra verte de vuelta! ¿Listo para el reto del día?`,
+                    `${timeGreeting}! 🔥 ¡Seguir conectado cada día te da XP extra! Sigue así.`
+                ];
+                return msgs[new Date().getDate() % msgs.length];
             }
-            return "¡Hola! Soy Mila, tu asistente. ¿En qué puedo ayudarte hoy?";
+            if (type === 'streak_danger') {
+                return `¡Hey! Mila te extraña 🐾. Entraste hoy y salvaste tu racha. ¡No la pierdas mañana!`;
+            }
+            return `¡Hola! Soy Mila, tu asistente. ¿En qué puedo ayudarte hoy?`;
         },
 
         speak(message, containerId = 'mila-bubble-container') {
@@ -802,5 +821,111 @@ const UI = {
         const badge = document.getElementById('notif-badge');
         container.innerHTML = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem">No tienes notificaciones nuevas</div>`;
         if (badge) badge.style.display = 'none';
+    },
+
+    // ─── MILA WELCOME SPLASH ───────────────────────────────────────────
+    showWelcomeSplash(user) {
+        // Only show once per session
+        if (sessionStorage.getItem('mila_splash_shown')) return;
+        sessionStorage.setItem('mila_splash_shown', '1');
+
+        const hour = new Date().getHours();
+        const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+        const firstName = user.name ? user.name.split(' ')[0] : 'Alumno';
+        const xp       = user.xp || 0;
+        const streak   = user.streak || 0;
+        const level    = user.level || 1;
+
+        // Full messages pool — Mila will "type" these
+        const messages = [
+            `${timeGreeting}, <strong>${firstName}</strong>! 🐾 Soy Mila y me alegra verte de vuelta. ¡Entrás al ${streak > 1 ? 'día <strong>' + streak + '</strong> de tu racha!' : 'primer día de tu racha. ¡Seguí así!'}`,
+            `¡Hola <strong>${firstName}</strong>! 🌟 Sos <strong>Nivel ${level}</strong> con <strong>${xp} XP</strong>. ¡Hoy tenés un nuevo reto esperándote!`,
+            `¡Bienvenido de vuelta, <strong>${firstName}</strong>! 🎯 Recordá revisar el <strong>Reto del Día</strong> para ganar más XP.`
+        ];
+        const msgIndex = new Date().getDate() % messages.length;
+        const fullMsg  = messages[msgIndex];
+
+        // Build splash DOM
+        const splash = document.createElement('div');
+        splash.className = 'mila-splash';
+        splash.id = 'mila-welcome-splash';
+        splash.innerHTML = `
+            <div class="mila-splash-card">
+                <div class="mila-splash-rings">
+                    <img src="img/mila.png" alt="Mila" class="mila-splash-avatar">
+                </div>
+
+                <div class="mila-splash-bubble" id="splash-bubble">
+                    <div class="mila-splash-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+
+                <div class="mila-splash-stats">
+                    <div class="mila-splash-stat">
+                        <div class="mila-splash-stat-value">${xp}</div>
+                        <div class="mila-splash-stat-label">XP Total</div>
+                    </div>
+                    <div class="mila-splash-stat">
+                        <div class="mila-splash-stat-value">${streak} 🔥</div>
+                        <div class="mila-splash-stat-label">Racha</div>
+                    </div>
+                    <div class="mila-splash-stat">
+                        <div class="mila-splash-stat-value">Nv.${level}</div>
+                        <div class="mila-splash-stat-label">Nivel</div>
+                    </div>
+                </div>
+
+                <button class="mila-splash-btn" id="splash-enter-btn" style="display:none" onclick="UI.dismissWelcomeSplash()">
+                    <i class="fa-solid fa-rocket"></i> ¡Vamos!
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(splash);
+
+        // Phase 1: show dots for 1.2s, then type the message
+        setTimeout(() => {
+            const bubble = document.getElementById('splash-bubble');
+            if (!bubble) return;
+
+            // Strip HTML for typing, restore HTML at end
+            const plainText = fullMsg.replace(/<[^>]+>/g, '');
+            bubble.innerHTML = '<span id="splash-typed"></span><span class="mila-splash-cursor"></span>';
+            const typedEl = document.getElementById('splash-typed');
+
+            let i = 0;
+            const speed = 28; // ms per char
+            const typeInterval = setInterval(() => {
+                if (!typedEl) { clearInterval(typeInterval); return; }
+                i++;
+                // Show plain text while typing
+                typedEl.textContent = plainText.slice(0, i);
+                if (i >= plainText.length) {
+                    clearInterval(typeInterval);
+                    // Replace with rich HTML version after typing finishes
+                    setTimeout(() => {
+                        if (bubble) {
+                            bubble.innerHTML = fullMsg;
+                        }
+                        const btn = document.getElementById('splash-enter-btn');
+                        if (btn) btn.style.display = 'inline-flex';
+
+                        // Auto-dismiss after 4 seconds if user doesn't click
+                        setTimeout(() => UI.dismissWelcomeSplash(), 4000);
+                    }, 300);
+                }
+            }, speed);
+
+        }, 1200);
+    },
+
+    dismissWelcomeSplash() {
+        const splash = document.getElementById('mila-welcome-splash');
+        if (!splash) return;
+        splash.classList.add('hiding');
+        setTimeout(() => {
+            if (splash.parentNode) splash.remove();
+        }, 650);
     }
 };
