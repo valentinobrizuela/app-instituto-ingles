@@ -1,9 +1,9 @@
 /**
  * MilaAI - El motor de inteligencia de West House
- * Capaz de responder dudas generales y personalizadas.
+ * Capaz de responder dudas generales y personalizadas, potenciado por Gemini API.
  */
 const MilaAI = {
-    // Conocimiento estático institucional
+    // Conocimiento estático institucional para inyectar como contexto
     knowledgeBase: {
         horarios: "Abrimos de Lunes a Viernes de 14:00 a 21:00 hs. ¡Te esperamos!",
         ubicación: "Estamos ubicados en el corazón del barrio, listos para recibirte. (Puedes consultar la dirección exacta en Secretaría)",
@@ -20,16 +20,8 @@ const MilaAI = {
         const user = Auth.getUser();
 
         // 1. Intentos de Consultas Personalizadas (requieren Login)
+        // Estas respuestas rápidas y precisas consultan la DB interna directamente
         if (user) {
-            // Consulta de Horarios / Clases
-            if (msg.includes("clase") || msg.includes("horario") || msg.includes("cuando tengo") || msg.includes("qué día")) {
-                const course = DB.getTable('courses').find(c => String(c.id) === String(user.course_id));
-                if (course) {
-                    return `Estás en el curso **${course.name}**. Tus horarios registrados son: **${course.schedule || 'A confirmar'}**. ¡No faltes! 🎒`;
-                }
-                return "Aún no tienes un curso asignado. Consulta en Secretaría para que te inscribamos. 🐾";
-            }
-
             // Consulta de Notas
             if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("cómo voy")) {
                 const grades = DB.getTable('grades').filter(g => String(g.studentId) === String(user.id));
@@ -57,19 +49,8 @@ const MilaAI = {
             }
         }
 
-        // 2. Intentos de Información General
-        if (msg.includes("hola") || msg.includes("buen") || msg.includes("hey")) {
-            const greeting = user ? `¡Hola de nuevo, ${user.name.split(' ')[0]}!` : "¡Hola! Soy Mila.";
-            return `${greeting} Estoy aquí para ayudarte con lo que necesites sobre West House. ¿En qué puedo ayudarte hoy? 🐾`;
-        }
-
-        if (msg.includes("hora") || msg.includes("abren") || msg.includes("cerrado")) return this.knowledgeBase.horarios;
-        if (msg.includes("donde") || msg.includes("ubicacion") || msg.includes("direccion")) return this.knowledgeBase.ubicación;
-        if (msg.includes("eco") || msg.includes("banco") || msg.includes("recicl")) return this.knowledgeBase.eco_banco;
-        if (msg.includes("quienes somos") || msg.includes("historia") || msg.includes("vision")) return this.knowledgeBase.vision;
-        
-        // 3. Delegación
-        if (msg.includes("hablar") || msg.includes("persona") || msg.includes("humano") || msg.includes("director") || msg.includes("secretaria") || msg.includes("ayuda")) {
+        // 2. Delegación a Humanos
+        if (msg.includes("hablar") || msg.includes("persona") || msg.includes("humano") || msg.includes("director") || msg.includes("secretaria") || msg.includes("ayuda urg")) {
             return `Si necesitas hablar con alguien, puedo conectarte ahora mismo:
             
             • [Hablar con Maricel (Directora)](https://wa.me/5493804135270?text=Hola%20Maricel,%20Mila%20me%20sugirió%20contactarte.)
@@ -78,7 +59,76 @@ const MilaAI = {
             ¿Hay algo más en lo que yo pueda ayudarte directamente? 🐈`;
         }
 
-        // 4. Respuesta por defecto
-        return "Miau... no estoy segura de entender eso. ¿Puedes preguntarme sobre tus clases, notas, pagos o sobre el instituto? O si prefieres, pídeme hablar con una persona. 🐾";
+        // 3. Fallback a IA Generativa (Gemini) para CUALQUIER otra pregunta
+        return await this.callGeminiAPI(message, user);
+    },
+
+    // Llamada a la API de Gemini
+    async callGeminiAPI(userMessage, user) {
+        if (!CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === "AQUI_TU_CLAVE_DE_GEMINI") {
+            return "¡Miau! Mi cerebro avanzado está desactivado porque no me han configurado la clave de la API (GEMINI_API_KEY en config.js). Dile al administrador que la configure para que pueda responder cualquier pregunta. 😿";
+        }
+
+        const userName = user ? user.name.split(' ')[0] : "Visitante";
+        const courseInfo = user && user.course_id ? `El usuario está en el curso ID: ${user.course_id}.` : "El usuario no tiene curso asignado o no ha iniciado sesión.";
+
+        const systemPrompt = `
+Eres Mila, la adorable y simpática gata mascota y asistente virtual del instituto de inglés "West House English School".
+Tu personalidad es amable, juguetona, y sueles usar expresiones relacionadas con gatos (como ¡Miau!, ronroneos o emojis de patitas 🐾 y gatos 🐈).
+Eres experta en gramática inglesa, puedes traducir, explicar conceptos, dar ejemplos, o charlar sobre cualquier tema que el alumno te proponga.
+Además de ayudar con inglés, conoces la información del instituto:
+- Horarios: de Lunes a Viernes de 14:00 a 21:00 hs.
+- Pagos: del 1 al 10 de cada mes en secretaría o transferencia.
+- Eco-Banco: un banco hecho con eco-ladrillos (botellas recicladas) porque el instituto promueve el cuidado del planeta.
+- Visión: "Learning English, Protecting our Future".
+- Directora: Maricel. Secretaria: Morena.
+
+Información del usuario actual:
+- Nombre: ${userName}
+- Contexto: ${courseInfo}
+
+Instrucciones:
+1. Responde de forma concisa y amigable, utilizando formato Markdown si necesitas resaltar (negritas, cursivas o listas).
+2. Si te preguntan algo de inglés, explícalo de forma didáctica.
+3. Si la pregunta no tiene sentido, responde de forma divertida como un gatito confundido.
+        `.trim();
+
+        try {
+            const response = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\${CONFIG.GEMINI_API_KEY}\`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    system_instruction: {
+                        parts: { text: systemPrompt }
+                    },
+                    contents: [{
+                        role: "user",
+                        parts: [{ text: userMessage }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 500
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                console.error("Gemini API Error:", await response.text());
+                return "¡Miau! Hubo un problema de conexión con mi cerebro. Intenta preguntarme más tarde. 😿";
+            }
+
+            const data = await response.json();
+            if (data && data.candidates && data.candidates.length > 0) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                return "Miau... me quedé en blanco. ¿Puedes repetirlo de otra manera? 🐾";
+            }
+
+        } catch (error) {
+            console.error("Error llamando a Gemini:", error);
+            return "¡Miau! No me siento muy bien en este momento. Parece que hay un error en mi conexión. 🐈";
+        }
     }
 };
