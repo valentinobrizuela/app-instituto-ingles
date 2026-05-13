@@ -332,18 +332,26 @@ Views.StudentPortal = {
 
         const user = Auth.getUser();
         if (selected === correct) {
-            localStorage.setItem(quizDoneKey, '1');
-            await Gamification.awardXP(user.id, Gamification.XP_MAP.DAILY_QUIZ, 'Reto del Día');
-            UI.showToast(`¡Correcto! +${Gamification.XP_MAP.DAILY_QUIZ} XP ganados 🎉`, 'success');
-            setTimeout(() => {
-                const qc = document.getElementById('daily-quiz-container');
-                if (qc) qc.innerHTML = `
-                    <div style="text-align:center; padding:1.5rem; background:var(--bg-hover); border-radius:12px">
-                        <div style="font-size:2.5rem; margin-bottom:0.5rem">🎉</div>
-                        <p style="font-weight:700">¡Excelente! +${Gamification.XP_MAP.DAILY_QUIZ} XP</p>
-                        <p class="text-muted text-sm">Volvé mañana para un nuevo reto. ¡Seguí tu racha! 🔥</p>
-                    </div>`;
-            }, 1200);
+            try {
+                await Gamification.awardXP(user.id, Gamification.XP_MAP.DAILY_QUIZ, 'Reto del Día');
+                // Solo marcar como hecho si el XP se guardó correctamente
+                localStorage.setItem(quizDoneKey, '1');
+                UI.showToast(`¡Correcto! +${Gamification.XP_MAP.DAILY_QUIZ} XP ganados 🎉`, 'success');
+                setTimeout(() => {
+                    const qc = document.getElementById('daily-quiz-container');
+                    if (qc) qc.innerHTML = `
+                        <div style="text-align:center; padding:1.5rem; background:var(--bg-hover); border-radius:12px">
+                            <div style="font-size:2.5rem; margin-bottom:0.5rem">🎉</div>
+                            <p style="font-weight:700">¡Excelente! +${Gamification.XP_MAP.DAILY_QUIZ} XP</p>
+                            <p class="text-muted text-sm">Volvé mañana para un nuevo reto. ¡Seguí tu racha! 🔥</p>
+                        </div>`;
+                }, 1200);
+            } catch (err) {
+                console.error('[Quiz] Error al guardar XP:', err);
+                UI.showToast('¡Correcto! Pero no se pudo guardar el XP. Intenta de nuevo más tarde.', 'danger');
+                // Re-habilitar botones para que pueda intentar de nuevo
+                buttons.forEach(btn => btn.disabled = false);
+            }
         } else {
             UI.showToast('¡Casi! La respuesta correcta está resaltada en verde.', 'info');
         }

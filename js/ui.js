@@ -201,12 +201,6 @@ const UI = {
 
                             <div style="width:1px; height:24px; background:var(--border-color)"></div>
                             
-                            <button class="btn" style="padding:0.4rem; background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;" onclick="UI.toggleTheme()" title="Modo Oscuro/Claro">
-                                <i class="fa-solid fa-moon"></i>
-                            </button>
-
-                            <div style="width:1px; height:24px; background:var(--border-color)"></div>
-                            
                             <div class="user-menu-container">
                                 <div class="avatar-wrapper" onclick="UI.toggleUserMenu()">
                                     <div class="avatar" style="width:32px; height:32px; font-size:0.8rem">${user.name[0]}</div>
@@ -474,6 +468,10 @@ const UI = {
     },
 
     composeEmail(recipient, subject = '', body = '') {
+        // Safely decode in case the caller passed encodeURIComponent values
+        try { recipient = decodeURIComponent(recipient); } catch(e) {}
+        try { subject = decodeURIComponent(subject); } catch(e) {}
+        try { body = decodeURIComponent(body); } catch(e) {}
         const mailto = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         window.location.href = mailto;
     },

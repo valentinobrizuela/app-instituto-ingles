@@ -263,9 +263,9 @@ Views.Payments = {
             UI.closeModal();
             UI.showToast('Transacción registrada con éxito', 'success');
             
-            // AUTOMACIÓN: Si está pagado, enviar factura inmediatamente
+            // Si está pagado, notificar al admin con un toast
             if (newPayment.status === 'Pagado') {
-                this.sendInvoice(newPayment.id, true); // true = silent mode
+                UI.showToast('Pago registrado. Usa el botón ✉ en la tabla para enviar la factura.', 'info');
             }
 
             this.render();
@@ -298,23 +298,46 @@ Views.Payments = {
         }
     },
 
-    async sendInvoice(id, silent = false) {
-        if(!silent && !confirm('¿Deseas enviar la factura electrónica al email del alumno por esta transacción?')) return;
-        
-        if(!silent) UI.showLoader();
-        try {
-            const res = await DB.authFetch(`${CONFIG.API_URL}/payments/invoice/${id}`, { method: 'POST' });
-            const data = await res.json();
-            if(data.success) {
-                UI.showToast('Factura enviada correctamente (' + data.data.invoiceId + ')', 'success');
-            } else {
-                UI.showToast('Error al enviar factura automática', 'danger');
-            }
-        } catch (err) {
-            console.error(err);
-            if(!silent) UI.showToast('Error de conexión con el servidor de correos', 'danger');
+    sendInvoice(id) {
+        const payments = DB.getTable('payments');
+        const p = payments.find(item => String(item.id) === String(id));
+        if (!p) { UI.showToast('Pago no encontrado', 'danger'); return; }
+
+        const student = DB.getTable('users').find(u => String(u.id) === String(p.student_id));
+        const recipientEmail = (student && student.parent_email) || (student && student.email);
+
+        if (!recipientEmail) {
+            UI.showToast('Este alumno no tiene email registrado (ni propio ni de tutor).', 'danger');
+            return;
         }
-        if(!silent) UI.hideLoader();
+
+        if (!confirm(`¿Enviar la factura de $${Number(p.amount).toFixed(2)} al email: ${recipientEmail}?`)) return;
+
+        const studentName = student ? student.name : 'Alumno';
+        const settings = JSON.parse(localStorage.getItem('wh_settings') || '{}');
+        const instituteName = settings.instituteName || 'West House English School';
+        const invId = `WH-${String(p.date).replace(/-/g,'').slice(0,8)}-${String(p.id).padStart(4,'0')}`;
+
+        const subject = encodeURIComponent(`Factura de Pago [${invId}] - ${instituteName}`);
+        const body = encodeURIComponent(
+`Estimado/a Tutor/a de ${studentName},
+
+Le informamos que hemos registrado el siguiente pago:
+
+  Factura N°: ${invId}
+  Alumno: ${studentName}
+  Monto: $${Number(p.amount).toFixed(2)}
+  Fecha: ${p.date}
+  Estado: ${p.status}
+
+Gracias por confiar en ${instituteName}.
+
+Saludos,
+Administración West House`
+        );
+
+        window.location.href = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
+        UI.showToast(`Abriendo cliente de email para: ${recipientEmail}`, 'success');
     },
 
     exportAll() {

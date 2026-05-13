@@ -85,7 +85,7 @@ Views.Grades = {
                                         <div class="text-sm text-muted" style="margin-top:4px">${sg.length} registros</div>
                                     </td>
                                     <td style="text-align:center">
-                                        <button class="btn btn-secondary shadow-sm" style="font-size:0.8rem" onclick="Views.Grades.openModal(${s.id}, '${s.name.replace(/'/g, "\\'")}')">
+                                        <button class="btn btn-secondary shadow-sm" style="font-size:0.8rem" onclick="Views.Grades.openModal(${s.id})">
                                             <i class="fa-solid fa-edit"></i> Calificar
                                         </button>
                                     </td>
@@ -99,7 +99,9 @@ Views.Grades = {
         `;
     },
 
-    openModal(studentId, studentName) {
+    openModal(studentId) {
+        const student = DB.getTable('users').find(u => Number(u.id) === Number(studentId));
+        const studentName = student ? student.name : `Alumno #${studentId}`;
         UI.openModal(`Calificar a ${studentName}`, `
             <form id="form-grade" onsubmit="Views.Grades.save(event, ${studentId})">
                 <div class="form-group">

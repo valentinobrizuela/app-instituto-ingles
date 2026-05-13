@@ -57,7 +57,7 @@ Views.Rewards = {
                         <h3 style="font-size:1.2rem; margin-bottom:0.5rem">${r.name}</h3>
                         <p class="text-muted text-sm" style="margin-bottom:1.5rem; flex:1">${r.description}</p>
                         
-                        <button class="btn btn-primary w-full" style="background:${r.color}; border-color:${r.color}" onclick="Views.Rewards.confirmPurchase('${r.id}')" ${(user.spendable_xp || 0) < r.cost ? 'disabled opacity="0.5"' : ''}>
+                        <button class="btn btn-primary w-full" style="background:${r.color}; border-color:${r.color}${(user.spendable_xp || 0) < r.cost ? '; opacity:0.5; cursor:not-allowed' : ''}" onclick="Views.Rewards.confirmPurchase('${r.id}')" ${(user.spendable_xp || 0) < r.cost ? 'disabled' : ''}>
                             <i class="fa-solid fa-cart-shopping"></i> Canjear
                         </button>
                     </div>

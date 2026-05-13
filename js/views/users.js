@@ -88,13 +88,13 @@ Views.Users = {
                     <div style="display:flex; align-items:center; gap:0.5rem">
                         <i class="fa-regular fa-envelope text-muted"></i> 
                         <span>${u.email || '-'}</span>
-                        ${u.email ? `<button class="btn" style="padding:2px 5px; background:transparent; color:var(--info); font-size:0.8rem" onclick="UI.composeEmail('${u.email}', 'Consulta del Instituto West House', 'Hola ${u.name.split(' ')[0]},')" title="Enviar Email"><i class="fa-solid fa-paper-plane"></i></button>` : ''}
+                        ${u.email ? `<button class="btn" style="padding:2px 5px; background:transparent; color:var(--info); font-size:0.8rem" onclick="UI.composeEmail(decodeURIComponent('${encodeURIComponent(u.email)}'), 'Consulta del Instituto West House', 'Hola ${encodeURIComponent(u.name.split(' ')[0])},')" title="Enviar Email"><i class="fa-solid fa-paper-plane"></i></button>` : ''}
                     </div>
                     ${u.parent_email ? `
                         <div style="margin-top:0.25rem; font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; gap:0.5rem">
                             <i class="fa-solid fa-user-shield text-info"></i> 
                             <span>Tutor: ${u.parent_email}</span>
-                            <button class="btn" style="padding:2px 5px; background:transparent; color:var(--info); font-size:0.7rem" onclick="UI.composeEmail('${u.parent_email}', 'Consulta sobre el alumno ${u.name}', 'Estimados padres de ${u.name},')" title="Email al Tutor"><i class="fa-solid fa-paper-plane"></i></button>
+                            <button class="btn" style="padding:2px 5px; background:transparent; color:var(--info); font-size:0.7rem" onclick="UI.composeEmail(decodeURIComponent('${encodeURIComponent(u.parent_email)}'), decodeURIComponent('${encodeURIComponent('Consulta sobre el alumno ' + u.name)}'), decodeURIComponent('${encodeURIComponent('Estimados padres de ' + u.name + ',')}'))" title="Email al Tutor"><i class="fa-solid fa-paper-plane"></i></button>
                         </div>` : ''}
                     ${u.parent_phone ? `
                         <div style="margin-top:0.25rem; font-size:0.8rem;">
