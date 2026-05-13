@@ -152,6 +152,12 @@ const UI = {
                             </button>
                         </div>
 
+                        <!-- Botón QR -->
+                        <button class="btn w-full" onclick="UI.showQRModal()" style="margin-bottom:0.75rem; background:var(--bg-hover); border:1px solid var(--border-color); color:var(--text-main); font-size:0.8rem; padding:0.6rem; display:flex; align-items:center; gap:0.5rem; justify-content:center; border-radius:10px; cursor:pointer; transition: all 0.2s" onmouseover="this.style.background='var(--primary-light)'; this.style.borderColor='var(--primary)'; this.style.color='var(--primary)'" onmouseout="this.style.background='var(--bg-hover)'; this.style.borderColor='var(--border-color)'; this.style.color='var(--text-main)'">
+                            <i class="fa-solid fa-qrcode" style="font-size:1rem"></i>
+                            <span style="font-weight:600">Abrir en Celular</span>
+                        </button>
+
                         <div class="user-profile-small" onclick="window.location.hash='#/settings'" style="cursor:pointer">
                             <div class="avatar">${user.name[0]}</div>
                             <div style="flex:1; overflow:hidden">
