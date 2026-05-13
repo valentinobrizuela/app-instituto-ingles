@@ -118,10 +118,13 @@ const UI = {
                             <a href="#/attendance" class="nav-link" id="nav-attendance"><i class="fa-solid fa-calendar-check"></i> Asistencia</a>
                         </div>
                         <div class="nav-item">
-                            <a href="#/payments" class="nav-link" id="nav-payments"><i class="fa-solid fa-file-invoice-dollar"></i> Pagos</a>
-                        </div>
-                        <div class="nav-item">
                             <a href="#/grades" class="nav-link" id="nav-grades"><i class="fa-solid fa-star"></i> Calificaciones</a>
+                        </div>
+                        ` : ''}
+
+                        ${Auth.hasRole('admin') ? `
+                        <div class="nav-item">
+                            <a href="#/payments" class="nav-link" id="nav-payments"><i class="fa-solid fa-file-invoice-dollar"></i> Pagos</a>
                         </div>
                         ` : ''}
 

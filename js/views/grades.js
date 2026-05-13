@@ -16,7 +16,7 @@ Views.Grades = {
         }
 
         const courses = DB.getTable('courses');
-        let myCourses = user.role === 'teacher' ? courses.filter(c => Number(c.teacherId) === Number(user.id)) : courses;
+        let myCourses = user.role === 'teacher' ? courses.filter(c => Number(c.teacher_id) === Number(user.id)) : courses;
         
         document.getElementById('router-view').innerHTML = `
             <div class="flex items-center justify-between mb-4">
