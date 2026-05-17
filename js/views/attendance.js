@@ -12,7 +12,7 @@ Views.Attendance = {
         const allCourses = DB.getTable('courses');
         let courses = allCourses;
         if (user.role === 'teacher') {
-            courses = courses.filter(c => String() === String());
+            courses = courses.filter(c => Number(c.teacher_id) === Number(user.id));
         }
 
         let html = `
@@ -48,7 +48,7 @@ Views.Attendance = {
         const coursesList = DB.getTable('courses');
         const attendanceRecords = DB.getTable('attendance');
 
-        const attendance = attendanceRecords.filter(a => String() === String());
+        const attendance = attendanceRecords.filter(a => Number(a.student_id) === Number(student.id));
         
         const presentes = attendance.filter(a => a.status === 'Presente').length;
         const ausentes = attendance.filter(a => a.status === 'Ausente').length;
@@ -84,7 +84,7 @@ Views.Attendance = {
                     </thead>
                     <tbody>
                         ${attendance.reverse().map(a => {
-                            const c = coursesList.find(c => String() === String());
+                            const c = coursesList.find(c => Number(c.id) === Number(a.course_id));
                             const badge = a.status === 'Presente' ? '<span class="badge badge-success">Presente</span>' : 
                                           a.status === 'Tarde' ? '<span class="badge badge-warning">Tarde</span>' :
                                           '<span class="badge badge-danger">Ausente</span>';
@@ -113,9 +113,9 @@ Views.Attendance = {
 
         UI.showLoader();
         const courses = DB.getTable('courses');
-        const course = courses.find(c => String() === String());
+        const course = courses.find(c => Number(c.id) === Number(courseId));
         const allUsers = DB.getTable('users');
-        const students = allUsers.filter(u => u.role === 'student' && String() === String());
+        const students = allUsers.filter(u => u.role === 'student' && Number(u.course_id) === Number(courseId));
         
         let html = `
             <div class="card mb-4 border-left-primary shadow-sm" style="padding: 1.5rem; background:linear-gradient(to right, #ffffff, #fff5ec)">
@@ -184,7 +184,7 @@ Views.Attendance = {
 
         const date = document.getElementById('a-date').value;
         const records = DB.getTable('attendance');
-        const filtered = records.filter(a => String() === String() && a.date === date);
+        const filtered = records.filter(a => Number(a.course_id) === Number(courseId) && a.date === date);
 
         filtered.forEach(r => {
             const container = document.getElementById(`status-btns-${r.student_id}`);
@@ -216,15 +216,15 @@ Views.Attendance = {
 
         UI.showLoader();
         const attendanceRecords = DB.getTable('attendance');
-        const existing = attendanceRecords.find(a => String() === String() && String() === String() && a.date === date);
+        const existing = attendanceRecords.find(a => Number(a.course_id) === Number(courseId) && Number(a.student_id) === Number(studentId) && a.date === date);
 
         try {
             if(existing) {
                 await DB.update('attendance', existing.id, { status: status });
             } else {
                 await DB.insert('attendance', {
-                    course_id: String(),
-                    student_id: String(),
+                    course_id: Number(courseId),
+                    student_id: Number(studentId),
                     date,
                     status
                 });

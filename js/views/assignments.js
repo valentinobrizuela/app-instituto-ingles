@@ -30,7 +30,7 @@ Views.Assignments = {
         }
 
         html += courses.map(course => {
-            const courseAssignments = assignments.filter(a => String() === String());
+            const courseAssignments = assignments.filter(a => Number(a.course_id) === Number(course.id));
             
             return `
                 <div class="card mb-4" style="border-left: 4px solid var(--primary);">
@@ -49,7 +49,7 @@ Views.Assignments = {
                             // Si es alumno, ver si ya entregó
                             let studentAction = '';
                             if (user.role === 'student') {
-                                const sub = submissions.find(s => String() === String() && String(s.student_id) === String(user.id));
+                                const sub = submissions.find(s => Number(s.assignment_id) === Number(a.id) && String(s.student_id) === String(user.id));
                                 if (sub) {
                                     statusBadge = `<span class="badge badge-primary">Entregada</span>`;
                                     studentAction = `
@@ -68,7 +68,7 @@ Views.Assignments = {
                                 }
                             } else {
                                 // Admin/Teacher
-                                const subCount = submissions.filter(s => String() === String()).length;
+                                const subCount = submissions.filter(s => Number(s.assignment_id) === Number(a.id)).length;
                                 studentAction = `
                                     <button class="btn btn-info w-full shadow-sm mt-3" onclick="Views.Assignments.viewSubmissions(${a.id})">
                                         <i class="fa-solid fa-list-check"></i> Ver Entregas (${subCount})

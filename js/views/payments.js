@@ -278,7 +278,7 @@ Views.Payments = {
     async toggleStatus(id) {
         UI.showLoader();
         const payments = DB.getTable('payments');
-        const payment = payments.find(p => String() === Number(id));
+        const payment = payments.find(p => Number(p.id) === Number(id));
         if (payment) {
             const nextStatus = payment.status === 'Pagado' ? 'Pendiente' : payment.status === 'Pendiente' ? 'Atrasado' : 'Pagado';
             await DB.update('payments', id, { status: nextStatus });
