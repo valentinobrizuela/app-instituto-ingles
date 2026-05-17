@@ -132,6 +132,14 @@ const App = {
                 UI.setSectionTitle('Materiales de Estudio', 'fa-solid fa-folder-open');
                 Views.Materials.render();
                 break;
+            case '#/assignments':
+                UI.setSectionTitle('Buzón de Tareas', 'fa-solid fa-file-pen');
+                if (Views.Assignments) Views.Assignments.render();
+                break;
+            case '#/quizzes':
+                UI.setSectionTitle('Evaluaciones Online', 'fa-solid fa-clipboard-question');
+                if (Views.Quizzes) Views.Quizzes.render();
+                break;
             case '#/calendar':
                 UI.setSectionTitle('Calendario Institucional', 'fa-solid fa-calendar-days');
                 if (Views.Calendar) Views.Calendar.render();

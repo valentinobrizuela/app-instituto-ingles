@@ -131,6 +131,12 @@ const UI = {
                         <div class="nav-item">
                             <a href="#/materials" class="nav-link" id="nav-materials"><i class="fa-solid fa-folder-open"></i> Materiales</a>
                         </div>
+                        <div class="nav-item">
+                            <a href="#/assignments" class="nav-link" id="nav-assignments"><i class="fa-solid fa-file-pen"></i> Tareas</a>
+                        </div>
+                        <div class="nav-item">
+                            <a href="#/quizzes" class="nav-link" id="nav-quizzes"><i class="fa-solid fa-clipboard-question"></i> Evaluaciones</a>
+                        </div>
                         
                         <div class="nav-item">
                             <a href="#/calendar" class="nav-link" id="nav-calendar"><i class="fa-solid fa-calendar-days"></i> Calendario</a>

@@ -59,20 +59,50 @@ const MilaAI = {
             ¿Hay algo más en lo que yo pueda ayudarte directamente? 🐈`;
         }
 
-        // 3. Fallback a IA Generativa (Gemini) para CUALQUIER otra pregunta
-        return await this.callGeminiAPI(message, user);
+        // 3. Modos Avanzados de Aprendizaje (Conversación / Ejercicios)
+        if (msg.includes("practicar inglés") || msg.includes("let's practice") || msg.includes("conversar")) {
+            return await this.callGeminiAPI(message, user, 'conversation');
+        }
+
+        if (msg.includes("ejercicio") || msg.includes("dame ejercicios") || msg.includes("quiz me")) {
+            return await this.callGeminiAPI(message, user, 'exercises');
+        }
+
+        // 4. Fallback a IA Generativa (Gemini) para CUALQUIER otra pregunta
+        return await this.callGeminiAPI(message, user, 'default');
     },
 
     // Llamada a la API de Gemini
-    async callGeminiAPI(userMessage, user) {
+    async callGeminiAPI(userMessage, user, mode = 'default') {
         if (!CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === "AQUI_TU_CLAVE_DE_GEMINI") {
             return "¡Miau! Mi cerebro avanzado está desactivado porque no me han configurado la clave de la API (GEMINI_API_KEY en config.js). Dile al administrador que la configure para que pueda responder cualquier pregunta. 😿";
         }
 
         const userName = user ? user.name.split(' ')[0] : "Visitante";
-        const courseInfo = user && user.course_id ? `El usuario está en el curso ID: ${user.course_id}.` : "El usuario no tiene curso asignado o no ha iniciado sesión.";
+        const courseInfo = user && user.course_id ? `El usuario está en el nivel/curso: ${user.level || user.course_id}.` : "El usuario no tiene curso asignado.";
 
-        const systemPrompt = `
+        let systemPrompt = "";
+
+        if (mode === 'conversation') {
+            systemPrompt = `
+Eres Mila, la asistente gata del instituto West House English School. El alumno quiere practicar inglés conversacional contigo.
+Inicia y mantén una conversación fluida en inglés, adaptada a su nivel (${courseInfo}).
+Haz preguntas abiertas, corrige sus errores sutilmente si es necesario, y mantén un tono amigable, utilizando emojis de gatos o "Miau" ocasionalmente.
+El nombre del alumno es ${userName}.
+            `.trim();
+        } else if (mode === 'exercises') {
+            systemPrompt = `
+Eres Mila, la asistente gata de West House English School. El alumno (${userName}) te ha pedido ejercicios para practicar.
+Genera un mini-quiz de 3 a 5 preguntas adaptado a su nivel (${courseInfo}).
+Puedes usar formato de completar el espacio, multiple choice, o traducción corta. 
+Pídele al alumno que responda, y dile que luego tú corregirás sus respuestas. Utiliza emojis y un tono motivador.
+            `.trim();
+        } else if (mode === 'raw_json') {
+            systemPrompt = "Eres un asistente que solo genera JSON válido y estricto. No incluyas explicaciones, saludos, ni formato markdown (como ```json). Solo devuelve el JSON crudo.";
+        } else if (mode === 'teacher_feedback') {
+            systemPrompt = `Eres un asistente para profesores de inglés. Debes generar un feedback constructivo, positivo y profesional en español para un alumno llamado ${userName}. No uses lenguaje de gato ni emojis excesivos. Máximo 3 frases cortas.`;
+        } else {
+            systemPrompt = `
 Eres Mila, la adorable y simpática gata mascota y asistente virtual del instituto de inglés "West House English School".
 Tu personalidad es amable, juguetona, y sueles usar expresiones relacionadas con gatos (como ¡Miau!, ronroneos o emojis de patitas 🐾 y gatos 🐈).
 Eres experta en gramática inglesa, puedes traducir, explicar conceptos, dar ejemplos, o charlar sobre cualquier tema que el alumno te proponga.
@@ -91,7 +121,8 @@ Instrucciones:
 1. Responde de forma concisa y amigable, utilizando formato Markdown si necesitas resaltar (negritas, cursivas o listas).
 2. Si te preguntan algo de inglés, explícalo de forma didáctica.
 3. Si la pregunta no tiene sentido, responde de forma divertida como un gatito confundido.
-        `.trim();
+            `.trim();
+        }
 
         try {
             const response = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\${CONFIG.GEMINI_API_KEY}\`, {

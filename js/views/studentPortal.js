@@ -214,10 +214,13 @@ Views.StudentPortal = {
                         </div>
                     </div>
 
-                    <div class="card" style="grid-column: 1 / -1;">
-                        <h3 class="mb-4" style="color:var(--primary); display:flex; align-items:center; gap:0.5rem">
-                            <i class="fa-solid fa-timeline"></i> Mi Camino de Aprendizaje
-                        </h3>
+                    <div class="card" style="grid-column: 1 / -1;" id="academic-report-container">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 style="color:var(--primary); display:flex; align-items:center; gap:0.5rem; margin:0">
+                                <i class="fa-solid fa-timeline"></i> Mi Camino de Aprendizaje
+                            </h3>
+                            <button class="btn btn-secondary btn-sm shadow-sm" onclick="Views.StudentPortal.generatePDF()"><i class="fa-solid fa-file-pdf text-danger"></i> Generar Boletín PDF</button>
+                        </div>
                         <div id="learning-timeline">Cargando progreso...</div>
                     </div>
                 </div>
@@ -354,6 +357,36 @@ Views.StudentPortal = {
             }
         } else {
             UI.showToast('¡Casi! La respuesta correcta está resaltada en verde.', 'info');
+        }
+    },
+
+    async generatePDF() {
+        if (typeof html2pdf === 'undefined') {
+            UI.showToast('La librería de PDF no se cargó correctamente. Intenta recargar la página.', 'danger');
+            return;
+        }
+
+        UI.showLoader();
+        const user = Auth.getUser();
+        const element = document.getElementById('academic-report-container');
+        
+        // Save original styles if we want to restore them later, but html2pdf takes a snapshot
+        const opt = {
+            margin:       0.5,
+            filename:     `Boletin_WestHouse_${user.name.replace(/ /g, '_')}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        try {
+            await html2pdf().set(opt).from(element).save();
+            UI.showToast('Boletín PDF generado con éxito.', 'success');
+        } catch (e) {
+            UI.showToast('Hubo un error al generar el PDF.', 'danger');
+            console.error(e);
+        } finally {
+            UI.hideLoader();
         }
     }
 };

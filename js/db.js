@@ -3,7 +3,7 @@
 // ============================================================
 
 const DB = {
-    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades', 'rewards', 'user_rewards'],
+    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades', 'rewards', 'user_rewards', 'quizzes', 'quiz_questions', 'quiz_results', 'assignments', 'assignment_submissions'],
 
     // Utility to get current session token if needed (Supabase JS handles this automatically usually)
     async getSession() {
