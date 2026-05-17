@@ -85,7 +85,7 @@ Views.Settings = {
                         </div>
                     </div>
                     
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem">
+                    <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem">
                         <div class="form-group">
                             <label>Nombre Completo</label>
                             <input type="text" class="form-control" value="${user.name}">
@@ -113,7 +113,7 @@ Views.Settings = {
                     <label>Contraseña Actual</label>
                     <input type="password" class="form-control" placeholder="••••••••">
                 </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem" class="mt-4">
+                <div class="responsive-grid mt-4" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem">
                     <div class="form-group">
                         <label>Nueva Contraseña</label>
                         <input type="password" class="form-control" placeholder="••••••••">

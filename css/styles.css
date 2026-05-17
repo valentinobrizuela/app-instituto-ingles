@@ -623,7 +623,7 @@ tr:last-child td {
 .wa-floating {
     position: fixed;
     bottom: 2rem;
-    right: 2rem;
+    right: 6.5rem;
     width: 60px;
     height: 60px;
     background: #25d366;
@@ -683,7 +683,7 @@ tr:last-child td {
 .wa-menu {
     position: fixed;
     bottom: 5.5rem;
-    right: 2rem;
+    right: 6.5rem;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 16px;
@@ -867,6 +867,23 @@ tr:last-child td {
         width: 95% !important;
         padding: 1.5rem !important;
     }
+
+    /* Calendar Mobile Overrides */
+    .calendar-grid-cell {
+        min-height: 60px !important;
+        padding: 0.25rem !important;
+    }
+    .calendar-day-number {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    .calendar-grid-cell .badge {
+        font-size: 0.55rem !important;
+        padding: 1px 3px !important;
+        margin-bottom: 2px !important;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
 }
 
 @media (max-width: 480px) {
@@ -879,10 +896,29 @@ tr:last-child td {
         margin-bottom: 0.5rem;
     }
     
-    .sidebar-footer {
-        padding: 1rem;
+}
+
+/* Custom dashboard layout responsive grids */
+.admin-dashboard-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2rem;
+}
+.admin-charts-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .admin-dashboard-layout {
+        grid-template-columns: 1fr !important;
+    }
+    .admin-charts-layout {
+        grid-template-columns: 1fr !important;
     }
 }
+
 /* --- Professional Upgrades --- */
 
 /* View Transitions */

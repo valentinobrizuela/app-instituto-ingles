@@ -184,6 +184,19 @@ const App = {
                 `;
         }
 
+        // Auto-wrap any tables in table-container dynamically for perfect mobile responsiveness
+        setTimeout(() => {
+            const tables = document.querySelectorAll('table');
+            tables.forEach(table => {
+                if (!table.parentElement.classList.contains('table-container')) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'table-container';
+                    table.parentNode.insertBefore(wrapper, table);
+                    wrapper.appendChild(table);
+                }
+            });
+        }, 50);
+
         // Finalizar carga
         UI.hideLoader();
         } catch (error) {

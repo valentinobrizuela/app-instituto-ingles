@@ -180,7 +180,7 @@ Views.Users = {
                 <div id="u-student-fields" style="background:#f8fafc; padding:1rem; border-radius:8px; border:1px solid #e2e8f0; margin-top:1.5rem; display: ${u.role === 'student' ? 'block' : 'none'}">
                     <h3 class="mb-4" style="font-size:1.1rem; color:var(--info)"><i class="fa-solid fa-graduation-cap"></i> Ficha Académica del Alumno</h3>
                     
-                    <div style="display:grid; grid-template-columns: 100px 1fr 1fr; gap:1rem;">
+                    <div class="responsive-grid" style="display:grid; grid-template-columns: 100px 1fr 1fr; gap:1rem;">
                         <div class="form-group">
                             <label>Edad</label>
                             <input type="number" id="u-age" class="form-control" min="4" max="99" value="${u.age || ''}">
@@ -195,7 +195,7 @@ Views.Users = {
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem; margin-top:0.5rem">
+                    <div class="responsive-grid" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem; margin-top:0.5rem">
                         <div class="form-group">
                             <label>Nivel de Inglés</label>
                             <select id="u-level" class="form-control">

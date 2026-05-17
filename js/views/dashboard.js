@@ -87,7 +87,7 @@ Views.Dashboard = {
             </div>
 
             <!-- Main Dashboard Grid -->
-            <div style="display:grid; grid-template-columns: 240px 1fr; gap: 2rem;">
+            <div class="admin-dashboard-layout">
                 
                 <!-- Left: Quick Actions -->
                 <div style="display:flex; flex-direction:column; gap:1rem;">
@@ -117,7 +117,7 @@ Views.Dashboard = {
                 <div style="display:flex; flex-direction:column; gap:2rem;">
                     
                     <!-- Charts Row -->
-                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem">
+                    <div class="admin-charts-layout">
                         <div class="card">
                             <h3 class="mb-4"><i class="fa-solid fa-chart-column text-primary"></i> Ingresos Mensuales</h3>
                             <canvas id="mainChart" style="max-height: 280px; width: 100%;"></canvas>

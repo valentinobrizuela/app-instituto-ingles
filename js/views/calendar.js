@@ -208,7 +208,7 @@ Views.Calendar = {
                     <input type="text" id="ev-title" class="form-control" required placeholder="Ej: Examen Final Modal verbs">
                 </div>
                 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="responsive-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                     <div class="form-group">
                         <label>Tipo *</label>
                         <select id="ev-type" class="form-control" required>
