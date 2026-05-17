@@ -27,7 +27,7 @@ Views.Quizzes = {
         }
 
         html += courses.map(course => {
-            const courseQuizzes = quizzes.filter(q => Number(q.course_id) === Number(course.id));
+            const courseQuizzes = quizzes.filter(q => String(q.course_id) === String(course.id));
             
             return `
                 <div class="card mb-4" style="border-left: 4px solid var(--primary);">
@@ -41,7 +41,7 @@ Views.Quizzes = {
                         ${courseQuizzes.map(q => {
                             let actionHtml = '';
                             if (user.role === 'student') {
-                                const result = results.find(r => Number(r.quiz_id) === Number(q.id) && String(r.student_id) === String(user.id));
+                                const result = results.find(r => String(r.quiz_id) === String(q.id) && String(r.student_id) === String(user.id));
                                 if (result) {
                                     actionHtml = `
                                         <div style="margin-top:1rem; padding:0.75rem; background:var(--bg-hover); border-radius:8px; text-align:center;">
@@ -57,7 +57,7 @@ Views.Quizzes = {
                                     `;
                                 }
                             } else {
-                                const totalTaken = results.filter(r => Number(r.quiz_id) === Number(q.id)).length;
+                                const totalTaken = results.filter(r => String(r.quiz_id) === String(q.id)).length;
                                 actionHtml = `
                                     <button class="btn btn-info w-full shadow-sm mt-3" onclick="Views.Quizzes.viewResults(${q.id})">
                                         <i class="fa-solid fa-chart-simple"></i> Ver Resultados (${totalTaken})

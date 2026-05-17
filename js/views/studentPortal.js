@@ -241,7 +241,7 @@ Views.StudentPortal = {
     },
 
     renderTimeline(user) {
-        const grades = DB.getTable('grades').filter(g => Number(g.studentId) === Number(user.id));
+        const grades = DB.getTable('grades').filter(g => String(g.studentId) === String(user.id));
         const container = document.getElementById('learning-timeline');
         if (!container) return;
         

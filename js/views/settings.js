@@ -49,7 +49,7 @@ Views.Settings = {
     renderProfileTab(user) {
         let studentStats = '';
         if (user.role === 'student') {
-            const course = DB.getTable('courses').find(c => Number(c.id) === Number(user.course_id));
+            const course = DB.getTable('courses').find(c => String(c.id) === String(user.course_id));
             studentStats = `
                 <div class="card mb-4" style="background:var(--primary-light); border:1px solid var(--primary); margin-bottom:2rem">
                     <h4 style="color:var(--primary); margin-bottom:1rem"><i class="fa-solid fa-graduation-cap"></i> Resumen Académico</h4>

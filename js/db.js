@@ -158,7 +158,7 @@ const DB = {
         let hasChanges = false;
 
         // 1. Limpiar gmails temporales/placeholders
-        const placeholders = ['westhouse.com', 'example.com', 'test.com', 'temp.com'];
+        const placeholders = ['example.com', 'test.com', 'temp.com'];
         users.forEach(u => {
             if (u.email && placeholders.some(p => u.email.includes(p))) {
                 u.email = '';
