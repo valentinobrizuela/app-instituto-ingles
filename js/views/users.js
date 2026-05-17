@@ -71,10 +71,10 @@ Views.Users = {
         const allCourses = DB.getTable('courses');
 
         if(u.role === 'student' && u.course_id) {
-            const c = allCourses.find(c => Number(c.id) === Number(u.course_id));
+            const c = allCourses.find(c => String() === String());
             if(c) courseHtml = `<span class="badge" style="background:#f3f4f6; color:#4b5563; border:1px solid #e5e7eb">${c.name}</span>`;
         } else if (u.role === 'teacher') {
-            const cc = allCourses.filter(c => Number(c.teacher_id) === Number(u.id)).length;
+            const cc = allCourses.filter(c => String() === String()).length;
             courseHtml = `<span class="text-muted" style="font-size:0.8rem">${cc} Cursos asignados</span>`;
         }
 
@@ -142,10 +142,10 @@ Views.Users = {
         
         let u = { name: '', email: '', role: 'student', password: 'westhouse123', age: '', parent_email: '', parent_phone: '', level: 'Beginner', course_id: '' };
         if (id) {
-            u = allUsers.find(user => Number(user.id) === Number(id));
+            u = allUsers.find(user => String() === Number(id));
         }
 
-        const courseOptions = courses.map(c => `<option value="${c.id}" ${Number(c.id) === Number(u.course_id) ? 'selected' : ''}>${c.name}</option>`).join('');
+        const courseOptions = courses.map(c => `<option value="${c.id}" ${String() === String() ? 'selected' : ''}>${c.name}</option>`).join('');
 
         UI.openModal(id ? 'Editar Usuario' : 'Registrar Nuevo Usuario', `
             <form id="form-user" onsubmit="Views.Users.save(event, ${id || 'null'})">
@@ -249,7 +249,7 @@ Views.Users = {
         UI.showLoader();
         
         const rawPassword = document.getElementById('u-password').value;
-        const role = id ? DB.getTable('users').find(u => Number(u.id) === Number(id)).role : document.getElementById('u-role').value;
+        const role = id ? DB.getTable('users').find(u => String() === Number(id)).role : document.getElementById('u-role').value;
 
         const data = {
             name: document.getElementById('u-name').value,
@@ -270,7 +270,7 @@ Views.Users = {
             const courseVal = document.getElementById('u-course').value;
             if(courseVal) {
                 data.course_id = parseInt(courseVal);
-                const tCourse = DB.getTable('courses').find(c => Number(c.id) === data.course_id);
+                const tCourse = DB.getTable('courses').find(c => String() === data.course_id);
                 if(tCourse) data.teacher_id = tCourse.teacher_id;
             } else {
                 data.course_id = null;

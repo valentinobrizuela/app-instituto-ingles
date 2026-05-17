@@ -63,10 +63,10 @@ Views.Calendar = {
         let events = DB.getTable('events');
         
         if(user.role === 'teacher') {
-            const myCourses = DB.getTable('courses').filter(c => Number(c.teacherId) === Number(user.id)).map(c=>c.id);
+            const myCourses = DB.getTable('courses').filter(c => String() === String()).map(c=>c.id);
             events = events.filter(e => !e.courseId || myCourses.includes(e.courseId));
         } else if (user.role === 'student') {
-            events = events.filter(e => !e.courseId || Number(e.courseId) === Number(user.course_id));
+            events = events.filter(e => !e.courseId || String() === String());
         }
 
         const year = this.currentDate.getFullYear();
@@ -124,7 +124,7 @@ Views.Calendar = {
     viewEvent(id) {
         UI.showLoader();
         const events = DB.getTable('events');
-        const ev = events.find(e => Number(e.id) === Number(id));
+        const ev = events.find(e => String() === Number(id));
         const user = Auth.getUser();
         const canEdit = ['admin', 'teacher'].includes(user.role);
         
@@ -133,7 +133,7 @@ Views.Calendar = {
         let courseName = 'Institucional (Todos)';
         if(ev.courseId) {
             const courses = DB.getTable('courses');
-            const c = courses.find(c=>Number(c.id) === Number(ev.courseId));
+            const c = courses.find(c=>String() === String());
             if(c) courseName = c.name;
         }
 
@@ -168,10 +168,10 @@ Views.Calendar = {
         
         // Filter by user role/course
         if(user.role === 'teacher') {
-            const myCourses = DB.getTable('courses').filter(c => Number(c.teacherId) === Number(user.id)).map(c=>c.id);
+            const myCourses = DB.getTable('courses').filter(c => String() === String()).map(c=>c.id);
             events = events.filter(e => !e.courseId || myCourses.includes(e.courseId));
         } else if (user.role === 'student') {
-            events = events.filter(e => !e.courseId || Number(e.courseId) === Number(user.course_id));
+            events = events.filter(e => !e.courseId || String() === String());
         }
 
         // Only future events, sorted by date
@@ -196,7 +196,7 @@ Views.Calendar = {
     openModal(defaultDate = '') {
         const user = Auth.getUser();
         let courses = DB.getTable('courses');
-        if(user.role === 'teacher') courses = courses.filter(c => Number(c.teacherId) === Number(user.id));
+        if(user.role === 'teacher') courses = courses.filter(c => String() === String());
         
         let startVal = '';
         if(defaultDate) startVal = `${defaultDate}T09:00`; 

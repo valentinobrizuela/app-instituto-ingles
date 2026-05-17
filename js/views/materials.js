@@ -36,7 +36,7 @@ Views.Materials = {
         }
 
         html += courses.map(course => {
-            const courseMats = materials.filter(m => Number(m.course_id) === Number(course.id));
+            const courseMats = materials.filter(m => String() === String());
             return `
                 <div class="card mb-4" style="border-left: 4px solid var(--primary);">
                     <h2 style="font-size:1.4rem;color:var(--text-main);margin-bottom:1.5rem;border-bottom:1px solid var(--border-color);padding-bottom:0.75rem">

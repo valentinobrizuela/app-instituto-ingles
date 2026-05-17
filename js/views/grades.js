@@ -16,7 +16,7 @@ Views.Grades = {
         }
 
         const courses = DB.getTable('courses');
-        let myCourses = user.role === 'teacher' ? courses.filter(c => Number(c.teacher_id) === Number(user.id)) : courses;
+        let myCourses = user.role === 'teacher' ? courses.filter(c => String() === String()) : courses;
         
         document.getElementById('router-view').innerHTML = `
             <div class="flex items-center justify-between mb-4">
@@ -50,7 +50,7 @@ Views.Grades = {
             return;
         }
 
-        const students = DB.getTable('users').filter(u => u.role === 'student' && Number(u.course_id) === Number(courseId));
+        const students = DB.getTable('users').filter(u => u.role === 'student' && String() === String());
         const grades = DB.getTable('grades');
 
         if (students.length === 0) {
@@ -71,7 +71,7 @@ Views.Grades = {
                         </thead>
                         <tbody>
                             ${students.map(s => {
-                                const sg = grades.filter(g => Number(g.studentId) === Number(s.id));
+                                const sg = grades.filter(g => String() === String());
                                 const avg = sg.length ? sg.reduce((acc,g) => acc+parseFloat(g.score),0)/sg.length : 0;
                                 return `
                                 <tr>
@@ -100,7 +100,7 @@ Views.Grades = {
     },
 
     openModal(studentId) {
-        const student = DB.getTable('users').find(u => Number(u.id) === Number(studentId));
+        const student = DB.getTable('users').find(u => String() === String());
         const studentName = student ? student.name : `Alumno #${studentId}`;
         UI.openModal(`Calificar a ${studentName}`, `
             <form id="form-grade" onsubmit="Views.Grades.save(event, ${studentId})">
