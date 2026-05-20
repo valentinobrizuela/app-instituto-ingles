@@ -3,9 +3,11 @@
 // ============================================================
 
 const DB = {
-    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades', 'rewards', 'user_rewards', 'quizzes', 'quiz_questions', 'quiz_results', 'assignments', 'assignment_submissions'],
+    tables: ['users', 'courses', 'attendance', 'payments', 'materials', 'notifications', 'events', 'grades', 'conversation_slots', 'bookings', 'waitlist', 'rewards', 'user_rewards', 'quizzes', 'quiz_questions', 'quiz_results', 'assignments', 'assignment_submissions'],
+    _memoryCache: new Map(),
+    _channels: {},
 
-    // Utility to get current session token if needed (Supabase JS handles this automatically usually)
+    // Utility to get current session token if needed
     async getSession() {
         if (!sb) return null;
         const { data: { session } } = await sb.auth.getSession();
@@ -13,17 +15,29 @@ const DB = {
     },
 
     getTable(tableName) {
-        const data = localStorage.getItem(`westhouse_${tableName}`);
-        return data ? JSON.parse(data) : [];
+        return this._memoryCache.get(tableName) || [];
     },
 
     saveTable(tableName, data) {
-        localStorage.setItem(`westhouse_${tableName}`, JSON.stringify(data));
+        this._memoryCache.set(tableName, data);
+        // Despachar evento global para reactividad en la UI
+        window.dispatchEvent(new CustomEvent(`db_update_${tableName}`, { detail: data }));
     },
 
     async logAction(tableName, action, details) {
-        // Auditoría desactivada por solicitud del usuario
-        return;
+        if (!sb) return;
+        try {
+            const session = await this.getSession();
+            const email = session?.user?.email || 'sistema';
+            await sb.from('logs').insert([{
+                user_id: null, // Asignado por trigger de Postgres usando el email de la sesión si es necesario
+                action: action,
+                table_name: tableName,
+                details: JSON.stringify(details)
+            }]);
+        } catch (err) {
+            console.error("Error al registrar auditoría:", err.message);
+        }
     },
 
     // ── OPERACIONES CON SUPABASE ──
@@ -52,13 +66,13 @@ const DB = {
             if (error) throw error;
 
             if (newRecord) {
-                // Actualizar cache local
+                // Actualizar cache local en memoria
                 const table = this.getTable(tableName);
                 table.push(newRecord);
                 this.saveTable(tableName, table);
                 
                 console.log(`[DB] ${tableName} insertado con éxito en Supabase`);
-                this.logAction(tableName, 'INSERT', newRecord);
+                await this.logAction(tableName, 'INSERT', newRecord);
                 return newRecord;
             }
         } catch (err) {
@@ -89,7 +103,7 @@ const DB = {
                     this.saveTable(tableName, table);
                 }
                 console.log(`[DB] ${tableName} ${id} actualizado en Supabase`);
-                this.logAction(tableName, 'UPDATE', { id, ...updatedFields });
+                await this.logAction(tableName, 'UPDATE', { id, ...updatedFields });
                 return updatedRecord;
             }
         } catch (err) {
@@ -114,7 +128,7 @@ const DB = {
             table = table.filter(t => t.id !== id);
             this.saveTable(tableName, table);
             console.log(`[DB] ${tableName} ${id} eliminado en Supabase`);
-            this.logAction(tableName, 'DELETE', { id });
+            await this.logAction(tableName, 'DELETE', { id });
         } catch (err) {
             console.error("Supabase Delete Error:", err.message);
             UI.showToast("Error al eliminar: " + err.message, "danger");
@@ -134,21 +148,21 @@ const DB = {
     getStudentStatus(studentId) {
         const payments = this.getTable('payments').filter(p => String(p.student_id) === String(studentId));
         const now = new Date();
-        const currentMonth = now.getMonth(); // 0-11
+        const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
         const currentDay = now.getDate();
 
-        // Check if there is a payment for the current month
+        // Verificar pago para el mes actual
         const paidThisMonth = payments.some(p => {
             const pDate = new Date(p.date);
             return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear && p.status === 'Pagado';
         });
 
-        if (paidThisMonth) return 'paid'; // Green
+        if (paidThisMonth) return 'paid'; // Verde
 
-        // If not paid, check if we are past the 10th day
-        if (currentDay <= 10) return 'pending'; // Yellow
-        return 'overdue'; // Red
+        // Si no está pagado, verificar si estamos antes del día 10
+        if (currentDay <= 10) return 'pending'; // Amarillo
+        return 'overdue'; // Rojo
     },
 
     async cleanupData() {
@@ -157,7 +171,6 @@ const DB = {
         const courses = this.getTable('courses');
         let hasChanges = false;
 
-        // 1. Limpiar gmails temporales/placeholders
         const placeholders = ['example.com', 'test.com', 'temp.com'];
         users.forEach(u => {
             if (u.email && placeholders.some(p => u.email.includes(p))) {
@@ -166,7 +179,6 @@ const DB = {
             }
         });
 
-        // 2. Lógica de hermanos (Mismo apellido -> mismo gmail si falta uno)
         const families = {};
         users.forEach(u => {
             if (u.role === 'student' && u.name) {
@@ -195,7 +207,6 @@ const DB = {
             }
         });
 
-        // 3. Consistencia de profesores
         courses.forEach(c => {
             if (c.teacher_id) {
                 users.forEach(u => {
@@ -207,11 +218,10 @@ const DB = {
             }
         });
 
-        // 4. Inicializar campos de Gamificación si no existen
         users.forEach(u => {
             if (u.role === 'student') {
                 if (u.xp === undefined) u.xp = 0;
-                if (u.spendable_xp === undefined) u.spendable_xp = u.xp; // Inicia con su XP actual
+                if (u.spendable_xp === undefined) u.spendable_xp = u.xp;
                 if (u.level === undefined) u.level = 1;
                 if (!u.badges) u.badges = [];
                 if (u.streak === undefined) u.streak = 0;
@@ -225,10 +235,46 @@ const DB = {
         }
     },
 
+    // Suscribir tablas a realtime de Supabase para mantener el caché en memoria actualizado
+    subscribeRealtime() {
+        if (!sb) return;
+
+        this.tables.forEach(table => {
+            if (this._channels[table]) {
+                sb.removeChannel(this._channels[table]);
+            }
+
+            this._channels[table] = sb.channel(`public:${table}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: table }, (payload) => {
+                    let currentData = this.getTable(table);
+                    
+                    if (payload.eventType === 'INSERT') {
+                        // Evitar duplicados si ya fue insertado localmente de forma optimista
+                        if (!currentData.some(item => item.id === payload.new.id)) {
+                            currentData.push(payload.new);
+                        }
+                    } else if (payload.eventType === 'UPDATE') {
+                        const idx = currentData.findIndex(item => item.id === payload.new.id);
+                        if (idx !== -1) {
+                            currentData[idx] = payload.new;
+                        } else {
+                            currentData.push(payload.new);
+                        }
+                    } else if (payload.eventType === 'DELETE') {
+                        currentData = currentData.filter(item => item.id !== payload.old.id);
+                    }
+
+                    this.saveTable(table, currentData);
+                })
+                .subscribe();
+        });
+        console.log("📡 Suscripciones Supabase Realtime activadas para todas las tablas.");
+    },
+
     // ── INIT: Sincronización completa con Supabase ──
     async init() {
         if (!sb) {
-            console.warn("Supabase no inicializado. Usando caché local.");
+            console.warn("Supabase no inicializado. Usando caché local vacío.");
             return;
         }
 
@@ -236,13 +282,15 @@ const DB = {
         UI.showLoader();
 
         try {
+            // Limpiar caché en RAM antes de repoblar
+            this._memoryCache.clear();
+
             for (let table of this.tables) {
                 const { data, error } = await sb
                     .from(table)
                     .select('*');
 
                 if (error) {
-                    // Ignorar errores de permisos (42501) si no es admin, es normal que no vea todo
                     if (error.code !== '42501') {
                         console.warn(`Error al cargar ${table}:`, error.message);
                     }
@@ -251,11 +299,12 @@ const DB = {
 
                 if (data) {
                     this.saveTable(table, data);
-                    console.log(`   ✓ ${table}: ${data.length} registros`);
+                    console.log(`   ✓ ${table}: ${data.length} registros cargados en RAM`);
                 }
             }
             
             await this.cleanupData();
+            this.subscribeRealtime();
 
             console.log("✅ Sincronización completada.");
         } catch (error) {

@@ -89,7 +89,7 @@ Views.Materials = {
                                 icon = 'fa-solid fa-file text-muted';
                             }
 
-                            return `
+                             return `
                             <div class="card shadow-md" style="display:flex;flex-direction:column; border: 1px solid #e5e7eb; padding:1.25rem; transition: transform 0.2s">
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="badge" style="background:#f3f4f6; color:#4b5563; font-size:0.75rem"><i class="${icon}"></i> ${typeText}</span>
@@ -102,11 +102,15 @@ Views.Materials = {
                                 </div>
                                 
                                 <div style="margin-top:1.5rem;">
-                                    ${!isYoutube ? 
+                                    ${isYoutube ? 
+                                    `<a href="${m.url}" target="_blank" class="btn btn-secondary w-full" style="font-size:0.9rem"><i class="fa-solid fa-external-link-alt"></i> Ver en YouTube</a>` : 
+                                    m.type === 'file' ?
+                                    `<button onclick="Views.Materials.handleDownload('${m.url}', '${m.title}')" class="btn btn-primary w-full shadow-sm flex justify-center items-center gap-2" style="font-size:0.9rem; cursor:pointer">
+                                        <i class="fa-solid fa-download"></i> Descargar Archivo
+                                    </button>` :
                                     `<a href="${m.url}" target="_blank" class="btn btn-primary w-full shadow-sm flex justify-center" style="font-size:0.9rem">
                                         <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Material
-                                    </a>` : 
-                                    `<a href="${m.url}" target="_blank" class="btn btn-secondary w-full" style="font-size:0.9rem"><i class="fa-solid fa-external-link-alt"></i> Ver en YouTube</a>`}
+                                    </a>`}
                                 </div>
                             </div>
                         `}).join('')}
@@ -116,6 +120,44 @@ Views.Materials = {
         }).join('');
 
         document.getElementById('router-view').innerHTML = html;
+    },
+
+    async getSecureFileUrl(url) {
+        try {
+            let filePath = url;
+            if (url.includes('/materials/')) {
+                filePath = url.split('/materials/')[1];
+            }
+            filePath = decodeURIComponent(filePath);
+
+            const { data, error } = await sb.storage
+                .from('materials')
+                .createSignedUrl(filePath, 900); // 15 minutos
+            
+            if (error) throw error;
+            return data.signedUrl;
+        } catch (err) {
+            console.error("Error al obtener enlace firmado:", err.message);
+            return null;
+        }
+    },
+
+    async handleDownload(url, title) {
+        UI.showLoader();
+        const secureUrl = await this.getSecureFileUrl(url);
+        UI.hideLoader();
+        
+        if (secureUrl) {
+            const a = document.createElement('a');
+            a.href = secureUrl;
+            a.target = '_blank';
+            a.download = title;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            UI.showToast("No tienes permisos para descargar este archivo", "danger");
+        }
     },
 
     playYt(videoId, containerId) {

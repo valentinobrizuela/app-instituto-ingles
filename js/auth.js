@@ -104,6 +104,7 @@ const Auth = {
         if (sb) await sb.auth.signOut();
         
         this.currentUser = null;
+        if (DB && DB._memoryCache) DB._memoryCache.clear();
         localStorage.removeItem('westhouse_session');
         localStorage.removeItem('westhouse_token');
         
