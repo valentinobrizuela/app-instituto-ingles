@@ -61,6 +61,7 @@ ALTER TABLE public.conversation_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.grades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waitlist ENABLE ROW LEVEL SECURITY;
 
 
 -- 3. FUNCIONES AUXILIARES DE SEGURIDAD (SECURITY DEFINER)
@@ -121,6 +122,10 @@ CREATE POLICY "grades_student_select" ON public.grades FOR SELECT USING (student
 
 -- POLÍTICAS: public.logs
 CREATE POLICY "logs_admin_all" ON public.logs FOR ALL USING (public.get_my_role() = 'admin');
+
+-- POLÍTICAS: public.waitlist
+CREATE POLICY "waitlist_public_insert" ON public.waitlist FOR INSERT WITH CHECK (true);
+CREATE POLICY "waitlist_admin_all" ON public.waitlist FOR ALL USING (public.get_my_role() = 'admin');
 
 
 -- 5. TRIGGERS DE AUTOMATIZACIÓN

@@ -136,13 +136,15 @@ Views.Users = {
         `;
     },
 
-    openModal(id = null) {
+    openModal(id = null, prefilled = null) {
         const allUsers = DB.getTable('users');
         const courses = DB.getTable('courses');
         
         let u = { name: '', email: '', role: 'student', password: 'westhouse123', age: '', parent_email: '', parent_phone: '', level: 'Beginner', course_id: '' };
         if (id) {
             u = allUsers.find(user => String(user.id) === Number(id));
+        } else if (prefilled) {
+            u = { ...u, ...prefilled };
         }
 
         const courseOptions = courses.map(c => `<option value="${c.id}" ${String(c.id) === String(u.course_id) ? 'selected' : ''}>${c.name}</option>`).join('');

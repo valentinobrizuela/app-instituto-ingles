@@ -53,7 +53,7 @@ const App = {
     router() {
         try {
             let path = window.location.hash.split('?')[0] || '#/';
-            const authRequired = path !== '#/login';
+            const authRequired = path !== '#/login' && path !== '#/waitlist-join';
 
             // Redirigir si no hay sesión
             if (authRequired && !Auth.isAuthenticated()) {
@@ -71,6 +71,18 @@ const App = {
         if (path === '#/login') {
             document.getElementById('app').innerHTML = ''; // Clear
             UI.renderLogin();
+            UI.hideLoader();
+            return;
+        }
+
+        if (path === '#/waitlist-join') {
+            document.getElementById('app').innerHTML = ''; // Clear
+            if (Views.Waitlist) {
+                Views.Waitlist.renderPublicForm();
+            } else {
+                console.error("Views.Waitlist not loaded.");
+                document.body.innerHTML = `<p style="padding:2rem;color:red">Error: Módulo de Lista de Espera no cargado.</p>`;
+            }
             UI.hideLoader();
             return;
         }
@@ -156,6 +168,14 @@ const App = {
             case '#/conversations':
                 UI.setSectionTitle('Conversaciones 1-a-1', 'fa-solid fa-comments');
                 if (Views.Conversations) Views.Conversations.render();
+                break;
+            case '#/waitlist':
+                if (Auth.hasRole('admin')) {
+                    UI.setSectionTitle('Lista de Espera Pública', 'fa-solid fa-clock-rotate-left');
+                    if (Views.Waitlist) Views.Waitlist.renderAdminView();
+                } else {
+                    window.location.hash = '#/';
+                }
                 break;
             case '#/grades':
                 if (Views.Grades && !Auth.hasRole('student')) {

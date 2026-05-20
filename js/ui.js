@@ -126,6 +126,9 @@ const UI = {
                         <div class="nav-item">
                             <a href="#/payments" class="nav-link" id="nav-payments"><i class="fa-solid fa-file-invoice-dollar"></i> Pagos</a>
                         </div>
+                        <div class="nav-item">
+                            <a href="#/waitlist" class="nav-link" id="nav-waitlist"><i class="fa-solid fa-clock-rotate-left"></i> Lista de Espera</a>
+                        </div>
                         ` : ''}
 
                         <div class="nav-item">
