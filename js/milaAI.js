@@ -30,7 +30,7 @@ const MilaAI = {
         // 2. Saludos Comunes
         const greetings = ['hola', 'buen dia', 'buen día', 'buenos dias', 'buenos días', 'buenas tardes', 'buenas noches', 'hello', 'hi', 'que tal', 'cómo estás', 'como estas', 'como andas', 'cómo andas', 'miau', 'hey'];
         if (greetings.some(g => msg === g || msg.startsWith(g + ' ') || msg.startsWith(g + ',') || msg.startsWith(g + '!'))) {
-            const userName = user ? user.name.split(' ')[0] : "Visitante";
+            const userName = (user && user.name) ? user.name.split(' ')[0] : (user && user.email ? user.email.split('@')[0] : "Visitante");
             return `¡Hola ${userName}! ¡Miau! 🐈 Soy Mila, la asistente virtual de West House English School. 🐾
 
 ¿En qué te puedo ayudar hoy? Puedes preguntarme cosas como:
@@ -46,12 +46,13 @@ ${user ? '• 📝 Tus **notas**, exámenes y promedio.\n• 📊 Tu **asistenci
 
         // 3. Consultas Personalizadas (requieren Login)
         if (user) {
+            const userName = (user && user.name) ? user.name.split(' ')[0] : (user && user.email ? user.email.split('@')[0] : "Visitante");
             // Consulta de Notas
             if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("cómo voy") || msg.includes("promedio") || msg.includes("rendimiento")) {
                 const grades = DB.getTable('grades').filter(g => String(g.studentId) === String(user.id));
                 if (grades.length > 0) {
                     const avg = (grades.reduce((sum, g) => sum + Number(g.score), 0) / grades.length).toFixed(1);
-                    return `He revisado tus notas, ${user.name.split(' ')[0]}. Tienes **${grades.length}** calificaciones registradas y tu promedio actual es **${avg}**. ¡Buen trabajo! 🌟`;
+                    return `He revisado tus notas, ${userName}. Tienes **${grades.length}** calificaciones registradas y tu promedio actual es **${avg}**. ¡Buen trabajo! 🌟`;
                 }
                 return "Todavía no tengo notas registradas para ti en el sistema. ¡Sigue esforzándote! 📝";
             }
@@ -170,7 +171,7 @@ Sin embargo, ¡puedo ayudarte con la información local! Pregúntame sobre:
 • 📞 **Hablar con un humano** (Maricel o Morena).`;
         }
 
-        const userName = user ? user.name.split(' ')[0] : "Visitante";
+        const userName = (user && user.name) ? user.name.split(' ')[0] : (user && user.email ? user.email.split('@')[0] : "Visitante");
         const courseInfo = user && user.course_id ? `El usuario está en el nivel/curso: ${user.level || user.course_id}.` : "El usuario no tiene curso asignado.";
 
         let systemPrompt = "";
