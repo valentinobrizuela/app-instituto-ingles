@@ -2,10 +2,48 @@ window.Views = window.Views || {};
 
 Views.Notifications = {
     render() {
-        if (!Auth.hasRole('admin')) return;
-
+        const user = Auth.getUser();
         const notifications = DB.getTable('notifications').sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-        
+
+        if (!Auth.hasRole('admin')) {
+            // Vista de Comunicados para Alumnos y Profesores
+            const myNotifs = notifications.filter(n => n.target === 'all' || n.target === user.role);
+            
+            let html = `
+                <div class="mb-4">
+                    <h1 class="text-primary" style="font-size:2rem; margin-bottom:0;"><i class="fa-regular fa-bell"></i> Comunicados Oficiales</h1>
+                    <p class="text-muted mt-2">Novedades, anuncios y avisos importantes del instituto.</p>
+                </div>
+                
+                <div id="notif-feed-container" style="display:flex; flex-direction:column; gap:1.25rem;">
+            `;
+
+            if (myNotifs.length === 0) {
+                html += `</div>`; // Close container
+                document.getElementById('router-view').innerHTML = html;
+                UI.showEmptyState('notif-feed-container', 'Sin comunicados', 'No hay avisos oficiales para ti en este momento.', 'fa-regular fa-bell-slash');
+                return;
+            }
+
+            html += myNotifs.map(n => `
+                <div class="card shadow-sm hover-card" style="padding:1.5rem; border-left:4px solid var(--primary); cursor:pointer; transition: transform 0.2s, box-shadow 0.2s" onclick="UI.showAnnouncementDetail('${n.id}')">
+                    <div class="flex justify-between items-start mb-2" style="gap:1rem">
+                        <h3 style="font-size:1.25rem; font-weight:700; margin:0; color:var(--text-main)">${n.title}</h3>
+                        <span class="text-muted text-sm" style="white-space:nowrap"><i class="fa-regular fa-calendar"></i> ${new Date(n.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p style="color:var(--text-muted); line-height:1.5; margin:0">${n.message.substring(0, 160)}${n.message.length > 160 ? '...' : ''}</p>
+                    <div style="margin-top:1rem; font-size:0.8rem; color:var(--primary); font-weight:600; display:flex; align-items:center; gap:0.25rem">
+                        <span>Leer más</span> <i class="fa-solid fa-arrow-right-long"></i>
+                    </div>
+                </div>
+            `).join('');
+
+            html += `</div>`;
+            document.getElementById('router-view').innerHTML = html;
+            return;
+        }
+
+        // Vista de Administración (solo para admin)
         document.getElementById('router-view').innerHTML = `
             <div class="flex items-center justify-between mb-4">
                 <div>

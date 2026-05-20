@@ -85,8 +85,13 @@ const App = {
         UI.renderBreadcrumbs();
         UI.renderNotifications();
 
-        // Limpiar vista actual
+        // Limpiar vista actual y forzar reinicio de animación
         const viewContainer = document.getElementById('router-view');
+        if (viewContainer) {
+            viewContainer.style.animation = 'none';
+            viewContainer.offsetHeight; // trigger reflow
+            viewContainer.style.animation = '';
+        }
 
         // Cargar la vista según ruta
         switch (path) {
@@ -148,6 +153,10 @@ const App = {
                 UI.setSectionTitle('Notificaciones', 'fa-regular fa-bell');
                 if (Views.Notifications) Views.Notifications.render();
                 break;
+            case '#/conversations':
+                UI.setSectionTitle('Conversaciones 1-a-1', 'fa-solid fa-comments');
+                if (Views.Conversations) Views.Conversations.render();
+                break;
             case '#/grades':
                 if (Views.Grades && !Auth.hasRole('student')) {
                     UI.setSectionTitle('Calificaciones', 'fa-solid fa-star');
@@ -159,10 +168,6 @@ const App = {
                     UI.setSectionTitle('Auditoría de Sistema', 'fa-solid fa-shield-halved');
                     Views.Logs.render();
                 } else window.location.hash = '#/';
-                break;
-            case '#/notifications':
-                UI.setSectionTitle('Notificaciones', 'fa-regular fa-bell');
-                if (Views.Notifications) Views.Notifications.render();
                 break;
             case '#/settings':
             case '#/profile':

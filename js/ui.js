@@ -137,6 +137,9 @@ const UI = {
                         <div class="nav-item">
                             <a href="#/quizzes" class="nav-link" id="nav-quizzes"><i class="fa-solid fa-clipboard-question"></i> Evaluaciones</a>
                         </div>
+                        <div class="nav-item">
+                            <a href="#/conversations" class="nav-link" id="nav-conversations"><i class="fa-solid fa-comments"></i> Conversaciones</a>
+                        </div>
                         
                         <div class="nav-item">
                             <a href="#/calendar" class="nav-link" id="nav-calendar"><i class="fa-solid fa-calendar-days"></i> Calendario</a>
@@ -363,20 +366,52 @@ const UI = {
         container.innerHTML = html;
     },
 
+    showEmptyState(containerId, title, message, icon = 'fa-solid fa-folder-open') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = `
+            <div class="empty-state" style="padding:4rem 2rem; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--bg-card); border:1px dashed var(--border-color); border-radius:12px; margin:2rem 0;">
+                <div class="empty-state-icon" style="font-size:3rem; color:var(--text-muted); margin-bottom:1rem;">
+                    <i class="${icon}"></i>
+                </div>
+                <h3 style="font-size:1.25rem; font-weight:700; color:var(--text-main); margin-bottom:0.5rem">${title}</h3>
+                <p style="color:var(--text-muted); max-width:400px; font-size:0.9rem; line-height:1.5; margin:0">${message}</p>
+            </div>
+        `;
+    },
+
     showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
+        if (!container) return;
+        
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
+        toast.style.cursor = 'pointer';
 
-        let icon = '<i class="fa-solid fa-circle-info"></i>';
+        let icon = '<i class="fa-solid fa-circle-info" style="color:var(--primary)"></i>';
         if (type === 'success') icon = '<i class="fa-solid fa-circle-check" style="color:var(--success)"></i>';
         if (type === 'danger') icon = '<i class="fa-solid fa-circle-exclamation" style="color:var(--danger)"></i>';
+        if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation" style="color:var(--warning)"></i>';
 
         toast.innerHTML = `${icon} <span style="font-weight:600">${message}</span>`;
-        if (container) {
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
-        }
+        
+        // Desvanecer y remover al hacer click
+        toast.onclick = () => {
+            toast.style.transform = 'translateX(120%)';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        };
+        
+        container.appendChild(toast);
+        
+        // Auto-remover después de 4 segundos
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.style.transform = 'translateX(120%)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 4000);
     },
 
     openModal(title, content) {

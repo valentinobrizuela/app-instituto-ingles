@@ -221,6 +221,9 @@ Views.StudentPortal = {
                             </h3>
                             <button class="btn btn-secondary btn-sm shadow-sm" onclick="Views.StudentPortal.generatePDF()"><i class="fa-solid fa-file-pdf text-danger"></i> Generar Boletín PDF</button>
                         </div>
+                        <div style="margin-bottom: 2rem; position: relative; height: 220px; display: none;" id="chart-wrapper">
+                            <canvas id="grades-progression-chart"></canvas>
+                        </div>
                         <div id="learning-timeline">Cargando progreso...</div>
                     </div>
                 </div>
@@ -240,12 +243,95 @@ Views.StudentPortal = {
         }
     },
 
+    _chartInstance: null,
+
+    renderChart(grades) {
+        const ctx = document.getElementById('grades-progression-chart');
+        if (!ctx) return;
+
+        if (this._chartInstance) {
+            this._chartInstance.destroy();
+            this._chartInstance = null;
+        }
+
+        const sortedGrades = [...grades].sort((a,b) => new Date(a.date) - new Date(b.date));
+        const labels = sortedGrades.map(g => new Date(g.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
+        const data = sortedGrades.map(g => Number(g.score));
+
+        const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+        const gridColor = isDarkMode ? '#334155' : '#e2e8f0';
+        const textColor = isDarkMode ? '#94a3b8' : '#64748b';
+
+        this._chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Calificación',
+                    data: data,
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#f97316',
+                    pointBorderColor: isDarkMode ? '#1e293b' : '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor,
+                            font: { family: 'Outfit, sans-serif' }
+                        }
+                    },
+                    y: {
+                        min: 0,
+                        max: 10,
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: textColor,
+                            stepSize: 1,
+                            font: { family: 'Outfit, sans-serif' }
+                        }
+                    }
+                }
+            }
+        });
+    },
+ 
     renderTimeline(user) {
         const grades = DB.getTable('grades').filter(g => String(g.studentId) === String(user.id));
         const container = document.getElementById('learning-timeline');
+        const chartWrapper = document.getElementById('chart-wrapper');
         if (!container) return;
         
         if (grades.length === 0) {
+            if (chartWrapper) chartWrapper.style.display = 'none';
             container.innerHTML = `
                 <div style="text-align:center; padding:3rem; background:var(--bg-main); border-radius:12px; border:1px dashed var(--border-color)">
                     <i class="fa-solid fa-graduation-cap fa-3x text-muted mb-3"></i>
@@ -255,9 +341,15 @@ Views.StudentPortal = {
             return;
         }
 
+        if (chartWrapper) {
+            chartWrapper.style.display = 'block';
+            // Esperar a que el contenedor sea visible para instanciar el gráfico
+            setTimeout(() => this.renderChart(grades), 50);
+        }
+ 
         // Sort by date if available, or by entry
         const sortedGrades = [...grades].sort((a,b) => new Date(a.date) - new Date(b.date));
-
+ 
         container.innerHTML = `
             <div class="timeline-container" style="display:flex; overflow-x:auto; padding:1rem 0; gap:2rem; scrollbar-width:thin">
                 ${sortedGrades.map((g, index) => `

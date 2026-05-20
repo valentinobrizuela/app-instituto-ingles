@@ -105,6 +105,71 @@ Views.Attendance = {
         document.getElementById('router-view').innerHTML = html;
     },
 
+    activeStudentIndex: -1,
+    _keyHandler: null,
+
+    setupKeyboardNavigation(students, courseId) {
+        if (this._keyHandler) {
+            window.removeEventListener('keydown', this._keyHandler);
+        }
+
+        this.activeStudentIndex = 0;
+        setTimeout(() => this.highlightActiveRow(), 100);
+
+        this._keyHandler = (e) => {
+            const stats = document.getElementById('attendance-stats');
+            if (!stats || !students.length) {
+                window.removeEventListener('keydown', this._keyHandler);
+                this._keyHandler = null;
+                return;
+            }
+
+            // Ignorar atajos si el foco está en un input
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            const key = e.key.toLowerCase();
+            const currentStudent = students[this.activeStudentIndex];
+            if (!currentStudent) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.activeStudentIndex = (this.activeStudentIndex + 1) % students.length;
+                this.highlightActiveRow();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.activeStudentIndex = (this.activeStudentIndex - 1 + students.length) % students.length;
+                this.highlightActiveRow();
+            } else if (key === 'p') {
+                e.preventDefault();
+                this.mark(courseId, currentStudent.id, 'Presente');
+            } else if (key === 't') {
+                e.preventDefault();
+                this.mark(courseId, currentStudent.id, 'Tarde');
+            } else if (key === 'a') {
+                e.preventDefault();
+                this.mark(courseId, currentStudent.id, 'Ausente');
+            }
+        };
+
+        window.addEventListener('keydown', this._keyHandler);
+    },
+
+    highlightActiveRow() {
+        const rows = document.querySelectorAll('.attendance-row');
+        rows.forEach((row, idx) => {
+            if (idx === this.activeStudentIndex) {
+                row.style.background = 'var(--primary-light)';
+                row.style.borderLeft = '4px solid var(--primary)';
+                row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            } else {
+                row.style.background = '';
+                row.style.borderLeft = '';
+            }
+        });
+    },
+
     loadCourseStats(courseId) {
         if (!courseId) {
             document.getElementById('attendance-stats').innerHTML = '';
@@ -119,10 +184,14 @@ Views.Attendance = {
         
         let html = `
             <div class="card mb-4 border-left-primary shadow-sm" style="padding: 1.5rem; background:linear-gradient(to right, #ffffff, #fff5ec)">
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center" style="flex-wrap:wrap; gap:1rem">
                     <div>
                         <h2><i class="fa-solid fa-users text-primary"></i> ${course.name}</h2>
                         <p class="text-muted"><i class="fa-regular fa-clock"></i> Horario: <strong>${course.schedule}</strong> — Nivel: <span class="badge badge-info">${course.level}</span></p>
+                    </div>
+                    <div style="background:var(--bg-main); padding:0.5rem 1rem; border-radius:8px; border:1px solid var(--border-color); font-size:0.8rem; display:flex; align-items:center; gap:0.5rem">
+                        <i class="fa-solid fa-keyboard text-primary" style="font-size:1.1rem"></i>
+                        <span><strong>Atajos:</strong> Use <kbd style="background:#eee;padding:2px 4px;border-radius:4px">↑ ↓</kbd> para navegar y las teclas <kbd style="background:#eee;padding:2px 4px;border-radius:4px">P</kbd>, <kbd style="background:#eee;padding:2px 4px;border-radius:4px">T</kbd>, o <kbd style="background:#eee;padding:2px 4px;border-radius:4px">A</kbd> para registrar.</span>
                     </div>
                 </div>
             </div>
@@ -137,17 +206,17 @@ Views.Attendance = {
                 
                 <table class="w-full" style="border-collapse: collapse;">
                     <tbody>
-                        ${students.map(s => `
-                            <tr style="border-bottom: 1px solid #eee;">
+                        ${students.map((s, idx) => `
+                            <tr class="attendance-row" style="border-bottom: 1px solid #eee; transition: all 0.2s; cursor:pointer" onclick="Views.Attendance.activeStudentIndex = ${idx}; Views.Attendance.highlightActiveRow()">
                                 <td style="padding:1rem 1.5rem">
                                     <div style="font-weight:600; font-size:1.1rem">${s.name}</div>
                                     <div class="text-muted" style="font-size:0.8rem">Email: ${s.email}</div>
                                 </td>
                                 <td style="padding:1rem 1.5rem; text-align:right">
                                     <div class="flex gap-2 justify-end" id="status-btns-${s.id}">
-                                        <button class="btn btn-secondary shadow-sm" onclick="Views.Attendance.mark(${courseId}, ${s.id}, 'Presente', this)" style="border-radius:20px; font-size:0.85rem"><i class="fa-solid fa-check text-success"></i> Presente</button>
-                                        <button class="btn btn-secondary shadow-sm" onclick="Views.Attendance.mark(${courseId}, ${s.id}, 'Tarde', this)" style="border-radius:20px; font-size:0.85rem"><i class="fa-solid fa-clock text-warning"></i> Tarde</button>
-                                        <button class="btn btn-secondary shadow-sm" onclick="Views.Attendance.mark(${courseId}, ${s.id}, 'Ausente', this)" style="border-radius:20px; font-size:0.85rem"><i class="fa-solid fa-xmark text-danger"></i> Ausente</button>
+                                        <button class="btn btn-secondary shadow-sm" onclick="event.stopPropagation(); Views.Attendance.mark(${courseId}, ${s.id}, 'Presente')" style="border-radius:20px; font-size:0.85rem"><i class="fa-solid fa-check text-success"></i> Presente</button>
+                                        <button class="btn btn-secondary shadow-sm" onclick="event.stopPropagation(); Views.Attendance.mark(${courseId}, ${s.id}, 'Tarde')" style="border-radius:20px; font-size:0.85rem"><i class="fa-solid fa-clock text-warning"></i> Tarde</button>
+                                        <button class="btn btn-secondary shadow-sm" onclick="event.stopPropagation(); Views.Attendance.mark(${courseId}, ${s.id}, 'Ausente')" style="border-radius:20px; font-size:0.85rem"><i class="fa-solid fa-xmark text-danger"></i> Ausente</button>
                                     </div>
                                 </td>
                             </tr>
@@ -159,6 +228,7 @@ Views.Attendance = {
         `;
         document.getElementById('attendance-stats').innerHTML = html;
         this.highlightExistingRecords(courseId);
+        this.setupKeyboardNavigation(students, courseId);
 
         document.getElementById('a-date').addEventListener('change', () => {
             this.highlightExistingRecords(courseId);
@@ -207,14 +277,44 @@ Views.Attendance = {
         });
     },
 
-    async mark(courseId, studentId, status, btnElem) {
+    async mark(courseId, studentId, status) {
         const date = document.getElementById('a-date').value;
         if(!date) {
             UI.showToast("Selecciona una fecha válida", "error");
             return;
         }
 
-        UI.showLoader();
+        // --- ACTUALIZACION OPTIMISTA LOCAL ---
+        const container = document.getElementById(`status-btns-${studentId}`);
+        if(container) {
+            const btns = container.querySelectorAll('button');
+            btns.forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-secondary');
+                b.style.background = '';
+                b.style.color = '';
+                b.style.borderColor = 'var(--border-color)';
+                const icon = b.querySelector('i');
+                if(icon) {
+                    if(b.innerText.trim() === 'Presente') icon.className = 'fa-solid fa-check text-success';
+                    else if(b.innerText.trim() === 'Tarde') icon.className = 'fa-solid fa-clock text-warning';
+                    else icon.className = 'fa-solid fa-xmark text-danger';
+                    icon.style.color = '';
+                }
+                if(b.innerText.trim() === status) {
+                    b.classList.remove('btn-secondary');
+                    b.style.background = status === 'Presente' ? 'var(--success)' : status === 'Tarde' ? 'var(--warning)' : 'var(--danger)';
+                    b.style.color = 'white';
+                    b.style.borderColor = 'transparent';
+                    const icon = b.querySelector('i');
+                    if(icon) {
+                        icon.className = icon.className.replace(/text-(success|warning|danger)/, '');
+                        icon.style.color = 'white';
+                    }
+                }
+            });
+        }
+
         const attendanceRecords = DB.getTable('attendance');
         const existing = attendanceRecords.find(a => String(a.course_id) === String(courseId) && String(a.student_id) === String(studentId) && a.date === date);
 
@@ -229,19 +329,18 @@ Views.Attendance = {
                     status
                 });
 
-                // Award XP for NEW records only to avoid farming
-                if (status === 'Presente') {
+                // XP por nuevo registro
+                if (status === 'Presente' && Gamification) {
                     await Gamification.awardXP(studentId, Gamification.XP_MAP.ATTENDANCE, "Asistencia");
-                } else if (status === 'Tarde') {
+                } else if (status === 'Tarde' && Gamification) {
                     await Gamification.awardXP(studentId, 5, "Asistencia (Tarde)");
                 }
             }
             UI.showToast(`Marcado como ${status}`, "success");
         } catch (err) {
             UI.showToast("Error al registrar asistencia", "danger");
-        } finally {
+            // Revertir en caso de error
             this.highlightExistingRecords(courseId);
-            UI.hideLoader();
         }
     },
 
