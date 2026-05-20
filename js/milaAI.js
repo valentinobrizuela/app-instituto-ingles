@@ -16,115 +16,182 @@ const MilaAI = {
 
     // Generar respuesta basada en el mensaje del usuario
     async getResponse(message) {
-        const msg = message.toLowerCase().trim();
-        const user = Auth.getUser();
-
-        // 1. Respuestas Rápidas para Respuestas de Quiz de Emergencia
-        if (msg === "1" || msg === "is") {
-            return "¡Excelente! 🌟 *'She is'* es la respuesta correcta porque es tercera persona del singular. ¡Miau! 🐈";
-        }
-        if (msg === "2" || msg === "are" || msg === "3" || msg === "am") {
-            return "¡Oh, casi! 😿 La respuesta correcta es la 1 (*'is'*). Usamos *'is'* para *he, she, it*. ¡Sigue practicando! 🐾";
-        }
-
-        // 2. Saludos Comunes
-        const greetings = ['hola', 'buen dia', 'buen día', 'buenos dias', 'buenos días', 'buenas tardes', 'buenas noches', 'hello', 'hi', 'que tal', 'cómo estás', 'como estas', 'como andas', 'cómo andas', 'miau', 'hey'];
-        if (greetings.some(g => msg === g || msg.startsWith(g + ' ') || msg.startsWith(g + ',') || msg.startsWith(g + '!'))) {
+        try {
+            const msg = message.toLowerCase().trim();
+            const user = Auth.getUser();
+            const userRole = user ? user.role : 'guest';
             const userName = (user && user.name) ? user.name.split(' ')[0] : (user && user.email ? user.email.split('@')[0] : "Visitante");
-            return `¡Hola ${userName}! ¡Miau! 🐈 Soy Mila, la asistente virtual de West House English School. 🐾
 
-¿En qué te puedo ayudar hoy? Puedes preguntarme cosas como:
+            // 1. Respuestas Rápidas para Respuestas de Quiz de Emergencia (Offline)
+            if (msg === "1" || msg === "is") {
+                return "¡Excelente! 🌟 *'She is'* es la respuesta correcta porque es tercera persona del singular. ¡Miau! 🐈";
+            }
+            if (msg === "2" || msg === "are" || msg === "3" || msg === "am") {
+                return "¡Oh, casi! 😿 La respuesta correcta es la 1 (*'is'*). Usamos *'is'* para *he, she, it*. ¡Sigue practicando! 🐾";
+            }
+
+            // 2. Control de Acceso y Advertencia de Rol (Alumno hablando como Profesor/Admin)
+            if (userRole === 'student') {
+                const teacherKeywords = [
+                    'pasar asistencia', 'cargar asistencia', 'poner asistencia', 'tomar asistencia', 
+                    'calificar', 'cargar nota', 'poner nota', 'crear examen', 'subir material', 
+                    'crear curso', 'editar alumno', 'crear profesor', 'eliminar profesor'
+                ];
+                if (teacherKeywords.some(kw => msg.includes(kw))) {
+                    return `¡Miau! Detecto que estás preguntando sobre cómo ${msg}, pero en mi registro figuras como **Alumno** de West House. 🐾
+                    
+Estas acciones son exclusivas para Profesores y Administradores. Si eres profesor o necesitas asistencia de un administrativo, comunícate con Morena en Secretaría para revisar tu cuenta. 🐈`;
+                }
+            }
+
+            if (userRole === 'guest') {
+                const privateKeywords = [
+                    'mi nota', 'mis notas', 'mi asistencia', 'mis faltas', 'mi cuota', 'mi pago', 
+                    'debo', 'deuda', 'mi examen', 'pasar asistencia', 'calificar', 'mi promedio'
+                ];
+                if (privateKeywords.some(kw => msg.includes(kw))) {
+                    return `¡Miau! Para consultar tus notas personales, asistencia o pagos, primero debes **iniciar sesión** con tu cuenta en la barra lateral. 🔑
+                    
+Si aún no formas parte de West House English School, ¡puedes sumarte a nuestra lista de espera! Solo dime "inscribirme" y te ayudo. 🐾`;
+                }
+            }
+
+            // 3. Saludos Personalizados según el Rol
+            const greetings = ['hola', 'buen dia', 'buen día', 'buenos dias', 'buenos días', 'buenas tardes', 'buenas noches', 'hello', 'hi', 'que tal', 'cómo estás', 'como estas', 'como andas', 'cómo andas', 'miau', 'hey'];
+            if (greetings.some(g => msg === g || msg.startsWith(g + ' ') || msg.startsWith(g + ',') || msg.startsWith(g + '!'))) {
+                if (userRole === 'admin') {
+                    return `¡Hola ${userName}! ¡Miau! 👑 Soy Mila, la asistente virtual de West House.
+                    
+Como **Administrador**, tienes el control de todo el sistema. Puedo ayudarte con:
+• 📊 Consultar la bitácora de **logs** de auditoría.
+• 🕒 **Horarios** de atención e información general.
+• 📍 **Ubicación** y contacto directo.
+• 📞 Conexión rápida por WhatsApp con Dirección o Secretaría.
+
+¿Qué deseas consultar o verificar hoy? 🐾`;
+                } else if (userRole === 'teacher') {
+                    return `¡Hola Profe ${userName}! ¡Miau! 🍎 Soy Mila, tu asistente docente en West House.
+
+Como **Profesor**, puedo ayudarte con tareas académicas:
+• 📝 Planificación y sugerencias para tus clases.
+• ✏️ Creación de exámenes y quizzes para tus alumnos.
+• 💬 Practicar conversación libre en inglés.
+• 🕒 **Horarios** de las clases y secretaría.
+• 📞 Contacto directo por WhatsApp con Dirección o Secretaría.
+
+¿En qué te asisto para tu jornada de hoy, Profe? 🐾`;
+                } else if (userRole === 'student') {
+                    return `¡Hola ${userName}! ¡Miau! 📚 Soy Mila, tu asistente de estudios en West House.
+
+Como **Alumno**, puedes pedirme:
+• 📝 Consultar tus **notas** actuales y promedio.
+• 📊 Ver tus **asistencias** y faltas registradas.
+• 💳 Consultar si estás al día con tu **cuota**.
+• 💬 **Practicar inglés** conversando en inglés conmigo.
+• ✏️ Pedirme **ejercicios** interactivos para practicar.
+• 🕒 Saber los **horarios** o la dirección del instituto.
+
+¿Qué te gustaría revisar o practicar hoy? 🐈`;
+                } else {
+                    return `¡Hola! ¡Miau! 🐈 Soy Mila, la asistente virtual de West House English School. 🐾
+
+¿En qué te puedo ayudar hoy? Puedes consultarme sobre:
 • 🕒 **Horarios** de clase y atención.
-• 📍 **Dónde estamos** (Ubicación/Dirección).
+• 📍 **Ubicación** / Dirección.
 • 💳 Métodos de **pago** y cuotas.
-• 🌿 Nuestro **Eco-Banco**.
-• 👩‍🏫 Quién es la **directora** o la **secretaria**.
-${user ? '• 📝 Tus **notas**, exámenes y promedio.\n• 📊 Tu **asistencia**.\n' : '• 🔑 Si eres alumno, ¡inicia sesión para ver tus notas y asistencia!\n'}• 📞 **Hablar con un humano** (Maricel o Morena).
+• 🌿 Nuestro **Eco-Banco** y visión.
+• 📝 Cómo registrarte en la **lista de espera** pública.
+• 🔑 Si eres alumno o profe, **inicia sesión** en la barra lateral.
+• 📞 **Hablar con un humano** (Maricel o Morena).
 
 ¡Dime qué necesitas y con gusto te respondo! 🐾`;
-        }
-
-        // 3. Consultas Personalizadas (requieren Login)
-        if (user) {
-            const userName = (user && user.name) ? user.name.split(' ')[0] : (user && user.email ? user.email.split('@')[0] : "Visitante");
-            // Consulta de Notas
-            if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("cómo voy") || msg.includes("promedio") || msg.includes("rendimiento")) {
-                const grades = DB.getTable('grades').filter(g => String(g.studentId) === String(user.id));
-                if (grades.length > 0) {
-                    const avg = (grades.reduce((sum, g) => sum + Number(g.score), 0) / grades.length).toFixed(1);
-                    return `He revisado tus notas, ${userName}. Tienes **${grades.length}** calificaciones registradas y tu promedio actual es **${avg}**. ¡Buen trabajo! 🌟`;
                 }
-                return "Todavía no tengo notas registradas para ti en el sistema. ¡Sigue esforzándote! 📝";
             }
 
-            // Consulta de Pagos
-            if (msg.includes("pago") || msg.includes("cuota") || msg.includes("debo") || msg.includes("deuda") || msg.includes("vence")) {
-                const status = DB.getStudentStatus(user.id);
-                if (status === 'paid') return "¡Estás al día con tus pagos! Mila está muy orgullosa. ¡Miau! 🐈";
-                if (status === 'pending') return "Tu cuota de este mes está pendiente, pero todavía estás a tiempo de pagar sin recargo (hasta el 10). 💸";
-                return "He notado que tienes una cuota vencida. Por favor, comunícate con Morena en Secretaría para regularizarla. 🐾";
+            // 4. Consultas Personalizadas de la DB (requieren Login)
+            if (user) {
+                // Consulta de Notas
+                if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("cómo voy") || msg.includes("promedio") || msg.includes("rendimiento")) {
+                    const rawGrades = DB.getTable('grades') || [];
+                    const grades = rawGrades.filter(g => g && String(g.student_id || g.studentId || '') === String(user.id));
+                    if (grades.length > 0) {
+                        const avg = (grades.reduce((sum, g) => sum + Number(g.score || 0), 0) / grades.length).toFixed(1);
+                        return `He revisado tus notas, ${userName}. Tienes **${grades.length}** calificaciones registradas y tu promedio actual es **${avg}**. ¡Buen trabajo! 🌟`;
+                    }
+                    return "Todavía no tengo notas registradas para ti en el sistema. ¡Sigue esforzándote! 📝";
+                }
+
+                // Consulta de Pagos
+                if (msg.includes("pago") || msg.includes("cuota") || msg.includes("debo") || msg.includes("deuda") || msg.includes("vence")) {
+                    const status = DB.getStudentStatus(user.id);
+                    if (status === 'paid') return "¡Estás al día con tus pagos! Mila está muy orgullosa de ti. ¡Miau! 🐈";
+                    if (status === 'pending') return "Tu cuota de este mes está pendiente, pero todavía estás a tiempo de abonar sin recargo (hasta el 10). 💸";
+                    return "He notado que tienes una cuota vencida. Por favor, comunícate con Morena en Secretaría para regularizarla. 🐾";
+                }
+
+                // Consulta de Asistencia
+                if (msg.includes("falta") || msg.includes("asistencia") || msg.includes("inasistencia") || msg.includes("cuantas veces falte")) {
+                    const rawAttendance = DB.getTable('attendance') || [];
+                    const attendance = rawAttendance.filter(a => a && String(a.student_id || a.studentId || '') === String(user.id));
+                    const absences = attendance.filter(a => a && a.status === 'Ausente').length;
+                    if (absences === 0) return "¡Tienes asistencia perfecta! Mila te da una medalla virtual y un gran ronroneo. 🥇🐈";
+                    return `Tienes **${absences}** inasistencias registradas. Recuerda que es importante venir para no perder el hilo de las clases. 🐾`;
+                }
             }
 
-            // Consulta de Asistencia
-            if (msg.includes("falta") || msg.includes("asistencia") || msg.includes("inasistencia") || msg.includes("cuantas veces falte")) {
-                const attendance = DB.getTable('attendance').filter(a => String(a.student_id) === String(user.id));
-                const absences = attendance.filter(a => a.status === 'Ausente').length;
-                if (absences === 0) return "¡Tienes asistencia perfecta! Mila te da una medalla virtual y un gran ronroneo. 🥇🐈";
-                return `Tienes **${absences}** inasistencias registradas. Recuerda que es importante venir para no perder el hilo de las clases. 🐾`;
+            // 5. Consultas de Información Institucional Estática
+            if (msg.includes("horario") || msg.includes("hora") || msg.includes("abierto") || msg.includes("cierran") || msg.includes("abren") || msg.includes("atención")) {
+                return `🕒 **Nuestros Horarios de Atención:**\n${this.knowledgeBase.horarios}`;
             }
-        } else {
-            // Advertencia de Login
-            if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("falta") || msg.includes("asistencia") || msg.includes("mi cuota") || msg.includes("deuda")) {
-                return "¡Miau! Para consultar tus notas personales, asistencias o estado de cuotas, primero debes **iniciar sesión** con tu cuenta de alumno en la barra lateral. 🔑";
+
+            if (msg.includes("donde") || msg.includes("dónde") || msg.includes("ubicacion") || msg.includes("ubicación") || msg.includes("direccion") || msg.includes("dirección") || msg.includes("queda") || msg.includes("mapa")) {
+                return `📍 **Nuestra Ubicación:**\n${this.knowledgeBase.ubicación}`;
             }
-        }
 
-        // 4. Consultas de Información Institucional Estática
-        if (msg.includes("horario") || msg.includes("hora") || msg.includes("abierto") || msg.includes("cierran") || msg.includes("abren") || msg.includes("atención")) {
-            return `🕒 **Nuestros Horarios de Atención:**\n${this.knowledgeBase.horarios}`;
-        }
+            if (msg.includes("pagar") || msg.includes("métodos de pago") || msg.includes("metodo de pago") || msg.includes("transferencia") || msg.includes("efectivo")) {
+                return `💳 **Información de Pagos:**\n${this.knowledgeBase.pagos}`;
+            }
 
-        if (msg.includes("donde") || msg.includes("dónde") || msg.includes("ubicacion") || msg.includes("ubicación") || msg.includes("direccion") || msg.includes("dirección") || msg.includes("queda") || msg.includes("mapa")) {
-            return `📍 **Nuestra Ubicación:**\n${this.knowledgeBase.ubicación}`;
-        }
+            if (msg.includes("eco-banco") || msg.includes("ecobanco") || msg.includes("eco banco") || msg.includes("eco-ladrillo") || msg.includes("ecoladrillo") || msg.includes("botella") || msg.includes("recicla")) {
+                return `🌿 **Proyecto Eco-Banco:**\n${this.knowledgeBase.eco_banco}`;
+            }
 
-        if (msg.includes("pagar") || msg.includes("métodos de pago") || msg.includes("metodo de pago") || msg.includes("transferencia") || msg.includes("efectivo")) {
-            return `💳 **Información de Pagos:**\n${this.knowledgeBase.pagos}`;
-        }
+            if (msg.includes("vision") || msg.includes("visión") || msg.includes("lema") || msg.includes("objetivo")) {
+                return `👁️ **Nuestra Visión:**\n${this.knowledgeBase.vision}`;
+            }
 
-        if (msg.includes("eco-banco") || msg.includes("ecobanco") || msg.includes("eco banco") || msg.includes("eco-ladrillo") || msg.includes("ecoladrillo") || msg.includes("botella") || msg.includes("recicla")) {
-            return `🌿 **Proyecto Eco-Banco:**\n${this.knowledgeBase.eco_banco}`;
-        }
+            if (msg.includes("director") || msg.includes("directora") || msg.includes("maricel")) {
+                return `👩‍🏫 **Dirección del Instituto:**\n${this.knowledgeBase.director}`;
+            }
 
-        if (msg.includes("vision") || msg.includes("visión") || msg.includes("lema") || msg.includes("objetivo")) {
-            return `👁️ **Nuestra Visión:**\n${this.knowledgeBase.vision}`;
-        }
+            if (msg.includes("secretaria") || msg.includes("secretaría") || msg.includes("morena") || msg.includes("administracion") || msg.includes("administración")) {
+                return `💼 **Secretaría y Administración:**\n${this.knowledgeBase.secretaria}`;
+            }
 
-        if (msg.includes("director") || msg.includes("directora") || msg.includes("maricel")) {
-            return `👩‍🏫 **Dirección del Instituto:**\n${this.knowledgeBase.director}`;
-        }
+            // Lista de espera
+            if (msg.includes("inscribirme") || msg.includes("lista de espera") || msg.includes("anotarme") || msg.includes("espera")) {
+                return `📝 **Inscripción a Lista de Espera:**
+                
+Para anotarte en nuestra lista de espera, por favor ve al enlace de **Lista de Espera** en el portal público o pídele a secretaría que te registre. ¡Estaremos encantados de tenerte! 🐾`;
+            }
 
-        if (msg.includes("secretaria") || msg.includes("secretaría") || msg.includes("morena") || msg.includes("administracion") || msg.includes("administración")) {
-            return `💼 **Secretaría y Administración:**\n${this.knowledgeBase.secretaria}`;
-        }
-
-        // 5. Delegación a Humanos
-        if (msg.includes("hablar") || msg.includes("persona") || msg.includes("humano") || msg.includes("whatsapp") || msg.includes("teléfono") || msg.includes("telefono") || msg.includes("contacto") || msg.includes("ayuda urg")) {
-            return `Si necesitas comunicarte directamente con una persona física de nuestro equipo, aquí tienes los contactos de WhatsApp directos:
-            
+            // 6. Delegación a Humanos
+            if (msg.includes("hablar") || msg.includes("persona") || msg.includes("humano") || msg.includes("whatsapp") || msg.includes("teléfono") || msg.includes("telefono") || msg.includes("contacto") || msg.includes("ayuda urg")) {
+                return `Si necesitas comunicarte directamente con una persona física de nuestro equipo, aquí tienes los contactos de WhatsApp directos:
+                
 • 👩‍🏫 [Hablar con Maricel (Directora)](https://wa.me/5493804135270?text=Hola%20Maricel,%20Mila%20me%20sugirió%20contactarte.)
 • 💼 [Hablar con Morena (Secretaría)](https://wa.me/5491176086865?text=Hola%20Morena,%20Mila%20me%20sugirió%20contactarte.)
-            
-¿Hay algo más en lo que yo pueda responderte? 🐈`;
-        }
-
-        // 6. Modos de Aprendizaje (Requieren API Key o Fallback de Quiz)
-        const isApiKeyMissing = !CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === "AQUI_TU_CLAVE_DE_GEMINI";
-
-        if (msg.includes("practicar inglés") || msg.includes("let's practice") || msg.includes("conversar")) {
-            if (isApiKeyMissing) {
-                return `¡Miau! Mi cerebro de Inteligencia Artificial para inglés conversacional está durmiendo. 😿
                 
+¿Hay algo más en lo que yo pueda responderte? 🐈`;
+            }
+
+            // 7. Modos de Aprendizaje (Requieren API Key o Fallback de Quiz)
+            const isApiKeyMissing = !CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === "AQUI_TU_CLAVE_DE_GEMINI" || CONFIG.GEMINI_API_KEY.trim() === "";
+
+            if (msg.includes("practicar inglés") || msg.includes("let's practice") || msg.includes("conversar")) {
+                if (isApiKeyMissing) {
+                    return `¡Miau! Mi cerebro de Inteligencia Artificial para inglés conversacional está durmiendo. 😿
+                    
 Pero podemos practicar con un juego rápido fuera de línea. **Completa la frase:**
 *"She ________ (be) a very dedicated student."*
 
@@ -133,13 +200,13 @@ Pero podemos practicar con un juego rápido fuera de línea. **Completa la frase
 3) **am**
 
 *¡Responde escribiendo el número correcto de la opción!* 🐾`;
+                }
+                return await this.callGeminiAPI(message, user, 'conversation');
             }
-            return await this.callGeminiAPI(message, user, 'conversation');
-        }
 
-        if (msg.includes("ejercicio") || msg.includes("dame ejercicios") || msg.includes("quiz me")) {
-            if (isApiKeyMissing) {
-                return `¡Miau! Para generar quizzes dinámicos con IA necesito que configures la clave de Gemini en config.js. 
+            if (msg.includes("ejercicio") || msg.includes("dame ejercicios") || msg.includes("quiz me")) {
+                if (isApiKeyMissing) {
+                    return `¡Miau! Para generar quizzes dinámicos con IA necesito que configures la clave de Gemini en config.js. 
 
 Mientras tanto, probemos tu nivel con esta pregunta:
 **¿Cuál es la opción correcta para completar?**
@@ -150,17 +217,22 @@ Mientras tanto, probemos tu nivel con esta pregunta:
 3) **sleeps**
 
 *¡Responde con el número de la opción (1, 2 o 3)!* 🐈`;
+                }
+                return await this.callGeminiAPI(message, user, 'exercises');
             }
-            return await this.callGeminiAPI(message, user, 'exercises');
-        }
 
-        // 7. Fallback a IA Generativa (Gemini) para CUALQUIER otra pregunta
-        return await this.callGeminiAPI(message, user, 'default');
+            // 8. Fallback a IA Generativa (Gemini) para CUALQUIER otra pregunta
+            return await this.callGeminiAPI(message, user, 'default');
+        } catch (e) {
+            console.error("MilaAI Error:", e);
+            return `¡Miau! Ocurrió un error al procesar tu consulta: **${e.message}**. Por favor abre la consola de desarrollador (F12) o reporta este error. 😿`;
+        }
     },
 
     // Llamada a la API de Gemini
     async callGeminiAPI(userMessage, user, mode = 'default') {
-        if (!CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === "AQUI_TU_CLAVE_DE_GEMINI") {
+        const isApiKeyMissing = !CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === "AQUI_TU_CLAVE_DE_GEMINI" || CONFIG.GEMINI_API_KEY.trim() === "";
+        if (isApiKeyMissing) {
             return `¡Miau! Mi cerebro avanzado en línea está desactivado porque no me han configurado la clave de la API en el archivo \`js/config.js\`. 😿
 
 Sin embargo, ¡puedo ayudarte con la información local! Pregúntame sobre:
@@ -171,8 +243,21 @@ Sin embargo, ¡puedo ayudarte con la información local! Pregúntame sobre:
 • 📞 **Hablar con un humano** (Maricel o Morena).`;
         }
 
+        const userRole = user ? user.role : 'guest';
         const userName = (user && user.name) ? user.name.split(' ')[0] : (user && user.email ? user.email.split('@')[0] : "Visitante");
         const courseInfo = user && user.course_id ? `El usuario está en el nivel/curso: ${user.level || user.course_id}.` : "El usuario no tiene curso asignado.";
+
+        // Inyección de rol personalizada
+        let rolePrompt = "";
+        if (userRole === 'admin') {
+            rolePrompt = `El usuario actual es un ADMINISTRADOR del instituto. Puede hacer preguntas de administración, gestión de profesores, alumnos o logs. Háblale con respeto profesional pero mantén tu estilo de gatita Mila.`;
+        } else if (userRole === 'teacher') {
+            rolePrompt = `El usuario actual es un PROFESOR (teacher) del instituto. Te pedirá sugerencias de clases, explicaciones gramaticales, ejercicios o redacción de notas de feedback. Háblale de colega a colega docente de forma cariñosa pero profesional.`;
+        } else if (userRole === 'student') {
+            rolePrompt = `El usuario actual es un ALUMNO (student) de nivel/curso: ${user.level || user.course_id || 'no especificado'}. Tu rol con él es pedagógico: guíalo, practica inglés con él, explícale la gramática de forma didáctica de acuerdo a su nivel, y no le permitas realizar tareas de profesor (como registrar asistencia o ver notas de otros).`;
+        } else {
+            rolePrompt = `El usuario actual es un VISITANTE/INVITADO público. No tiene cuenta activa en el sistema. Puedes responder dudas generales de horarios, ubicación o promover que se inscriba mediante la lista de espera pública.`;
+        }
 
         let systemPrompt = "";
 
@@ -198,7 +283,10 @@ Pídele al alumno que responda, y dile que luego tú corregirás sus respuestas.
             systemPrompt = `
 Eres Mila, la adorable y simpática gata mascota y asistente virtual del instituto de inglés "West House English School".
 Tu personalidad es amable, juguetona, y sueles usar expresiones relacionadas con gatos (como ¡Miau!, ronroneos o emojis de patitas 🐾 y gatos 🐈).
-Eres experta en gramática inglesa, puedes traducir, explicar conceptos, dar ejemplos, o charlar sobre cualquier tema que el alumno te proponga.
+Eres experta en gramática inglesa, puedes traducir, explicar conceptos, dar ejemplos, o charlar sobre cualquier tema que el usuario te proponga.
+
+${rolePrompt}
+
 Además de ayudar con inglés, conoces la información del instituto:
 - Horarios: de Lunes a Viernes de 14:00 a 21:00 hs.
 - Pagos: del 1 al 10 de cada mes en secretaría o transferencia.
@@ -208,6 +296,7 @@ Además de ayudar con inglés, conoces la información del instituto:
 
 Información del usuario actual:
 - Nombre: ${userName}
+- Rol: ${userRole}
 - Contexto: ${courseInfo}
 
 Instrucciones:
@@ -218,7 +307,7 @@ Instrucciones:
         }
 
         try {
-            const response = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\${CONFIG.GEMINI_API_KEY}\`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
