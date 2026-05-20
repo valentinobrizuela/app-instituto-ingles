@@ -16,24 +16,48 @@ const MilaAI = {
 
     // Generar respuesta basada en el mensaje del usuario
     async getResponse(message) {
-        const msg = message.toLowerCase();
+        const msg = message.toLowerCase().trim();
         const user = Auth.getUser();
 
-        // 1. Intentos de Consultas Personalizadas (requieren Login)
-        // Estas respuestas rápidas y precisas consultan la DB interna directamente
+        // 1. Respuestas Rápidas para Respuestas de Quiz de Emergencia
+        if (msg === "1" || msg === "is") {
+            return "¡Excelente! 🌟 *'She is'* es la respuesta correcta porque es tercera persona del singular. ¡Miau! 🐈";
+        }
+        if (msg === "2" || msg === "are" || msg === "3" || msg === "am") {
+            return "¡Oh, casi! 😿 La respuesta correcta es la 1 (*'is'*). Usamos *'is'* para *he, she, it*. ¡Sigue practicando! 🐾";
+        }
+
+        // 2. Saludos Comunes
+        const greetings = ['hola', 'buen dia', 'buen día', 'buenos dias', 'buenos días', 'buenas tardes', 'buenas noches', 'hello', 'hi', 'que tal', 'cómo estás', 'como estas', 'como andas', 'cómo andas', 'miau', 'hey'];
+        if (greetings.some(g => msg === g || msg.startsWith(g + ' ') || msg.startsWith(g + ',') || msg.startsWith(g + '!'))) {
+            const userName = user ? user.name.split(' ')[0] : "Visitante";
+            return `¡Hola ${userName}! ¡Miau! 🐈 Soy Mila, la asistente virtual de West House English School. 🐾
+
+¿En qué te puedo ayudar hoy? Puedes preguntarme cosas como:
+• 🕒 **Horarios** de clase y atención.
+• 📍 **Dónde estamos** (Ubicación/Dirección).
+• 💳 Métodos de **pago** y cuotas.
+• 🌿 Nuestro **Eco-Banco**.
+• 👩‍🏫 Quién es la **directora** o la **secretaria**.
+${user ? '• 📝 Tus **notas**, exámenes y promedio.\n• 📊 Tu **asistencia**.\n' : '• 🔑 Si eres alumno, ¡inicia sesión para ver tus notas y asistencia!\n'}• 📞 **Hablar con un humano** (Maricel o Morena).
+
+¡Dime qué necesitas y con gusto te respondo! 🐾`;
+        }
+
+        // 3. Consultas Personalizadas (requieren Login)
         if (user) {
             // Consulta de Notas
-            if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("cómo voy")) {
+            if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("cómo voy") || msg.includes("promedio") || msg.includes("rendimiento")) {
                 const grades = DB.getTable('grades').filter(g => String(g.studentId) === String(user.id));
                 if (grades.length > 0) {
                     const avg = (grades.reduce((sum, g) => sum + Number(g.score), 0) / grades.length).toFixed(1);
-                    return `He revisado tus notas. Tienes ${grades.length} calificaciones registradas y tu promedio actual es **${avg}**. ¡Buen trabajo! 🌟`;
+                    return `He revisado tus notas, ${user.name.split(' ')[0]}. Tienes **${grades.length}** calificaciones registradas y tu promedio actual es **${avg}**. ¡Buen trabajo! 🌟`;
                 }
-                return "Todavía no tengo notas registradas para ti. ¡Sigue esforzándote! 📝";
+                return "Todavía no tengo notas registradas para ti en el sistema. ¡Sigue esforzándote! 📝";
             }
 
             // Consulta de Pagos
-            if (msg.includes("pago") || msg.includes("cuota") || msg.includes("debo") || msg.includes("deuda")) {
+            if (msg.includes("pago") || msg.includes("cuota") || msg.includes("debo") || msg.includes("deuda") || msg.includes("vence")) {
                 const status = DB.getStudentStatus(user.id);
                 if (status === 'paid') return "¡Estás al día con tus pagos! Mila está muy orgullosa. ¡Miau! 🐈";
                 if (status === 'pending') return "Tu cuota de este mes está pendiente, pero todavía estás a tiempo de pagar sin recargo (hasta el 10). 💸";
@@ -41,41 +65,109 @@ const MilaAI = {
             }
 
             // Consulta de Asistencia
-            if (msg.includes("falta") || msg.includes("asistencia") || msg.includes("cuantas veces falte")) {
+            if (msg.includes("falta") || msg.includes("asistencia") || msg.includes("inasistencia") || msg.includes("cuantas veces falte")) {
                 const attendance = DB.getTable('attendance').filter(a => String(a.student_id) === String(user.id));
                 const absences = attendance.filter(a => a.status === 'Ausente').length;
-                if (absences === 0) return "¡Tienes asistencia perfecta! Mila te da una medalla virtual. 🥇";
+                if (absences === 0) return "¡Tienes asistencia perfecta! Mila te da una medalla virtual y un gran ronroneo. 🥇🐈";
                 return `Tienes **${absences}** inasistencias registradas. Recuerda que es importante venir para no perder el hilo de las clases. 🐾`;
+            }
+        } else {
+            // Advertencia de Login
+            if (msg.includes("nota") || msg.includes("calificación") || msg.includes("examen") || msg.includes("falta") || msg.includes("asistencia") || msg.includes("mi cuota") || msg.includes("deuda")) {
+                return "¡Miau! Para consultar tus notas personales, asistencias o estado de cuotas, primero debes **iniciar sesión** con tu cuenta de alumno en la barra lateral. 🔑";
             }
         }
 
-        // 2. Delegación a Humanos
-        if (msg.includes("hablar") || msg.includes("persona") || msg.includes("humano") || msg.includes("director") || msg.includes("secretaria") || msg.includes("ayuda urg")) {
-            return `Si necesitas hablar con alguien, puedo conectarte ahora mismo:
-            
-            • [Hablar con Maricel (Directora)](https://wa.me/5493804135270?text=Hola%20Maricel,%20Mila%20me%20sugirió%20contactarte.)
-            • [Hablar con Morena (Secretaría)](https://wa.me/5491176086865?text=Hola%20Morena,%20Mila%20me%20sugirió%20contactarte.)
-            
-            ¿Hay algo más en lo que yo pueda ayudarte directamente? 🐈`;
+        // 4. Consultas de Información Institucional Estática
+        if (msg.includes("horario") || msg.includes("hora") || msg.includes("abierto") || msg.includes("cierran") || msg.includes("abren") || msg.includes("atención")) {
+            return `🕒 **Nuestros Horarios de Atención:**\n${this.knowledgeBase.horarios}`;
         }
 
-        // 3. Modos Avanzados de Aprendizaje (Conversación / Ejercicios)
+        if (msg.includes("donde") || msg.includes("dónde") || msg.includes("ubicacion") || msg.includes("ubicación") || msg.includes("direccion") || msg.includes("dirección") || msg.includes("queda") || msg.includes("mapa")) {
+            return `📍 **Nuestra Ubicación:**\n${this.knowledgeBase.ubicación}`;
+        }
+
+        if (msg.includes("pagar") || msg.includes("métodos de pago") || msg.includes("metodo de pago") || msg.includes("transferencia") || msg.includes("efectivo")) {
+            return `💳 **Información de Pagos:**\n${this.knowledgeBase.pagos}`;
+        }
+
+        if (msg.includes("eco-banco") || msg.includes("ecobanco") || msg.includes("eco banco") || msg.includes("eco-ladrillo") || msg.includes("ecoladrillo") || msg.includes("botella") || msg.includes("recicla")) {
+            return `🌿 **Proyecto Eco-Banco:**\n${this.knowledgeBase.eco_banco}`;
+        }
+
+        if (msg.includes("vision") || msg.includes("visión") || msg.includes("lema") || msg.includes("objetivo")) {
+            return `👁️ **Nuestra Visión:**\n${this.knowledgeBase.vision}`;
+        }
+
+        if (msg.includes("director") || msg.includes("directora") || msg.includes("maricel")) {
+            return `👩‍🏫 **Dirección del Instituto:**\n${this.knowledgeBase.director}`;
+        }
+
+        if (msg.includes("secretaria") || msg.includes("secretaría") || msg.includes("morena") || msg.includes("administracion") || msg.includes("administración")) {
+            return `💼 **Secretaría y Administración:**\n${this.knowledgeBase.secretaria}`;
+        }
+
+        // 5. Delegación a Humanos
+        if (msg.includes("hablar") || msg.includes("persona") || msg.includes("humano") || msg.includes("whatsapp") || msg.includes("teléfono") || msg.includes("telefono") || msg.includes("contacto") || msg.includes("ayuda urg")) {
+            return `Si necesitas comunicarte directamente con una persona física de nuestro equipo, aquí tienes los contactos de WhatsApp directos:
+            
+• 👩‍🏫 [Hablar con Maricel (Directora)](https://wa.me/5493804135270?text=Hola%20Maricel,%20Mila%20me%20sugirió%20contactarte.)
+• 💼 [Hablar con Morena (Secretaría)](https://wa.me/5491176086865?text=Hola%20Morena,%20Mila%20me%20sugirió%20contactarte.)
+            
+¿Hay algo más en lo que yo pueda responderte? 🐈`;
+        }
+
+        // 6. Modos de Aprendizaje (Requieren API Key o Fallback de Quiz)
+        const isApiKeyMissing = !CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === "AQUI_TU_CLAVE_DE_GEMINI";
+
         if (msg.includes("practicar inglés") || msg.includes("let's practice") || msg.includes("conversar")) {
+            if (isApiKeyMissing) {
+                return `¡Miau! Mi cerebro de Inteligencia Artificial para inglés conversacional está durmiendo. 😿
+                
+Pero podemos practicar con un juego rápido fuera de línea. **Completa la frase:**
+*"She ________ (be) a very dedicated student."*
+
+1) **is**
+2) **are**
+3) **am**
+
+*¡Responde escribiendo el número correcto de la opción!* 🐾`;
+            }
             return await this.callGeminiAPI(message, user, 'conversation');
         }
 
         if (msg.includes("ejercicio") || msg.includes("dame ejercicios") || msg.includes("quiz me")) {
+            if (isApiKeyMissing) {
+                return `¡Miau! Para generar quizzes dinámicos con IA necesito que configures la clave de Gemini en config.js. 
+
+Mientras tanto, probemos tu nivel con esta pregunta:
+**¿Cuál es la opción correcta para completar?**
+*"The cats ________ (sleep) on the Eco-Banco."*
+
+1) **is sleeping**
+2) **are sleeping**
+3) **sleeps**
+
+*¡Responde con el número de la opción (1, 2 o 3)!* 🐈`;
+            }
             return await this.callGeminiAPI(message, user, 'exercises');
         }
 
-        // 4. Fallback a IA Generativa (Gemini) para CUALQUIER otra pregunta
+        // 7. Fallback a IA Generativa (Gemini) para CUALQUIER otra pregunta
         return await this.callGeminiAPI(message, user, 'default');
     },
 
     // Llamada a la API de Gemini
     async callGeminiAPI(userMessage, user, mode = 'default') {
         if (!CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY === "AQUI_TU_CLAVE_DE_GEMINI") {
-            return "¡Miau! Mi cerebro avanzado está desactivado porque no me han configurado la clave de la API (GEMINI_API_KEY en config.js). Dile al administrador que la configure para que pueda responder cualquier pregunta. 😿";
+            return `¡Miau! Mi cerebro avanzado en línea está desactivado porque no me han configurado la clave de la API en el archivo \`js/config.js\`. 😿
+
+Sin embargo, ¡puedo ayudarte con la información local! Pregúntame sobre:
+• 🕒 **Horarios** de atención.
+• 📍 **Ubicación** / Dirección.
+• 💳 Métodos de **pago** y cuotas.
+• 🌿 El **Eco-Banco**.
+• 📞 **Hablar con un humano** (Maricel o Morena).`;
         }
 
         const userName = user ? user.name.split(' ')[0] : "Visitante";
