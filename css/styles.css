@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+ @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
     --primary: #f97316;
@@ -1776,5 +1776,5 @@ tr:last-child td {
 @keyframes dotBounce {
     0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
     40%           { transform: scale(1);   opacity: 1; }
-}
+} 
 
