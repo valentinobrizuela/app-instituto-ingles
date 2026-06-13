@@ -2,9 +2,12 @@
   "name": "app-instituto",
   "version": "1.0.0",
   "description": "",
-  "main": "check_teacher.js",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "repository": {
     "type": "git",
@@ -13,13 +16,19 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/valentinobrizuela/app-instituto-ingles/issues"
   },
   "homepage": "https://github.com/valentinobrizuela/app-instituto-ingles#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.103.3",
-    "pdfkit": "^0.18.0"
+    "autoprefixer": "^10.4.19",
+    "framer-motion": "^11.2.6",
+    "next": "^14.2.3",
+    "pdfkit": "^0.18.0",
+    "postcss": "^8.4.38",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.3"
   }
 }

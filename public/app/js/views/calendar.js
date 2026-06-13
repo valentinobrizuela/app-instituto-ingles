@@ -63,10 +63,10 @@ Views.Calendar = {
         let events = DB.getTable('events');
         
         if(user.role === 'teacher') {
-            const myCourses = DB.getTable('courses').filter(c => String(c.teacherId) === String(user.id)).map(c=>c.id);
-            events = events.filter(e => !e.courseId || myCourses.includes(e.courseId));
+            const myCourses = DB.getTable('courses').filter(c => String(c.teacher_id) === String(user.id)).map(c=>c.id);
+            events = events.filter(e => !e.course_id || myCourses.includes(e.course_id));
         } else if (user.role === 'student') {
-            events = events.filter(e => !e.courseId || String(e.courseId) === String(user.course_id));
+            events = events.filter(e => !e.course_id || String(e.course_id) === String(user.course_id));
         }
 
         const year = this.currentDate.getFullYear();
@@ -83,7 +83,7 @@ Views.Calendar = {
         
         for(let d=1; d<=daysInMonth; d++) {
             const dayDateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const dayEvents = events.filter(e => e.start.startsWith(dayDateStr));
+            const dayEvents = events.filter(e => e.start_date && e.start_date.startsWith(dayDateStr));
             
             let todayStyle = '';
             const today = new Date();
@@ -99,7 +99,7 @@ Views.Calendar = {
                     </div>
                     ${dayEvents.map(e => {
                         let badgeColor = e.type === 'Exam' ? 'danger' : e.type === 'Holiday' ? 'success' : 'primary';
-                        const time = new Date(e.start).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
+                        const time = new Date(e.start_date).toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
                         return `
                             <div class="badge badge-${badgeColor} mb-1 shadow-sm" style="display:block; padding:0.25rem 0.5rem; white-space:normal; cursor:pointer;" onclick="Views.Calendar.viewEvent(${e.id})">
                                 <span style="font-weight:700; opacity:0.8">${time}</span> ${e.title}
@@ -131,9 +131,9 @@ Views.Calendar = {
         if(!ev) { UI.hideLoader(); return; }
 
         let courseName = 'Institucional (Todos)';
-        if(ev.courseId) {
+        if(ev.course_id) {
             const courses = DB.getTable('courses');
-            const c = courses.find(c=>String(c.id) === String(ev.courseId));
+            const c = courses.find(c=>String(c.id) === String(ev.course_id));
             if(c) courseName = c.name;
         }
 
@@ -144,7 +144,7 @@ Views.Calendar = {
             </div>
             
             <div style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem">
-                <p><i class="fa-solid fa-calendar text-primary" style="width:20px"></i> <strong>Fecha Inicio:</strong> ${new Date(ev.start).toLocaleString('es-ES')}</p>
+                <p><i class="fa-solid fa-calendar text-primary" style="width:20px"></i> <strong>Fecha Inicio:</strong> ${new Date(ev.start_date).toLocaleString('es-ES')}</p>
                 <p><i class="fa-solid fa-graduation-cap text-primary" style="width:20px"></i> <strong>Aplica a:</strong> ${courseName}</p>
             </div>
 
@@ -168,16 +168,16 @@ Views.Calendar = {
         
         // Filter by user role/course
         if(user.role === 'teacher') {
-            const myCourses = DB.getTable('courses').filter(c => String(c.teacherId) === String(user.id)).map(c=>c.id);
-            events = events.filter(e => !e.courseId || myCourses.includes(e.courseId));
+            const myCourses = DB.getTable('courses').filter(c => String(c.teacher_id) === String(user.id)).map(c=>c.id);
+            events = events.filter(e => !e.course_id || myCourses.includes(e.course_id));
         } else if (user.role === 'student') {
-            events = events.filter(e => !e.courseId || String(e.courseId) === String(user.course_id));
+            events = events.filter(e => !e.course_id || String(e.course_id) === String(user.course_id));
         }
 
         // Only future events, sorted by date
         const upcoming = events
-            .filter(e => new Date(e.start) >= now)
-            .sort((a, b) => new Date(a.start) - new Date(b.start))
+            .filter(e => e.start_date && new Date(e.start_date) >= now)
+            .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
             .slice(0, 5);
 
         if (upcoming.length === 0) return '<p class="text-muted text-sm">No hay eventos próximos.</p>';
@@ -186,7 +186,7 @@ Views.Calendar = {
             <div class="upcoming-item" onclick="Views.Calendar.viewEvent(${e.id})">
                 <p style="font-weight:700; font-size:0.9rem; margin-bottom:0.25rem; color:var(--text-main)">${e.title}</p>
                 <div style="display:flex; justify-content:space-between; align-items:center">
-                    <span class="text-muted text-sm"><i class="fa-regular fa-clock"></i> ${new Date(e.start).toLocaleDateString('es-ES', {day:'numeric', month:'short'})}</span>
+                    <span class="text-muted text-sm"><i class="fa-regular fa-clock"></i> ${new Date(e.start_date).toLocaleDateString('es-ES', {day:'numeric', month:'short'})}</span>
                     <span class="badge badge-${e.type === 'Exam' ? 'danger' : e.type === 'Holiday' ? 'success' : 'info'}" style="font-size:0.6rem">${e.type}</span>
                 </div>
             </div>
@@ -196,7 +196,7 @@ Views.Calendar = {
     openModal(defaultDate = '') {
         const user = Auth.getUser();
         let courses = DB.getTable('courses');
-        if(user.role === 'teacher') courses = courses.filter(c => String(c.teacherId) === String(user.id));
+        if(user.role === 'teacher') courses = courses.filter(c => String(c.teacher_id) === String(user.id));
         
         let startVal = '';
         if(defaultDate) startVal = `${defaultDate}T09:00`; 
@@ -252,8 +252,8 @@ Views.Calendar = {
         DB.insert('events', {
             title: document.getElementById('ev-title').value,
             type: document.getElementById('ev-type').value,
-            courseId: courseVal ? parseInt(courseVal) : null,
-            start: document.getElementById('ev-start').value,
+            course_id: courseVal ? parseInt(courseVal) : null,
+            start_date: document.getElementById('ev-start').value,
             description: document.getElementById('ev-desc').value
         });
         

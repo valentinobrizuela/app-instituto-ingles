@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>West House English School — Sistema de Gestión</title>
+    <meta name="description" content="Sistema de gestión educativa de West House English School. Alumnos, cursos, asistencia, calificaciones y comunicación en un solo lugar.">
+    <link rel="canonical" href="https://westhouseenglishschool.com/app/" />
+
+    <!-- Open Graph / SEO Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="West House English School">
+    <meta property="og:description" content="Plataforma educativa para alumnos, profesores y administración.">
+    <meta property="og:url" content="https://westhouseenglishschool.com/app/">
+
+    <!-- PWA Meta tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f97316">
+    <link rel="apple-touch-icon" href="img/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="West House">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css?v=6">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CryptoJS (Hashing) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" defer></script>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Chart.js (Dashboard) — cargado diferido, solo necesario en el dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <!-- html2pdf — cargado diferido -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app"></div>
+
+    <!-- UI Components -->
+    <div id="toast-container" class="toast-container"></div>
+    <div id="global-loader" class="loader-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Core Scripts (Global Objects First) -->
+    <script src="js/config.js?v=6"></script>
+    <script src="js/db.js?v=6"></script>
+    <script src="js/auth.js?v=6"></script>
+    <script src="js/milaAI.js?v=6"></script>
+    <script src="js/ui.js?v=6"></script>
+    <script src="js/search.js?v=6"></script>
+
+    <!-- View Components are now lazy loaded dynamically by the router in app.js -->
+
+    <!-- Main Router and Bootstrapper (Init Everything) -->
+    <script src="js/gamification.js?v=6"></script>
+    <script src="js/app.js?v=6"></script>
+</body>
+</html>

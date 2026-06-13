@@ -763,8 +763,12 @@ const UI = {
                     status.innerText = originalStatus;
                 }, 1000);
             } catch (err) {
+                console.error("UI Chat Error:", err);
                 this.removeTyping(typingId);
-                this.addMessage("Miau... tuve un problema para procesar eso. ¿Podrías intentar de nuevo? 🐾", true);
+                this.addMessage(`¡Miau! Ocurrió un error al procesar el mensaje: ${err.message}. 😿`, true);
+                if (typeof UI !== 'undefined' && UI.showToast) {
+                    UI.showToast(`Error de chat: ${err.message}`, 'danger');
+                }
                 status.innerText = originalStatus;
             }
         },

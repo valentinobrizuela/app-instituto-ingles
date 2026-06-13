@@ -5,16 +5,18 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function checkColumns() {
-    const { data, error } = await supabase.from('courses').select('*').limit(1);
-    if (!error && data.length > 0) {
-        console.log("Columnas en 'courses':", Object.keys(data[0]));
-    } else {
-        console.error("Error o tabla vacía:", error);
-    }
-    
-    const { data: usersData, error: uError } = await supabase.from('users').select('*').limit(1);
-    if (!uError && usersData.length > 0) {
-        console.log("Columnas en 'users':", Object.keys(usersData[0]));
+    const tables = ['courses', 'users', 'events', 'payments', 'attendance', 'materials', 'notifications', 'quizzes', 'assignments', 'logs'];
+    for (const t of tables) {
+        const { data, error } = await supabase.from(t).select('*').limit(1);
+        if (!error) {
+            if (data.length > 0) {
+                console.log(`Columnas en '${t}':`, Object.keys(data[0]));
+            } else {
+                console.log(`Tabla '${t}' existe pero está vacía.`);
+            }
+        } else {
+            console.error(`Error en '${t}':`, error.message);
+        }
     }
 }
 checkColumns();
