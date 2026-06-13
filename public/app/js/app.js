@@ -82,9 +82,16 @@ const App = {
                 return;
             }
 
-            // Redirigir si ya hay sesión pero trata de ir a Login
-            if (path === '#/login' && Auth.isAuthenticated()) {
-                window.location.hash = '#/';
+            // Redirigir si ya hay sesión pero trata de ir a Login o al root
+            if ((path === '#/login' || path === '#/') && Auth.isAuthenticated()) {
+                const user = Auth.currentUser;
+                if (user.role === 'student') {
+                    window.location.href = '/student';
+                } else if (user.role === 'teacher') {
+                    window.location.href = '/teacher';
+                } else {
+                    window.location.href = '/director';
+                }
                 return;
             }
 

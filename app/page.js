@@ -128,7 +128,7 @@ export default function LandingPage() {
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <a href="/app/#/login" className="px-5 py-2.5 rounded-xl font-bold text-slate-700 hover:text-amber-600 transition-colors text-sm">
+            <a href="/login" className="px-5 py-2.5 rounded-xl font-bold text-slate-700 hover:text-amber-600 transition-colors text-sm">
               Iniciar Sesión
             </a>
             <a href="/app/#/waitlist-join" className="px-5 py-2.5 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition-all hover:shadow-lg hover:shadow-orange-500/10 active:scale-95">
@@ -158,7 +158,7 @@ export default function LandingPage() {
               <a href="#gallery" onClick={() => setMobileMenuOpen(false)} className="font-semibold text-slate-700 hover:text-amber-600">Galería</a>
               <hr className="border-amber-100" />
               <div className="flex flex-col gap-3 pt-2">
-                <a href="/app/#/login" className="text-center py-2.5 font-bold text-slate-700 border border-slate-200 rounded-xl">
+                <a href="/login" className="text-center py-2.5 font-bold text-slate-700 border border-slate-200 rounded-xl">
                   Iniciar Sesión
                 </a>
                 <a href="/app/#/waitlist-join" className="text-center py-2.5 bg-amber-600 text-white font-bold rounded-xl shadow-md">

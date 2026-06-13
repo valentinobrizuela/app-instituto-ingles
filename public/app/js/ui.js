@@ -48,8 +48,15 @@ const UI = {
         try {
             const success = await Auth.login(email, password);
             if (success) {
-                this.showToast('¡Bienvenido de nuevo!', 'success');
-                window.location.hash = '#/';
+                this.hideLoader();
+                const user = Auth.currentUser;
+                if (user.role === 'student') {
+                    window.location.href = '/student';
+                } else if (user.role === 'teacher') {
+                    window.location.href = '/teacher';
+                } else {
+                    window.location.href = '/director';
+                }
             } else {
                 this.hideLoader();
                 this.showToast('Credenciales incorrectas', 'danger');
