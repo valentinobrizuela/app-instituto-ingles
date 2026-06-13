@@ -1,6 +1,12 @@
 // Bootstrapper y Router
 const App = {
     async init() {
+        // Safety timeout: si algo cuelga, ocultar loader en 8 segundos
+        const loaderTimeout = setTimeout(() => {
+            console.warn('[App] Safety timeout: ocultando loader por demora excesiva.');
+            UI.hideLoader();
+        }, 8000);
+
         try {
             UI.initTheme();
             console.log("Iniciando West House OS (Backend Ready)...");
@@ -22,9 +28,15 @@ const App = {
                 UI.showInstallButton();
             });
 
-            // Sincronización de Datos (Backend unificado)
-            await DB.init();
+            // Primero verificar si hay sesión activa
             await Auth.init();
+
+            // Solo cargar DB si hay sesión (evita 18 queries bloqueantes sin auth)
+            if (Auth.isAuthenticated()) {
+                await DB.init();
+            } else {
+                console.log('Sin sesión activa. Saltando DB.init().');
+            }
             
             // Command Palette Shortcut
             window.addEventListener('keydown', (e) => {
@@ -42,9 +54,11 @@ const App = {
                 requestAnimationFrame(() => this.router());
             });
 
+            clearTimeout(loaderTimeout);
             // Ejecuta ruta inicial con RAF
             requestAnimationFrame(() => this.router());
         } catch (error) {
+            clearTimeout(loaderTimeout);
             document.body.innerHTML = `<div style="padding:4rem;text-align:center;color:red;font-family:sans-serif"><h1>Error Crítico de Inicialización</h1><p>${error.message}</p><pre style="text-align:left;background:#eee;padding:1rem">${error.stack}</pre></div>`;
             console.error("Critical Init Error:", error);
         }
